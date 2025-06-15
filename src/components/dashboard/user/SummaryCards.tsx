@@ -7,7 +7,7 @@ const SummaryCards = () => {
   const summaryData = [
     { title: 'Upcoming Sessions', value: '2', icon: Calendar, color: '#9B59B6' },
     { title: 'Completed Sessions', value: '15', icon: CheckCircle, color: '#1ABC9C' },
-    { title: 'Wallet Balance', value: '$150.00', icon: Wallet, color: '#D4AC0D' },
+    { title: 'Wallet Balance', value: '₦150.00', icon: Wallet, color: '#D4AC0D' },
   ];
 
   return (

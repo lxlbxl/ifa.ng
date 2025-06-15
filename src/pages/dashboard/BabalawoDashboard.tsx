@@ -1,21 +1,26 @@
-
-import React from 'react';
-import AuthenticatedHeader from '@/components/AuthenticatedHeader';
-import Footer from '@/components/Footer';
-import BabalawoDashboardOverview from '@/components/dashboard/babalawo/BabalawoDashboardOverview';
+import React from "react";
+import BabalawoDashboardSidebar from "@/components/dashboard/babalawo/BabalawoDashboardSidebar";
+import BabalawoDashboardOverview from "@/components/dashboard/babalawo/BabalawoDashboardOverview";
+import AuthenticatedHeader from "@/components/AuthenticatedHeader";
+import Footer from "@/components/Footer";
 
 const BabalawoDashboard = () => {
+  // Sidebar State (if you want to allow switching sections in future, keep for extensibility)
+  const [activeSection] = React.useState<"dashboard">("dashboard");
+
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="min-h-screen w-full bg-gradient-to-br from-[#f3eafd] to-[#e8ecfa] flex flex-col">
       <AuthenticatedHeader />
-      <main className="flex-grow bg-gradient-to-br from-orange-50 to-pink-50">
-        <div className="container mx-auto py-8">
-          <h1 className="text-3xl font-semibold text-center text-gray-800 mb-8">
-            Babalawo Dashboard
-          </h1>
-          <BabalawoDashboardOverview />
+      <div className="flex flex-1 min-h-0 w-full">
+        <div className="hidden md:block">
+          <BabalawoDashboardSidebar activeSection={activeSection} />
         </div>
-      </main>
+        <main className="flex-1 min-h-0">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+            <BabalawoDashboardOverview />
+          </div>
+        </main>
+      </div>
       <Footer />
     </div>
   );

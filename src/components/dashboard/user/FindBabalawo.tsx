@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Star, Calendar, CheckCircle } from 'lucide-react';
 import BookSessionModal from "./BookSessionModal";
@@ -54,7 +55,7 @@ const FindBabalawo = () => {
 
       const mapped = (data || []).map((b: any) => ({
         id: b.id,
-        full_name: b.profiles?.full_name ?? "Unknown",
+        full_name: b.profiles?.full_name ?? "Babalawo",
         avatar_url: b.profiles?.avatar_url,
         title: "Ifa Priest & Spiritual Guide",
         specialties: Array.isArray(b.specialties) ? b.specialties : [],

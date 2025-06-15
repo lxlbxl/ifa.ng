@@ -50,7 +50,8 @@ const FeaturedBabalawos: React.FC = () => {
             total_sessions,
             languages,
             timezone,
-            is_active
+            is_active,
+            profiles:profiles(full_name, avatar_url)
           `)
           .eq('verification_status', 'approved')
           .eq('is_active', true)
@@ -63,25 +64,15 @@ const FeaturedBabalawos: React.FC = () => {
           return;
         }
 
-        // Fetch profiles for each babalawo
-        const babalawosWithProfiles = await Promise.all(
-          babalawosData.map(async (babalawo) => {
-            const { data: profileData, error: profileError } = await supabase
-              .from('profiles')
-              .select('full_name, avatar_url')
-              .eq('id', babalawo.id)
-              .single();
-
-            if (profileError) {
-              console.error('Error fetching profile:', profileError);
-              return { ...babalawo, profiles: null };
-            }
-
-            return { ...babalawo, profiles: profileData };
-          })
-        );
+        // Transform the data to match our interface
+        const transformedData = babalawosData.map(babalawo => ({
+          ...babalawo,
+          profiles: Array.isArray(babalawo.profiles) && babalawo.profiles.length > 0 
+            ? babalawo.profiles[0] 
+            : babalawo.profiles
+        }));
         
-        setBabalawos(babalawosWithProfiles);
+        setBabalawos(transformedData);
       } catch (err: any) {
         setError(err.message || 'An unexpected error occurred.');
       } finally {
@@ -101,7 +92,7 @@ const FeaturedBabalawos: React.FC = () => {
     // Convert to the format expected by BookSessionModal
     const babalawForModal = {
       id: babalawo.id,
-      full_name: babalawo.profiles?.full_name ?? "Unknown",
+      full_name: babalawo.profiles?.full_name || "Babalawo",
       avatar_url: babalawo.profiles?.avatar_url,
       title: "Ifa Priest & Spiritual Guide",
       specialties: Array.isArray(babalawo.specialties) ? babalawo.specialties : [],
@@ -144,19 +135,19 @@ const FeaturedBabalawos: React.FC = () => {
               {babalawo.profiles?.avatar_url ? (
                 <AvatarImage
                   src={babalawo.profiles.avatar_url}
-                  alt={babalawo.profiles.full_name ?? "Babalawo"}
+                  alt={babalawo.profiles.full_name || "Babalawo"}
                 />
               ) : (
                 <AvatarFallback>
                   {babalawo.profiles?.full_name
-                    ? babalawo.profiles.full_name.charAt(0)
+                    ? babalawo.profiles.full_name.charAt(0).toUpperCase()
                     : "B"}
                 </AvatarFallback>
               )}
             </Avatar>
             {/* Name */}
             <div className="font-semibold text-lg text-gray-900 mb-1">
-              {babalawo.profiles?.full_name ?? "Unknown"}
+              {babalawo.profiles?.full_name || "Babalawo"}
             </div>
             {/* Rating and Sessions */}
             <div className="text-sm text-gray-600 mb-2">
@@ -174,7 +165,7 @@ const FeaturedBabalawos: React.FC = () => {
             )}
             {/* Price */}
             <div className="text-sm font-semibold text-gray-800 mb-3">
-              ${babalawo.hourly_rate || 0}/session
+              ₦{babalawo.hourly_rate || 0}/session
             </div>
             {/* Action Button */}
             <button 

@@ -6,7 +6,7 @@ import { useAuth } from './useAuth';
 const fetchUserSessions = async (userId: string | undefined) => {
     if (!userId) return [];
 
-    const { data, error } = await supabase
+    const { data: sessions, error } = await supabase
         .from('sessions')
         .select(`
             id,
@@ -26,36 +26,36 @@ const fetchUserSessions = async (userId: string | undefined) => {
         throw new Error(error.message);
     }
 
-    // Now fetch babalawo details for each session
-    if (data && data.length > 0) {
-        const babalawosData = await Promise.all(
-            data.map(async (session) => {
-                const { data: babalawos, error: babalawosError } = await supabase
-                    .from('babalawos')
-                    .select(`
-                        id,
-                        specialties,
-                        profiles (
-                            full_name,
-                            avatar_url
-                        )
-                    `)
-                    .eq('id', session.babalawo_id)
-                    .single();
-
-                if (babalawosError) {
-                    console.error('Error fetching babalawo:', babalawosError);
-                    return { ...session, babalawos: null };
-                }
-
-                return { ...session, babalawos };
-            })
-        );
-
-        return babalawosData;
+    if (!sessions) {
+        return [];
     }
-    
-    return data || [];
+
+    // Now fetch babalawo details for each session
+    const sessionsWithBabalawos = await Promise.all(
+        sessions.map(async (session) => {
+            const { data: babalawos, error: babalawosError } = await supabase
+                .from('babalawos')
+                .select(`
+                    id,
+                    specialties,
+                    profiles (
+                        full_name,
+                        avatar_url
+                    )
+                `)
+                .eq('id', session.babalawo_id)
+                .single();
+
+            if (babalawosError) {
+                console.error('Error fetching babalawo:', babalawosError);
+                return { ...session, babalawos: null };
+            }
+
+            return { ...session, babalawos };
+        })
+    );
+
+    return sessionsWithBabalawos;
 };
 
 export const useUserSessions = () => {

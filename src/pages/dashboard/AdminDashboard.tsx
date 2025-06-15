@@ -1,32 +1,53 @@
 
-import React from 'react';
-import AuthenticatedHeader from '@/components/AuthenticatedHeader';
-import Footer from '@/components/Footer';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import React, { useState } from 'react';
+import AdminSidebar from '@/components/dashboard/admin/AdminSidebar';
+import DashboardOverview from '@/components/dashboard/admin/DashboardOverview';
+import { Search, Bell } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const AdminDashboard = () => {
+  const [activeSection, setActiveSection] = useState('overview');
   const { userProfile } = useAuth();
+
+  const renderContent = () => {
+    switch (activeSection) {
+      // TODO: Add cases for other sections
+      // case 'users':
+      //   return <UserManagement />;
+      case 'overview':
+      default:
+        return <DashboardOverview />;
+    }
+  };
+
   return (
-    <div className="flex flex-col min-h-screen">
-      <AuthenticatedHeader />
-      <main className="flex-grow bg-gradient-to-br from-orange-50 to-pink-50">
-        <div className="container mx-auto py-12">
-          <h1 className="text-3xl font-semibold text-center text-gray-800 mb-8">
-            Admin Panel
+    <div className="flex min-h-screen bg-gray-50 font-sans">
+      <AdminSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+      <div className="flex-1 flex flex-col">
+        <header className="bg-white border-b p-4 flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-800">
+            Business Dashboard
           </h1>
-          <Card className="max-w-2xl mx-auto">
-            <CardHeader>
-              <CardTitle>Welcome, {userProfile?.full_name || 'Admin'}!</CardTitle>
-              <CardDescription>Manage the platform.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>The admin panel is under construction.</p>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-      <Footer />
+          <div className="flex items-center space-x-6">
+            <Search className="h-5 w-5 text-gray-500 cursor-pointer hover:text-gray-800" />
+            <Bell className="h-5 w-5 text-gray-500 cursor-pointer hover:text-gray-800" />
+            <div className="flex items-center space-x-2">
+              <Avatar>
+                <AvatarImage src={userProfile?.avatar_url || ''} />
+                <AvatarFallback>{userProfile?.full_name?.[0]}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-semibold text-sm">{userProfile?.full_name}</p>
+                <p className="text-xs text-gray-500 capitalize">{userProfile?.role} Account</p>
+              </div>
+            </div>
+          </div>
+        </header>
+        <main className="flex-grow p-6 md:p-8 lg:p-10">
+          {renderContent()}
+        </main>
+      </div>
     </div>
   );
 };

@@ -67,7 +67,9 @@ const UserDashboard = () => {
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-orange-50 to-pink-50 font-poppins">
       {/* Always show sidebar on desktop, only in drawer on mobile */}
-      <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} className="hidden md:flex" />
+      <div className="hidden md:flex">
+        <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+      </div>
       <div className="flex-1 flex flex-col">
         <DashboardHeader activeSection={activeSection} onSectionChange={setActiveSection} />
         <main className="flex-grow p-6 md:p-8 lg:p-10 space-y-8 overflow-y-auto">
@@ -78,3 +80,4 @@ const UserDashboard = () => {
   );
 };
 export default UserDashboard;
+

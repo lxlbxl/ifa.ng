@@ -1,10 +1,12 @@
 
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   // Handle scroll lock and z-index on mobile overlay
   // Prevent background scroll when menu open
@@ -17,6 +19,10 @@ const Header = () => {
     // Cleanup
     return () => { document.body.style.overflow = ""; };
   }, [isMenuOpen]);
+
+  const handleAuthNavigate = (tab: "signin" | "signup") => {
+    navigate(`/auth?tab=${tab}`);
+  };
 
   return (
     <header className="bg-white/95 backdrop-blur-sm shadow-lg sticky top-0 z-50">
@@ -40,10 +46,17 @@ const Header = () => {
           </nav>
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white">
+            <Button
+              variant="outline"
+              className="border-primary text-primary hover:bg-primary hover:text-white"
+              onClick={() => handleAuthNavigate("signin")}
+            >
               Login
             </Button>
-            <Button className="bg-gradient-primary hover:opacity-90 text-white">
+            <Button
+              className="bg-gradient-primary hover:opacity-90 text-white"
+              onClick={() => handleAuthNavigate("signup")}
+            >
               Sign Up
             </Button>
           </div>
@@ -76,10 +89,23 @@ const Header = () => {
             <a href="#babalawos" className="text-gray-700 hover:text-primary transition-colors" onClick={() => setIsMenuOpen(false)}>Babalawos</a>
             <a href="#about" className="text-gray-700 hover:text-primary transition-colors" onClick={() => setIsMenuOpen(false)}>About</a>
             <div className="flex flex-col space-y-2 pt-2">
-              <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white" onClick={() => setIsMenuOpen(false)}>
+              <Button
+                variant="outline"
+                className="border-primary text-primary hover:bg-primary hover:text-white"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  handleAuthNavigate("signin");
+                }}
+              >
                 Login
               </Button>
-              <Button className="bg-gradient-primary hover:opacity-90 text-white" onClick={() => setIsMenuOpen(false)}>
+              <Button
+                className="bg-gradient-primary hover:opacity-90 text-white"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  handleAuthNavigate("signup");
+                }}
+              >
                 Sign Up
               </Button>
             </div>

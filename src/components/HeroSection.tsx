@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Star, Shield, Video } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const testimonials = [
   {
@@ -26,6 +27,7 @@ const testimonials = [
 
 const HeroSection = () => {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -59,10 +61,18 @@ const HeroSection = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
-              <Button size="lg" className="bg-white text-primary hover:bg-gray-100 font-semibold px-8 py-4 text-lg shadow-lg border-2 border-white">
+              <Button
+                size="lg"
+                className="bg-white text-primary hover:bg-gray-100 font-semibold px-8 py-4 text-lg shadow-lg border-2 border-white"
+                onClick={() => navigate('/auth?tab=signin')}
+              >
                 Book Consultation
               </Button>
-              <Button size="lg" className="bg-transparent text-white hover:bg-white hover:text-primary font-semibold px-8 py-4 text-lg shadow-lg border-2 border-white transition-all duration-300">
+              <Button
+                size="lg"
+                className="bg-transparent text-white hover:bg-white hover:text-primary font-semibold px-8 py-4 text-lg shadow-lg border-2 border-white transition-all duration-300"
+                onClick={() => navigate('/auth?tab=signin')}
+              >
                 Browse Babalawos
               </Button>
             </div>

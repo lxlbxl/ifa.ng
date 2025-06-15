@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { Home, Calendar, History, Users, Settings, LifeBuoy } from 'lucide-react';
+import { Home, Calendar, History, Users, Settings, LifeBuoy, LogOut } from 'lucide-react';
+import { useAuth } from "@/hooks/useAuth";
 
 interface SidebarProps {
   activeSection: string;
@@ -16,6 +17,17 @@ const menuItems = [
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange }) => {
+  const { signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
   return (
     <aside className="w-64 bg-white shadow-lg flex-col hidden md:flex">
       <div className="p-6 border-b">
@@ -40,15 +52,22 @@ const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange }) => 
           </button>
         ))}
       </nav>
-      <div className="p-4 border-t">
+      <div className="p-4 border-t space-y-2">
         <button
           onClick={() => onSectionChange('support')}
-          className={`w-full flex items-center px-4 py-2.5 text-gray-600 rounded-lg hover:bg-warm-light ${
+          className={`w-full flex items-center px-4 py-2.5 text-gray-600 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors duration-200 ${
             activeSection === 'support' ? 'bg-primary/10 text-primary' : ''
           }`}
         >
           <LifeBuoy className="h-5 w-5 mr-3" />
           <span className="font-medium">Support</span>
+        </button>
+        <button
+          onClick={handleSignOut}
+          className="w-full flex items-center px-4 py-2.5 text-gray-600 rounded-lg hover:bg-red-50 hover:text-red-700 transition-colors duration-200"
+        >
+          <LogOut className="h-5 w-5 mr-3" />
+          <span className="font-medium">Sign Out</span>
         </button>
       </div>
     </aside>

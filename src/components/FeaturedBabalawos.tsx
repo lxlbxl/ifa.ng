@@ -64,12 +64,12 @@ const FeaturedBabalawos: React.FC = () => {
           return;
         }
 
-        // Transform the data to match our interface
-        const transformedData = babalawosData.map(babalawo => ({
+        // Transform the data to match our interface - fix the profiles structure
+        const transformedData: BabalawoProfile[] = babalawosData.map(babalawo => ({
           ...babalawo,
           profiles: Array.isArray(babalawo.profiles) && babalawo.profiles.length > 0 
             ? babalawo.profiles[0] 
-            : babalawo.profiles
+            : (babalawo.profiles as any) || null
         }));
         
         setBabalawos(transformedData);

@@ -7,7 +7,6 @@ import AdminSectionTabs from "@/components/dashboard/admin/AdminSectionTabs";
 import AdminAnalyticsPanels from "@/components/dashboard/admin/AdminAnalyticsPanels";
 import AdminSidebarMobile from "@/components/dashboard/admin/AdminSidebarMobile";
 import { Menu } from "lucide-react";
-import { useState } from "react";
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState<

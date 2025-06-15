@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ import { Search, MoreVertical, UserPlus, Filter, Edit, Trash2, Star, Clock, Doll
 import { useAdminBabalawos } from "@/hooks/useAdminBabalawos";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 const BabalawoManagement = () => {
   const { data: babalawos, isLoading } = useAdminBabalawos();
@@ -27,6 +29,12 @@ const BabalawoManagement = () => {
   const [selectedBabalawo, setSelectedBabalawo] = useState<any>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    hourly_rate: "",
+    experience_years: "",
+    bio: "",
+    specialties: "",
+  });
   const [addForm, setAddForm] = useState({
     email: "",
     full_name: "",
@@ -37,8 +45,10 @@ const BabalawoManagement = () => {
     languages: "",
   });
   const [isAdding, setIsAdding] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const filteredBabalawos = babalawos?.filter(babalawo =>
     babalawo.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -87,15 +97,20 @@ const BabalawoManagement = () => {
     languages: "",
   });
 
+  const resetEditForm = () => setEditForm({
+    hourly_rate: "",
+    experience_years: "",
+    bio: "",
+    specialties: "",
+  });
+
   const handleAddBabalawo = async () => {
-    // Minimal validation
     if (!addForm.email || !addForm.full_name) {
       toast({ title: "Missing Info", description: "Email and Full Name are required.", variant: "destructive" });
       return;
     }
     setIsAdding(true);
     try {
-      // 1. Create Supabase Auth User (invite flow)
       const { data: signUpData, error: signUpError } = await supabase.auth.admin.createUser({
         email: addForm.email,
         email_confirm: true,
@@ -109,13 +124,11 @@ const BabalawoManagement = () => {
 
       const userId = signUpData.user.id;
 
-      // 2. Insert/Upsert into profiles table (optional, for extra info)
       await supabase
         .from("profiles")
         .update({ full_name: addForm.full_name, role: "babalawo" })
         .eq("id", userId);
 
-      // 3. Insert into babalawos table (with "approved" status)
       const specialtiesArr = addForm.specialties
         .split(",")
         .map((v) => v.trim())
@@ -135,9 +148,10 @@ const BabalawoManagement = () => {
         is_active: true,
       });
 
-      toast({ title: "Babalawo Created", description: "A new babalawo has been added and approved.", variant: "success" });
+      toast({ title: "Babalawo Created", description: "A new babalawo has been added and approved." });
       setIsAddModalOpen(false);
       resetAddForm();
+      queryClient.invalidateQueries({ queryKey: ['adminBabalawos'] });
     } catch (err: any) {
       toast({ title: "Error", description: err?.message || "Failed to add babalawo", variant: "destructive" });
     }
@@ -146,14 +160,69 @@ const BabalawoManagement = () => {
 
   const handleVerification = async (babalawoId: string, status: "approved" | "rejected") => {
     try {
-      await supabase.from("babalawos").update({ verification_status: status }).eq("id", babalawoId);
+      const { error } = await supabase
+        .from("babalawos")
+        .update({ verification_status: status })
+        .eq("id", babalawoId);
+
+      if (error) throw error;
+
       toast({
         title: status === "approved" ? "Approved" : "Rejected",
-        description: `Babalawo marked as ${status}.`,
-        variant: status === "approved" ? "success" : "destructive",
+        description: `Babalawo has been ${status}.`,
       });
+      
+      queryClient.invalidateQueries({ queryKey: ['adminBabalawos'] });
     } catch (err: any) {
       toast({ title: "Error", description: err?.message || "Update failed", variant: "destructive" });
+    }
+  };
+
+  const handleEditBabalawo = async () => {
+    if (!selectedBabalawo) return;
+    
+    setIsUpdating(true);
+    try {
+      const specialtiesArr = editForm.specialties
+        ? editForm.specialties.split(",").map((v) => v.trim()).filter(Boolean)
+        : selectedBabalawo.specialties;
+
+      const { error } = await supabase
+        .from("babalawos")
+        .update({
+          hourly_rate: Number(editForm.hourly_rate) || selectedBabalawo.hourly_rate,
+          experience_years: Number(editForm.experience_years) || selectedBabalawo.experience_years,
+          bio: editForm.bio || selectedBabalawo.bio,
+          specialties: specialtiesArr,
+        })
+        .eq("id", selectedBabalawo.id);
+
+      if (error) throw error;
+
+      toast({ title: "Updated", description: "Babalawo profile has been updated successfully." });
+      setIsEditModalOpen(false);
+      resetEditForm();
+      setSelectedBabalawo(null);
+      queryClient.invalidateQueries({ queryKey: ['adminBabalawos'] });
+    } catch (err: any) {
+      toast({ title: "Error", description: err?.message || "Update failed", variant: "destructive" });
+    }
+    setIsUpdating(false);
+  };
+
+  const handleDeactivate = async (babalawoId: string) => {
+    try {
+      const { error } = await supabase
+        .from("babalawos")
+        .update({ is_active: false })
+        .eq("id", babalawoId);
+
+      if (error) throw error;
+
+      toast({ title: "Deactivated", description: "Babalawo has been deactivated." });
+      queryClient.invalidateQueries({ queryKey: ['adminBabalawos'] });
+    } catch (err: any) {
+      toast({ title: "Error", description: err?.message || "Deactivation failed", variant: "destructive" });
     }
   };
 
@@ -327,6 +396,12 @@ const BabalawoManagement = () => {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => {
                             setSelectedBabalawo(babalawo);
+                            setEditForm({
+                              hourly_rate: babalawo.hourly_rate?.toString() || "",
+                              experience_years: babalawo.experience_years?.toString() || "",
+                              bio: babalawo.bio || "",
+                              specialties: babalawo.specialties?.join(", ") || "",
+                            });
                             setIsEditModalOpen(true);
                           }}>
                             <Edit className="w-4 h-4 mr-2" />
@@ -350,7 +425,10 @@ const BabalawoManagement = () => {
                               </DropdownMenuItem>
                             </>
                           )}
-                          <DropdownMenuItem className="text-red-600">
+                          <DropdownMenuItem 
+                            className="text-red-600"
+                            onClick={() => handleDeactivate(babalawo.id)}
+                          >
                             <Trash2 className="w-4 h-4 mr-2" />
                             Deactivate
                           </DropdownMenuItem>
@@ -444,7 +522,7 @@ const BabalawoManagement = () => {
       </Dialog>
 
       {/* Edit Babalawo Modal */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+      <Dialog open={isEditModalOpen} onOpenChange={o => { setIsEditModalOpen(o); if (!o) { resetEditForm(); setSelectedBabalawo(null); } }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Edit Babalawo Profile</DialogTitle>
@@ -453,11 +531,21 @@ const BabalawoManagement = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Hourly Rate (₦)</label>
-                <Input type="number" defaultValue={selectedBabalawo?.hourly_rate || ''} />
+                <Input 
+                  type="number" 
+                  value={editForm.hourly_rate}
+                  onChange={e => setEditForm(f => ({ ...f, hourly_rate: e.target.value }))}
+                  placeholder={selectedBabalawo?.hourly_rate?.toString() || "Enter hourly rate"}
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Experience (Years)</label>
-                <Input type="number" defaultValue={selectedBabalawo?.experience_years || ''} />
+                <Input 
+                  type="number" 
+                  value={editForm.experience_years}
+                  onChange={e => setEditForm(f => ({ ...f, experience_years: e.target.value }))}
+                  placeholder={selectedBabalawo?.experience_years?.toString() || "Enter years of experience"}
+                />
               </div>
             </div>
             <div>
@@ -465,18 +553,26 @@ const BabalawoManagement = () => {
               <textarea 
                 className="w-full p-2 border border-gray-300 rounded-md"
                 rows={3}
-                defaultValue={selectedBabalawo?.bio || ''}
+                value={editForm.bio}
+                onChange={e => setEditForm(f => ({ ...f, bio: e.target.value }))}
+                placeholder={selectedBabalawo?.bio || "Enter bio"}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Specialties</label>
-              <Input defaultValue={selectedBabalawo?.specialties?.join(", ") || ''} />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Specialties (comma separated)</label>
+              <Input 
+                value={editForm.specialties}
+                onChange={e => setEditForm(f => ({ ...f, specialties: e.target.value }))}
+                placeholder={selectedBabalawo?.specialties?.join(", ") || "Enter specialties"}
+              />
             </div>
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+              <Button variant="outline" disabled={isUpdating} onClick={() => setIsEditModalOpen(false)}>
                 Cancel
               </Button>
-              <Button>Save Changes</Button>
+              <Button disabled={isUpdating} onClick={handleEditBabalawo}>
+                {isUpdating ? "Saving..." : "Save Changes"}
+              </Button>
             </div>
           </div>
         </DialogContent>

@@ -1,10 +1,9 @@
-
 import React, { useState } from "react";
 import { useBabalawoConsultations } from "@/hooks/useBabalawoConsultations";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, ArrowRightCircle, FileText, Video, XCircle } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const SessionRow = ({
   session,
@@ -16,7 +15,13 @@ const SessionRow = ({
   onNote: (sessionId: string) => void;
 }) => (
   <div className="flex items-center gap-3 border-b py-2">
-    <Avatar className="h-8 w-8" src={user?.avatar_url} />
+    <Avatar className="h-8 w-8">
+      {user?.avatar_url ? (
+        <AvatarImage src={user.avatar_url} />
+      ) : (
+        <AvatarFallback>{user?.full_name?.charAt(0) ?? "U"}</AvatarFallback>
+      )}
+    </Avatar>
     <div className="flex-1">
       <div className="font-medium">{user?.full_name ?? "User"}</div>
       <div className="text-xs text-gray-500">{session.session_date} • {session.start_time}</div>
@@ -49,7 +54,13 @@ const HistoryRow = ({
   onNote: (sessionId: string) => void;
 }) => (
   <div className="flex items-center gap-3 border-b py-2">
-    <Avatar className="h-8 w-8" src={user?.avatar_url} />
+    <Avatar className="h-8 w-8">
+      {user?.avatar_url ? (
+        <AvatarImage src={user.avatar_url} />
+      ) : (
+        <AvatarFallback>{user?.full_name?.charAt(0) ?? "U"}</AvatarFallback>
+      )}
+    </Avatar>
     <div className="flex-1">
       <div className="font-medium">{user?.full_name ?? "User"}</div>
       <div className="text-xs text-gray-500">{session.session_date} • {session.start_time}</div>

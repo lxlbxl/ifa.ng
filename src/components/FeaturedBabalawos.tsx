@@ -1,6 +1,6 @@
-
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface BabalawoProfile {
   id: string;
@@ -109,21 +109,20 @@ const FeaturedBabalawos: React.FC = () => {
           className="bg-white rounded-xl shadow-md p-5 flex flex-col items-center text-center fade-in"
         >
           {/* Avatar */}
-          <div className="w-20 h-20 rounded-full overflow-hidden mb-3 border-2 border-primary">
+          <Avatar className="w-20 h-20 mb-3 border-2 border-primary">
             {babalawo.profiles?.avatar_url ? (
-              <img
+              <AvatarImage
                 src={babalawo.profiles.avatar_url}
                 alt={babalawo.profiles.full_name ?? "Babalawo"}
-                className="w-full h-full object-cover"
               />
             ) : (
-              <span className="w-full h-full flex items-center justify-center bg-slate-200 text-4xl font-bold text-primary">
+              <AvatarFallback>
                 {babalawo.profiles?.full_name
                   ? babalawo.profiles.full_name.charAt(0)
                   : "B"}
-              </span>
+              </AvatarFallback>
             )}
-          </div>
+          </Avatar>
           {/* Name */}
           <div className="font-semibold text-lg text-gray-900 mb-1">
             {babalawo.profiles?.full_name ?? "Unknown"}

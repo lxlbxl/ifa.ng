@@ -1,14 +1,14 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
+import { Loader2, Camera } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
-// Fetch Babalawo profile details
 const fetchBabalawoProfile = async (id: string) => {
   const { data, error } = await supabase
     .from("babalawos")
@@ -30,8 +30,25 @@ const fetchAvailability = async (id: string) => {
   return data;
 };
 
+const uploadAvatarToSupabase = async (file: File, userId: string) => {
+  const ext = file.name.split('.').pop();
+  const filePath = `avatars/${userId}.${ext}`;
+  // Remove existing
+  await supabase.storage.from("avatars").remove([`avatars/${userId}.png`, `avatars/${userId}.jpg`, `avatars/${userId}.jpeg`, `avatars/${userId}.webp`]);
+  // Upload new
+  const { data, error } = await supabase.storage
+    .from("avatars")
+    .upload(filePath, file, { upsert: true, cacheControl: "3600" });
+  if (error) throw error;
+  // Get public URL
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("avatars").getPublicUrl(filePath);
+  return publicUrl;
+};
+
 const BabalawoProfileSettings = () => {
-  const { user } = useAuth();
+  const { user, userProfile, updateProfile, refreshProfile } = useAuth();
   const queryClient = useQueryClient();
 
   // PROFILE INFO (rate, status)
@@ -87,6 +104,30 @@ const BabalawoProfileSettings = () => {
     },
   });
 
+  // Avatar upload
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || !user?.id) return;
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await uploadAvatarToSupabase(file, user.id);
+      // Update profile
+      await updateProfile({ avatar_url: url });
+      await refreshProfile();
+    } catch (err) {
+      alert("Error uploading image");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const avatar_url = userProfile?.avatar_url;
+  const full_name = userProfile?.full_name ?? "B";
+
   // Slot UI helpers
   const addSlot = () =>
     setSlots(s => [
@@ -98,13 +139,47 @@ const BabalawoProfileSettings = () => {
   const removeSlot = (idx: number) =>
     setSlots(s => s.filter((_, i) => i !== idx));
 
-  // Render
   return (
     <Card className="my-8">
       <CardHeader>
         <CardTitle>My Rate & Availability Settings</CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Avatar upload */}
+        <div className="mb-6">
+          <div className="font-medium mb-2">Profile Picture</div>
+          <div className="flex items-center gap-3">
+            <Avatar className="h-16 w-16">
+              {avatar_url ? (
+                <AvatarImage src={avatar_url} alt={full_name} />
+              ) : (
+                <AvatarFallback>{full_name.charAt(0)}</AvatarFallback>
+              )}
+            </Avatar>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={uploading}
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Camera className="mr-2 h-4 w-4" />
+              {uploading ? "Uploading..." : "Change Photo"}
+            </Button>
+            <Input
+              ref={fileInputRef}
+              type="file"
+              style={{ display: "none" }}
+              accept="image/*"
+              disabled={uploading}
+              onChange={handleAvatarChange}
+            />
+          </div>
+          <div className="text-xs text-muted-foreground mt-2">
+            Recommended: Square, JPG/PNG, under 2MB
+          </div>
+        </div>
+
         {/* Rate */}
         <div className="mb-6">
           <div className="font-medium mb-2">Your Booking Rate (₦ per session)</div>
@@ -131,7 +206,6 @@ const BabalawoProfileSettings = () => {
             </div>
           )}
         </div>
-
         {/* Availability */}
         <div className="">
           <div className="font-medium mb-2">Weekly Availability</div>

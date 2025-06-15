@@ -5,6 +5,7 @@ import DashboardOverview from '@/components/dashboard/admin/DashboardOverview';
 import { Search, Bell } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import UserManagement from '@/components/dashboard/admin/UserManagement';
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState('overview');
@@ -12,9 +13,11 @@ const AdminDashboard = () => {
 
   const renderContent = () => {
     switch (activeSection) {
+      case 'users':
+        return <UserManagement />;
       // TODO: Add cases for other sections
-      // case 'users':
-      //   return <UserManagement />;
+      // case 'babalawos':
+      //   return <BabalawoManagement />;
       case 'overview':
       default:
         return <DashboardOverview />;

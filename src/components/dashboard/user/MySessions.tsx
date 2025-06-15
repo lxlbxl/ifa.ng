@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useUserSessions } from '@/hooks/useUserSessions';
 import { Calendar, Clock, User, Video } from 'lucide-react';
@@ -56,10 +55,10 @@ const MySessions = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-800">
-                      {session.babalawos?.profiles?.full_name || 'Babalawo'}
+                      {session.babalawo?.profile?.full_name || 'Babalawo'}
                     </h3>
                     <p className="text-sm text-gray-500">
-                      {session.babalawos?.specialties?.join(', ') || 'General consultation'}
+                      {session.babalawo?.specialties?.join(', ') || 'General consultation'}
                     </p>
                   </div>
                 </div>

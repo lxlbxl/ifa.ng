@@ -50,39 +50,54 @@ const FindBabalawo = ({ openBookModal }: { openBookModal?: (babalawo?: BabalawoP
         return;
       }
 
+      // Log the raw data for debugging
+      console.log('Raw Supabase data:', data);
+
       // Map fields for frontend
       const mapped = (data || []).map((b: any) => ({
         id: b.id,
         full_name: b.profiles?.full_name ?? "Unknown",
         avatar_url: b.profiles?.avatar_url,
         title: "Ifa Priest & Spiritual Guide", // Ideally from db, fallback
-        specialties: b.specialties ?? [],
+        specialties: Array.isArray(b.specialties) ? b.specialties : [],
         rating: b.rating ? Number(b.rating) : 5,
         reviews: b.total_sessions ?? 0,
         verified: b.verification_status === 'approved',
         nextAvailable: 'Flexible', // Could later fetch from availability
         price: b.hourly_rate ? `₦${Number(b.hourly_rate).toLocaleString()}/hr` : '₦10,000/hr',
       }));
+
+      // Log the mapped data for debugging
+      console.log('Mapped Babalawos:', mapped);
+
       setBabalawos(mapped);
       setFilteredBabalawos(mapped);
       setLoading(false);
-      console.log('Fetched babalawos:', mapped); // NEW LOG
     }
     fetchBabalawos();
   }, []);
 
-  // Specialty chips
-  const specialties = [
-    'All Specialties',
-    ...Array.from(new Set(babalawos.flatMap((b) => b.specialties || [])))
-  ];
+  // Compute unique specialties on all babalawos
+  const specialtiesSet = new Set<string>();
+  babalawos.forEach((b) => {
+    (b.specialties || []).forEach((s) => {
+      if (typeof s === "string" && s.trim()) {
+        specialtiesSet.add(s);
+      }
+    });
+  });
+  const specialties = ['All Specialties', ...Array.from(specialtiesSet)];
 
+  // Filter when specialty is changed
   function filterBySpecialty(spec: string) {
     setActiveSpecialty(spec);
     if (spec === 'All Specialties') {
       setFilteredBabalawos(babalawos);
     } else {
-      setFilteredBabalawos(babalawos.filter((b) => (b.specialties || []).includes(spec)));
+      // Filter by specialty
+      setFilteredBabalawos(
+        babalawos.filter((b) => (b.specialties || []).includes(spec))
+      );
     }
     console.log('Specialty selected:', spec, 'Filtered:', babalawos.filter((b) => (b.specialties || []).includes(spec)));
   }
@@ -104,6 +119,7 @@ const FindBabalawo = ({ openBookModal }: { openBookModal?: (babalawo?: BabalawoP
                 : "border border-gray-300 text-gray-700 hover:bg-gray-50"
               }`}
               onClick={() => filterBySpecialty(spec)}
+              data-testid={`specialty-chip-${spec}`}
             >
               {spec}
             </button>
@@ -161,11 +177,15 @@ const FindBabalawo = ({ openBookModal }: { openBookModal?: (babalawo?: BabalawoP
                   <div className="mb-4">
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Specialties:</h4>
                     <div className="flex flex-wrap gap-1">
-                      {(babalawo.specialties || []).map((specialty, index) => (
-                        <span key={index} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
-                          {specialty}
-                        </span>
-                      ))}
+                      {(babalawo.specialties && babalawo.specialties.length > 0) ? (
+                        babalawo.specialties.map((specialty, index) => (
+                          <span key={index} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                            {specialty}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-gray-400 text-xs">None listed</span>
+                      )}
                     </div>
                   </div>
 

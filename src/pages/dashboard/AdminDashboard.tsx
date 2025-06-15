@@ -7,16 +7,16 @@ import AdminSectionTabs from "@/components/dashboard/admin/AdminSectionTabs";
 import AdminAnalyticsPanels from "@/components/dashboard/admin/AdminAnalyticsPanels";
 
 const AdminDashboard = () => {
-  const [activeSection, setActiveSection] = useState<'overview' | 'users' | 'babalawos' | 'finance'>('overview');
+  const [activeSection, setActiveSection] = useState<
+    'overview' | 'users' | 'babalawos' | 'finance' | 'settings'
+  >('overview');
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-[#f6f8fc] to-[#e9edfb] flex font-poppins">
-      {/* Sidebar */}
       <AdminSidebar
         activeSection={activeSection}
         onSectionChange={setActiveSection}
       />
-      {/* Main Content Area */}
       <main className="flex-1 flex flex-col px-6 py-8 max-w-[1440px] mx-auto">
         <AdminHeader />
         <AdminSummaryCards />

@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Calendar, Star, Bell } from "lucide-react";
@@ -55,7 +54,7 @@ const BabalawoDashboardOverview = () => {
         />
       </div>
       <div className="flex flex-wrap gap-4 items-center pt-2">
-        <Button variant={isActive ? "success" : "destructive"} onClick={handleToggle}>
+        <Button variant={isActive ? "default" : "destructive"} onClick={handleToggle}>
           {isActive ? "Online" : "Offline"}
         </Button>
         <span className="text-muted-foreground">Toggle your availability status</span>

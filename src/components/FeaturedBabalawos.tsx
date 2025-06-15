@@ -1,4 +1,3 @@
-
 import { Star, Video, MessageCircle, MapPin, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useBabalawos } from "@/hooks/useBabalawos";
@@ -79,7 +78,6 @@ const FeaturedBabalawos = () => {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {babalawos.map((babalawo, index) => {
-            // Defensive checks to ensure profiles is valid
             const profile =
               typeof babalawo.profiles === "object" &&
               babalawo.profiles !== null &&
@@ -99,8 +97,8 @@ const FeaturedBabalawos = () => {
                   <div className="flex items-start space-x-4">
                     <div className="relative">
                       <img
-                        src={profile?.avatar_url || "/placeholder.svg"}
-                        alt={profile?.full_name || "Babalawo"}
+                        src={profile && profile.avatar_url ? profile.avatar_url : "/placeholder.svg"}
+                        alt={profile && profile.full_name ? profile.full_name : "Babalawo"}
                         className="w-16 h-16 rounded-full object-cover border-3 border-white shadow-md"
                       />
                       <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
@@ -108,7 +106,7 @@ const FeaturedBabalawos = () => {
 
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-gray-900 text-lg mb-1 truncate">
-                        {profile?.full_name || "Anonymous"}
+                        {profile && profile.full_name ? profile.full_name : "Anonymous"}
                       </h3>
                       <Badge variant="secondary" className="mb-2 text-xs">
                         {babalawo.specialties?.[0] || "General Guidance"}
@@ -188,4 +186,3 @@ const FeaturedBabalawos = () => {
 };
 
 export default FeaturedBabalawos;
-

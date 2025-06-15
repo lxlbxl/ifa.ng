@@ -7,7 +7,7 @@ import AdminSectionTabs from "@/components/dashboard/admin/AdminSectionTabs";
 import AdminAnalyticsPanels from "@/components/dashboard/admin/AdminAnalyticsPanels";
 
 const AdminDashboard = () => {
-  const [activeSection, setActiveSection] = useState<'overview' | 'users' | 'babalawos'>('overview');
+  const [activeSection, setActiveSection] = useState<'overview' | 'users' | 'babalawos' | 'finance'>('overview');
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-[#f6f8fc] to-[#e9edfb] flex font-poppins">

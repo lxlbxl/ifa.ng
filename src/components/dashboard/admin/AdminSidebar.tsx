@@ -1,16 +1,16 @@
-
 import React from 'react';
 import { LayoutGrid, Users, UserCheck, Calendar, Wallet, Settings, Shield, BarChart, LifeBuoy } from 'lucide-react';
 
 interface AdminSidebarProps {
-  activeSection: 'overview' | 'users' | 'babalawos'; // Fix type here!
-  onSectionChange: (section: 'overview' | 'users' | 'babalawos') => void;
+  activeSection: 'overview' | 'users' | 'babalawos' | 'finance'; // Added 'finance'
+  onSectionChange: (section: 'overview' | 'users' | 'babalawos' | 'finance') => void;
 }
 
 const menuItems = [
   { icon: LayoutGrid, text: 'Dashboard', section: 'overview' },
   { icon: Users, text: 'User Management', section: 'users' },
   { icon: UserCheck, text: 'Babalawo Management', section: 'babalawos' },
+  { icon: Wallet, text: 'Finance', section: 'finance' },
   // You could add more as needed for your platform
 ];
 
@@ -29,7 +29,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeSection, onSectionCha
         {menuItems.map((item) => (
           <button
             key={item.text}
-            onClick={() => onSectionChange(item.section as 'overview' | 'users' | 'babalawos')}
+            onClick={() => onSectionChange(item.section as 'overview' | 'users' | 'babalawos' | 'finance')}
             className={`w-full flex items-center px-5 py-3 rounded-xl transition-colors duration-200 font-semibold
               ${
                 activeSection === item.section

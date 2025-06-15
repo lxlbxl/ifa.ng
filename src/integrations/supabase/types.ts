@@ -123,6 +123,123 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          admin_commission: number
+          amount: number
+          babalawo_id: string
+          babalawo_share: number
+          created_at: string
+          currency: string
+          flutterwave_reference: string | null
+          flutterwave_transaction_id: string | null
+          id: string
+          payment_method: string | null
+          session_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_commission?: number
+          amount: number
+          babalawo_id: string
+          babalawo_share?: number
+          created_at?: string
+          currency?: string
+          flutterwave_reference?: string | null
+          flutterwave_transaction_id?: string | null
+          id?: string
+          payment_method?: string | null
+          session_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_commission?: number
+          amount?: number
+          babalawo_id?: string
+          babalawo_share?: number
+          created_at?: string
+          currency?: string
+          flutterwave_reference?: string | null
+          flutterwave_transaction_id?: string | null
+          id?: string
+          payment_method?: string | null
+          session_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_babalawo_id_fkey"
+            columns: ["babalawo_id"]
+            isOneToOne: false
+            referencedRelation: "babalawos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payouts: {
+        Row: {
+          amount: number
+          babalawo_id: string
+          bank_details: Json | null
+          created_at: string
+          id: string
+          payment_method: string | null
+          processed_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          babalawo_id: string
+          bank_details?: Json | null
+          created_at?: string
+          id?: string
+          payment_method?: string | null
+          processed_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          babalawo_id?: string
+          bank_details?: Json | null
+          created_at?: string
+          id?: string
+          payment_method?: string | null
+          processed_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payouts_babalawo_id_fkey"
+            columns: ["babalawo_id"]
+            isOneToOne: false
+            referencedRelation: "babalawos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -155,6 +272,57 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      refunds: {
+        Row: {
+          amount: number
+          created_at: string
+          flutterwave_refund_id: string | null
+          id: string
+          payment_id: string
+          processed_by: string | null
+          reason: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          flutterwave_refund_id?: string | null
+          id?: string
+          payment_id: string
+          processed_by?: string | null
+          reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          flutterwave_refund_id?: string | null
+          id?: string
+          payment_id?: string
+          processed_by?: string | null
+          reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "refunds_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "refunds_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reviews: {
         Row: {

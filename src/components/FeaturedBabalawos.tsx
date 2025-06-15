@@ -78,88 +78,103 @@ const FeaturedBabalawos = () => {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {babalawos.map((babalawo, index) => (
-            <div key={babalawo.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden animate-fade-in" style={{animationDelay: `${index * 0.2}s`}}>
-              {/* Profile Header */}
-              <div className="relative p-6 pb-4">
-                <div className="flex items-start space-x-4">
-                  <div className="relative">
-                    <img 
-                      src={babalawo.profiles?.avatar_url || "/placeholder.svg"} 
-                      alt={babalawo.profiles?.full_name || "Babalawo"}
-                      className="w-16 h-16 rounded-full object-cover border-3 border-white shadow-md"
-                    />
-                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-gray-900 text-lg mb-1 truncate">
-                      {babalawo.profiles?.full_name || "Anonymous"}
-                    </h3>
-                    <Badge variant="secondary" className="mb-2 text-xs">
-                      {babalawo.specialties?.[0] || "General Guidance"}
-                    </Badge>
-                    
-                    <div className="flex items-center space-x-4 text-sm">
-                      <div className="flex items-center">
-                        <Star className="w-4 h-4 text-accent fill-current mr-1" />
-                        <span className="font-semibold text-gray-900">{babalawo.rating || 0}</span>
-                        <span className="text-gray-600 ml-1">({babalawo.total_sessions || 0})</span>
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <Clock className="w-4 h-4 mr-1" />
-                        <span>{babalawo.experience_years || 0}+ years</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          {babalawos.map((babalawo, index) => {
+            // Defensive checks to ensure profiles is valid
+            const profile =
+              typeof babalawo.profiles === "object" &&
+              babalawo.profiles !== null &&
+              "avatar_url" in babalawo.profiles &&
+              "full_name" in babalawo.profiles
+                ? babalawo.profiles
+                : null;
 
-              {/* Details */}
-              <div className="px-6 pb-4">
-                <p className="text-gray-700 text-sm mb-4 leading-relaxed">
-                  {babalawo.bio || "Experienced spiritual guide ready to help you on your journey."}
-                </p>
-                
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center text-gray-600">
-                    <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
-                    <span>{babalawo.timezone || "UTC"}</span>
-                  </div>
-                  
-                  <div className="flex items-center text-gray-600">
-                    <MessageCircle className="w-4 h-4 mr-2 flex-shrink-0" />
-                    <span>{babalawo.languages?.join(", ") || "English"}</span>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="text-gray-600">
-                      <span className="text-sm">Rate:</span>
-                      <div className="font-semibold text-gray-900">${babalawo.hourly_rate || 0}/hour</div>
+            return (
+              <div
+                key={babalawo.id}
+                className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden animate-fade-in"
+                style={{ animationDelay: `${index * 0.2}s` }}
+              >
+                {/* Profile Header */}
+                <div className="relative p-6 pb-4">
+                  <div className="flex items-start space-x-4">
+                    <div className="relative">
+                      <img
+                        src={profile?.avatar_url || "/placeholder.svg"}
+                        alt={profile?.full_name || "Babalawo"}
+                        className="w-16 h-16 rounded-full object-cover border-3 border-white shadow-md"
+                      />
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm text-green-600 font-medium">Available</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              {/* Actions */}
-              <div className="px-6 pb-6 pt-2 border-t border-gray-100">
-                <div className="flex space-x-3">
-                  <button className="flex-1 bg-primary hover:bg-primary-dark text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 shadow">
-                    Book Now
-                  </button>
-                  <button className="p-3 border border-gray-300 hover:border-primary text-gray-700 hover:text-primary rounded-lg transition-all duration-300">
-                    <Video className="w-5 h-5" />
-                  </button>
-                  <button className="p-3 border border-gray-300 hover:border-primary text-gray-700 hover:text-primary rounded-lg transition-all duration-300">
-                    <MessageCircle className="w-5 h-5" />
-                  </button>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-gray-900 text-lg mb-1 truncate">
+                        {profile?.full_name || "Anonymous"}
+                      </h3>
+                      <Badge variant="secondary" className="mb-2 text-xs">
+                        {babalawo.specialties?.[0] || "General Guidance"}
+                      </Badge>
+
+                      <div className="flex items-center space-x-4 text-sm">
+                        <div className="flex items-center">
+                          <Star className="w-4 h-4 text-accent fill-current mr-1" />
+                          <span className="font-semibold text-gray-900">{babalawo.rating || 0}</span>
+                          <span className="text-gray-600 ml-1">({babalawo.total_sessions || 0})</span>
+                        </div>
+                        <div className="flex items-center text-gray-600">
+                          <Clock className="w-4 h-4 mr-1" />
+                          <span>{babalawo.experience_years || 0}+ years</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Details */}
+                <div className="px-6 pb-4">
+                  <p className="text-gray-700 text-sm mb-4 leading-relaxed">
+                    {babalawo.bio || "Experienced spiritual guide ready to help you on your journey."}
+                  </p>
+
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center text-gray-600">
+                      <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+                      <span>{babalawo.timezone || "UTC"}</span>
+                    </div>
+
+                    <div className="flex items-center text-gray-600">
+                      <MessageCircle className="w-4 h-4 mr-2 flex-shrink-0" />
+                      <span>{babalawo.languages?.join(", ") || "English"}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="text-gray-600">
+                        <span className="text-sm">Rate:</span>
+                        <div className="font-semibold text-gray-900">${babalawo.hourly_rate || 0}/hour</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-green-600 font-medium">Available</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="px-6 pb-6 pt-2 border-t border-gray-100">
+                  <div className="flex space-x-3">
+                    <button className="flex-1 bg-primary hover:bg-primary-dark text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 shadow">
+                      Book Now
+                    </button>
+                    <button className="p-3 border border-gray-300 hover:border-primary text-gray-700 hover:text-primary rounded-lg transition-all duration-300">
+                      <Video className="w-5 h-5" />
+                    </button>
+                    <button className="p-3 border border-gray-300 hover:border-primary text-gray-700 hover:text-primary rounded-lg transition-all duration-300">
+                      <MessageCircle className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="text-center mt-12">
@@ -173,3 +188,4 @@ const FeaturedBabalawos = () => {
 };
 
 export default FeaturedBabalawos;
+

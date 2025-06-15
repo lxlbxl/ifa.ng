@@ -2,6 +2,14 @@ import { Star, Video, MessageCircle, MapPin, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useBabalawos } from "@/hooks/useBabalawos";
 import { Skeleton } from "@/components/ui/skeleton";
+import React from "react";
+
+// Define the local expected profile shape
+type Profile = {
+  id: string;
+  avatar_url?: string | null;
+  full_name?: string | null;
+};
 
 const FeaturedBabalawos = () => {
   const { data: babalawos, isLoading } = useBabalawos();
@@ -78,13 +86,17 @@ const FeaturedBabalawos = () => {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {babalawos.map((babalawo, index) => {
-            const profile =
+            let profile: Profile | null = null;
+            if (
+              babalawo &&
+              babalawo.profiles &&
               typeof babalawo.profiles === "object" &&
               babalawo.profiles !== null &&
-              "avatar_url" in babalawo.profiles &&
-              "full_name" in babalawo.profiles
-                ? babalawo.profiles
-                : null;
+              "id" in babalawo.profiles
+            ) {
+              // TypeScript: Narrow to Profile by assertion
+              profile = babalawo.profiles as Profile;
+            }
 
             return (
               <div

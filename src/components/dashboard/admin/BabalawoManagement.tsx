@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -19,12 +18,27 @@ import {
 } from "@/components/ui/dialog";
 import { Search, MoreVertical, UserPlus, Filter, Edit, Trash2, Star, Clock, DollarSign, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { useAdminBabalawos } from "@/hooks/useAdminBabalawos";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const BabalawoManagement = () => {
   const { data: babalawos, isLoading } = useAdminBabalawos();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedBabalawo, setSelectedBabalawo] = useState<any>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addForm, setAddForm] = useState({
+    email: "",
+    full_name: "",
+    specialties: "",
+    experience_years: "",
+    hourly_rate: "",
+    bio: "",
+    languages: "",
+  });
+  const [isAdding, setIsAdding] = useState(false);
+
+  const { toast } = useToast();
 
   const filteredBabalawos = babalawos?.filter(babalawo =>
     babalawo.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -63,6 +77,86 @@ const BabalawoManagement = () => {
     return new Date(dateString).toLocaleDateString();
   };
 
+  const resetAddForm = () => setAddForm({
+    email: "",
+    full_name: "",
+    specialties: "",
+    experience_years: "",
+    hourly_rate: "",
+    bio: "",
+    languages: "",
+  });
+
+  const handleAddBabalawo = async () => {
+    // Minimal validation
+    if (!addForm.email || !addForm.full_name) {
+      toast({ title: "Missing Info", description: "Email and Full Name are required.", variant: "destructive" });
+      return;
+    }
+    setIsAdding(true);
+    try {
+      // 1. Create Supabase Auth User (invite flow)
+      const { data: signUpData, error: signUpError } = await supabase.auth.admin.createUser({
+        email: addForm.email,
+        email_confirm: true,
+        user_metadata: {
+          full_name: addForm.full_name,
+          role: "babalawo"
+        }
+      });
+
+      if (signUpError || !signUpData?.user?.id) throw signUpError || new Error("No user ID");
+
+      const userId = signUpData.user.id;
+
+      // 2. Insert/Upsert into profiles table (optional, for extra info)
+      await supabase
+        .from("profiles")
+        .update({ full_name: addForm.full_name, role: "babalawo" })
+        .eq("id", userId);
+
+      // 3. Insert into babalawos table (with "approved" status)
+      const specialtiesArr = addForm.specialties
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean);
+      const languagesArr = addForm.languages
+        ? addForm.languages.split(",").map((v) => v.trim()).filter(Boolean)
+        : ["English"];
+
+      await supabase.from("babalawos").insert({
+        id: userId,
+        specialties: specialtiesArr,
+        experience_years: Number(addForm.experience_years) || 0,
+        hourly_rate: Number(addForm.hourly_rate) || 0,
+        verification_status: "approved",
+        bio: addForm.bio,
+        languages: languagesArr,
+        is_active: true,
+      });
+
+      toast({ title: "Babalawo Created", description: "A new babalawo has been added and approved.", variant: "success" });
+      setIsAddModalOpen(false);
+      resetAddForm();
+    } catch (err: any) {
+      toast({ title: "Error", description: err?.message || "Failed to add babalawo", variant: "destructive" });
+    }
+    setIsAdding(false);
+  };
+
+  const handleVerification = async (babalawoId: string, status: "approved" | "rejected") => {
+    try {
+      await supabase.from("babalawos").update({ verification_status: status }).eq("id", babalawoId);
+      toast({
+        title: status === "approved" ? "Approved" : "Rejected",
+        description: `Babalawo marked as ${status}.`,
+        variant: status === "approved" ? "success" : "destructive",
+      });
+    } catch (err: any) {
+      toast({ title: "Error", description: err?.message || "Update failed", variant: "destructive" });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -81,7 +175,10 @@ const BabalawoManagement = () => {
           <h2 className="text-2xl font-bold text-gray-900">Babalawo Management</h2>
           <p className="text-gray-600">Manage all registered babalawos and their verification status</p>
         </div>
-        <Button className="bg-purple-600 hover:bg-purple-700">
+        <Button
+          className="bg-purple-600 hover:bg-purple-700"
+          onClick={() => setIsAddModalOpen(true)}
+        >
           <UserPlus className="w-4 h-4 mr-2" />
           Add New Babalawo
         </Button>
@@ -237,11 +334,17 @@ const BabalawoManagement = () => {
                           </DropdownMenuItem>
                           {babalawo.verification_status === 'pending' && (
                             <>
-                              <DropdownMenuItem className="text-green-600">
+                              <DropdownMenuItem
+                                className="text-green-600"
+                                onClick={() => handleVerification(babalawo.id, "approved")}
+                              >
                                 <CheckCircle className="w-4 h-4 mr-2" />
                                 Approve
                               </DropdownMenuItem>
-                              <DropdownMenuItem className="text-red-600">
+                              <DropdownMenuItem
+                                className="text-red-600"
+                                onClick={() => handleVerification(babalawo.id, "rejected")}
+                              >
                                 <XCircle className="w-4 h-4 mr-2" />
                                 Reject
                               </DropdownMenuItem>
@@ -261,6 +364,84 @@ const BabalawoManagement = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Add Babalawo Modal */}
+      <Dialog open={isAddModalOpen} onOpenChange={o => { setIsAddModalOpen(o); if (!o) resetAddForm(); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Add New Babalawo</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email<span className="text-red-500">*</span></label>
+              <Input
+                value={addForm.email}
+                onChange={e => setAddForm(f => ({ ...f, email: e.target.value }))}
+                placeholder="babalawo@email.com"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Full Name<span className="text-red-500">*</span></label>
+              <Input
+                value={addForm.full_name}
+                onChange={e => setAddForm(f => ({ ...f, full_name: e.target.value }))}
+                placeholder="Full Name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Specialties (comma separated)</label>
+              <Input
+                value={addForm.specialties}
+                onChange={e => setAddForm(f => ({ ...f, specialties: e.target.value }))}
+                placeholder="Divination, Cleansing"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Experience (Years)</label>
+                <Input
+                  type="number"
+                  value={addForm.experience_years}
+                  onChange={e => setAddForm(f => ({ ...f, experience_years: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Hourly Rate (₦)</label>
+                <Input
+                  type="number"
+                  value={addForm.hourly_rate}
+                  onChange={e => setAddForm(f => ({ ...f, hourly_rate: e.target.value }))}
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Languages (comma separated)</label>
+              <Input
+                value={addForm.languages}
+                onChange={e => setAddForm(f => ({ ...f, languages: e.target.value }))}
+                placeholder="English, Yoruba"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+              <textarea
+                className="w-full p-2 border border-gray-300 rounded-md"
+                rows={3}
+                value={addForm.bio}
+                onChange={e => setAddForm(f => ({ ...f, bio: e.target.value }))}
+              />
+            </div>
+            <div className="flex gap-2 justify-end mt-2">
+              <Button variant="outline" disabled={isAdding} onClick={() => setIsAddModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button className="bg-purple-600 hover:bg-purple-700 text-white" disabled={isAdding} onClick={handleAddBabalawo}>
+                {isAdding ? "Adding..." : "Add Babalawo"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Babalawo Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>

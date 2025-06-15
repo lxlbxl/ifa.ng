@@ -49,28 +49,28 @@ const HeroSection = () => {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Column - Hero Content */}
           <div className="text-center lg:text-left animate-fade-in">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight drop-shadow-lg">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
               Seek Guidance from{" "}
-              <span className="text-yellow-500 drop-shadow-lg">
+              <span className="text-gray-900 bg-yellow-400 px-2 py-1 rounded-lg shadow-lg">
                 Verified Babalawos
               </span>
             </h1>
             
-            <p className="text-lg md:text-xl text-gray-800 mb-8 max-w-2xl drop-shadow">
+            <p className="text-xl md:text-2xl text-gray-900 font-semibold mb-8 max-w-2xl bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-lg">
               Connect with authentic spiritual guides for life-changing consultations through secure audio and video sessions. Your path to wisdom starts here.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
               <Button
                 size="lg"
-                className="bg-gray-900 text-white hover:bg-gray-800 font-semibold px-8 py-4 text-lg shadow-lg border-2 border-gray-900"
+                className="bg-gray-900 text-white hover:bg-gray-800 font-semibold px-8 py-4 text-lg shadow-xl border-2 border-gray-900"
                 onClick={() => navigate('/auth?tab=signin')}
               >
                 Book Consultation
               </Button>
               <Button
                 size="lg"
-                className="bg-white text-gray-900 hover:bg-gray-100 font-semibold px-8 py-4 text-lg shadow-lg border-2 border-gray-900 transition-all duration-300"
+                className="bg-white text-gray-900 hover:bg-gray-100 font-semibold px-8 py-4 text-lg shadow-xl border-2 border-gray-900 transition-all duration-300"
                 onClick={() => navigate('/auth?tab=signin')}
               >
                 Browse Babalawos
@@ -79,17 +79,17 @@ const HeroSection = () => {
 
             {/* Trust Indicators */}
             <div className="flex flex-wrap justify-center lg:justify-start gap-6">
-              <div className="flex items-center gap-2 bg-white/30 backdrop-blur-sm rounded-full px-4 py-2 border border-gray-700/20">
-                <Shield className="w-5 h-5 text-gray-800" />
-                <span className="text-sm font-medium text-gray-800 drop-shadow">100% Verified</span>
+              <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 border-2 border-gray-900 shadow-lg">
+                <Shield className="w-5 h-5 text-gray-900" />
+                <span className="text-sm font-bold text-gray-900">100% Verified</span>
               </div>
-              <div className="flex items-center gap-2 bg-white/30 backdrop-blur-sm rounded-full px-4 py-2 border border-gray-700/20">
-                <Video className="w-5 h-5 text-gray-800" />
-                <span className="text-sm font-medium text-gray-800 drop-shadow">Secure Sessions</span>
+              <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 border-2 border-gray-900 shadow-lg">
+                <Video className="w-5 h-5 text-gray-900" />
+                <span className="text-sm font-bold text-gray-900">Secure Sessions</span>
               </div>
-              <div className="flex items-center gap-2 bg-white/30 backdrop-blur-sm rounded-full px-4 py-2 border border-gray-700/20">
-                <Star className="w-5 h-5 fill-current text-gray-800" />
-                <span className="text-sm font-medium text-gray-800 drop-shadow">5.0 Average Rating</span>
+              <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 border-2 border-gray-900 shadow-lg">
+                <Star className="w-5 h-5 fill-current text-gray-900" />
+                <span className="text-sm font-bold text-gray-900">5.0 Average Rating</span>
               </div>
             </div>
           </div>

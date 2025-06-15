@@ -1,6 +1,10 @@
+
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import BookSessionModal from "./dashboard/user/BookSessionModal";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 interface BabalawoProfile {
   id: string;
@@ -24,6 +28,9 @@ const FeaturedBabalawos: React.FC = () => {
   const [babalawos, setBabalawos] = useState<BabalawoProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [bookingBabalawo, setBookingBabalawo] = useState<any>(null);
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchBabalawos = async () => {
@@ -85,6 +92,29 @@ const FeaturedBabalawos: React.FC = () => {
     fetchBabalawos();
   }, []);
 
+  const handleBookSession = (babalawo: BabalawoProfile) => {
+    if (!user) {
+      navigate('/auth?tab=signin');
+      return;
+    }
+    
+    // Convert to the format expected by BookSessionModal
+    const babalawForModal = {
+      id: babalawo.id,
+      full_name: babalawo.profiles?.full_name ?? "Unknown",
+      avatar_url: babalawo.profiles?.avatar_url,
+      title: "Ifa Priest & Spiritual Guide",
+      specialties: Array.isArray(babalawo.specialties) ? babalawo.specialties : [],
+      rating: babalawo.rating ? Number(babalawo.rating) : 5,
+      reviews: babalawo.total_sessions ?? 0,
+      verified: babalawo.verification_status === 'approved',
+      nextAvailable: 'Flexible',
+      price: babalawo.hourly_rate ? `₦${Number(babalawo.hourly_rate).toLocaleString()}/hr` : '₦10,000/hr',
+    };
+    
+    setBookingBabalawo(babalawForModal);
+  };
+
   if (loading) {
     return <div className="text-center">Loading babalawos...</div>;
   }
@@ -102,56 +132,68 @@ const FeaturedBabalawos: React.FC = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {babalawos.map((babalawo) => (
-        <div
-          key={babalawo.id}
-          className="bg-white rounded-xl shadow-md p-5 flex flex-col items-center text-center fade-in"
-        >
-          {/* Avatar */}
-          <Avatar className="w-20 h-20 mb-3 border-2 border-primary">
-            {babalawo.profiles?.avatar_url ? (
-              <AvatarImage
-                src={babalawo.profiles.avatar_url}
-                alt={babalawo.profiles.full_name ?? "Babalawo"}
-              />
-            ) : (
-              <AvatarFallback>
-                {babalawo.profiles?.full_name
-                  ? babalawo.profiles.full_name.charAt(0)
-                  : "B"}
-              </AvatarFallback>
-            )}
-          </Avatar>
-          {/* Name */}
-          <div className="font-semibold text-lg text-gray-900 mb-1">
-            {babalawo.profiles?.full_name ?? "Unknown"}
-          </div>
-          {/* Rating and Sessions */}
-          <div className="text-sm text-gray-600 mb-2">
-            ⭐ {babalawo.rating || 0} • {babalawo.total_sessions || 0} sessions
-          </div>
-          {/* Specialties */}
-          {babalawo.specialties && babalawo.specialties.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-3">
-              {babalawo.specialties.slice(0, 2).map((specialty, index) => (
-                <span key={index} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
-                  {specialty}
-                </span>
-              ))}
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {babalawos.map((babalawo) => (
+          <div
+            key={babalawo.id}
+            className="bg-white rounded-xl shadow-md p-5 flex flex-col items-center text-center fade-in"
+          >
+            {/* Avatar */}
+            <Avatar className="w-20 h-20 mb-3 border-2 border-primary">
+              {babalawo.profiles?.avatar_url ? (
+                <AvatarImage
+                  src={babalawo.profiles.avatar_url}
+                  alt={babalawo.profiles.full_name ?? "Babalawo"}
+                />
+              ) : (
+                <AvatarFallback>
+                  {babalawo.profiles?.full_name
+                    ? babalawo.profiles.full_name.charAt(0)
+                    : "B"}
+                </AvatarFallback>
+              )}
+            </Avatar>
+            {/* Name */}
+            <div className="font-semibold text-lg text-gray-900 mb-1">
+              {babalawo.profiles?.full_name ?? "Unknown"}
             </div>
-          )}
-          {/* Price */}
-          <div className="text-sm font-semibold text-gray-800 mb-3">
-            ${babalawo.hourly_rate || 0}/session
+            {/* Rating and Sessions */}
+            <div className="text-sm text-gray-600 mb-2">
+              ⭐ {babalawo.rating || 0} • {babalawo.total_sessions || 0} sessions
+            </div>
+            {/* Specialties */}
+            {babalawo.specialties && babalawo.specialties.length > 0 && (
+              <div className="flex flex-wrap gap-1 mb-3">
+                {babalawo.specialties.slice(0, 2).map((specialty, index) => (
+                  <span key={index} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                    {specialty}
+                  </span>
+                ))}
+              </div>
+            )}
+            {/* Price */}
+            <div className="text-sm font-semibold text-gray-800 mb-3">
+              ${babalawo.hourly_rate || 0}/session
+            </div>
+            {/* Action Button */}
+            <button 
+              className="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary/90 transition-colors"
+              onClick={() => handleBookSession(babalawo)}
+            >
+              Book Session
+            </button>
           </div>
-          {/* Action Button */}
-          <button className="w-full bg-primary text-white py-2 rounded-lg hover:bg-primary/90 transition-colors">
-            Book Session
-          </button>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+      
+      {/* Book session modal */}
+      <BookSessionModal
+        open={!!bookingBabalawo}
+        onOpenChange={(open) => setBookingBabalawo(open ? bookingBabalawo : null)}
+        babalawo={bookingBabalawo}
+      />
+    </>
   );
 };
 

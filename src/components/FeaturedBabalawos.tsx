@@ -94,7 +94,6 @@ const FeaturedBabalawos = () => {
               babalawo.profiles !== null &&
               "id" in babalawo.profiles
             ) {
-              // TypeScript: Narrow to Profile by assertion
               profile = babalawo.profiles as Profile;
             }
 

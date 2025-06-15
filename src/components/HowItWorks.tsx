@@ -30,7 +30,7 @@ const HowItWorks = () => {
           <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
             How IFA Connect Works
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-gray-700 max-w-2xl mx-auto">
             Your journey to spiritual enlightenment is just three simple steps away
           </p>
         </div>
@@ -52,7 +52,7 @@ const HowItWorks = () => {
                   <h3 className="text-xl font-bold text-gray-800 mb-4">
                     {step.title}
                   </h3>
-                  <p className="text-gray-600 leading-relaxed">
+                  <p className="text-gray-700 leading-relaxed">
                     {step.description}
                   </p>
                 </div>
@@ -68,7 +68,7 @@ const HowItWorks = () => {
 
         <div className="text-center mt-12">
           <div className="inline-flex items-center bg-white rounded-full px-6 py-3 shadow-md">
-            <span className="text-gray-700 mr-2">Ready to begin?</span>
+            <span className="text-gray-800 mr-2 font-semibold">Ready to begin?</span>
             <button className="bg-gradient-primary text-white px-6 py-2 rounded-full font-semibold hover:opacity-90 transition-opacity">
               Start Now
             </button>

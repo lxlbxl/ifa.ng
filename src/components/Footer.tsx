@@ -12,18 +12,18 @@ const Footer = () => {
               <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center">
                 <span className="text-white font-bold text-xl">I</span>
               </div>
-              <span className="text-2xl font-bold">IFA Connect</span>
+              <span className="text-2xl font-bold text-white">IFA Connect</span>
             </div>
-            <p className="text-gray-300 mb-6 max-w-md leading-relaxed">
+            <p className="text-gray-200 mb-6 max-w-md leading-relaxed">
               Connecting souls with authentic spiritual guidance through verified Babalawos. 
               Your trusted platform for traditional wisdom in the modern world.
             </p>
             <div className="flex space-x-4">
-              <div className="flex items-center text-sm text-gray-300">
+              <div className="flex items-center text-sm text-gray-100">
                 <Shield className="w-4 h-4 mr-2 text-green-400" />
                 SSL Secured
               </div>
-              <div className="flex items-center text-sm text-gray-300">
+              <div className="flex items-center text-sm text-gray-100">
                 <Video className="w-4 h-4 mr-2 text-blue-400" />
                 HD Video Calls
               </div>
@@ -32,25 +32,25 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h3 className="font-semibold text-lg mb-6">Quick Links</h3>
+            <h3 className="font-semibold text-lg mb-6 text-white">Quick Links</h3>
             <ul className="space-y-3">
-              <li><a href="#home" className="text-gray-300 hover:text-white transition-colors">Home</a></li>
-              <li><a href="#how-it-works" className="text-gray-300 hover:text-white transition-colors">How It Works</a></li>
-              <li><a href="#babalawos" className="text-gray-300 hover:text-white transition-colors">Find Babalawos</a></li>
-              <li><a href="#about" className="text-gray-300 hover:text-white transition-colors">About Us</a></li>
-              <li><a href="#contact" className="text-gray-300 hover:text-white transition-colors">Contact</a></li>
+              <li><a href="#home" className="text-gray-200 hover:text-white transition-colors">Home</a></li>
+              <li><a href="#how-it-works" className="text-gray-200 hover:text-white transition-colors">How It Works</a></li>
+              <li><a href="#babalawos" className="text-gray-200 hover:text-white transition-colors">Find Babalawos</a></li>
+              <li><a href="#about" className="text-gray-200 hover:text-white transition-colors">About Us</a></li>
+              <li><a href="#contact" className="text-gray-200 hover:text-white transition-colors">Contact</a></li>
             </ul>
           </div>
 
           {/* Support */}
           <div>
-            <h3 className="font-semibold text-lg mb-6">Support</h3>
+            <h3 className="font-semibold text-lg mb-6 text-white">Support</h3>
             <ul className="space-y-3">
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Help Center</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Safety Guidelines</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Terms of Service</a></li>
-              <li><a href="#" className="text-gray-300 hover:text-white transition-colors">Refund Policy</a></li>
+              <li><a href="#" className="text-gray-200 hover:text-white transition-colors">Help Center</a></li>
+              <li><a href="#" className="text-gray-200 hover:text-white transition-colors">Safety Guidelines</a></li>
+              <li><a href="#" className="text-gray-200 hover:text-white transition-colors">Privacy Policy</a></li>
+              <li><a href="#" className="text-gray-200 hover:text-white transition-colors">Terms of Service</a></li>
+              <li><a href="#" className="text-gray-200 hover:text-white transition-colors">Refund Policy</a></li>
             </ul>
           </div>
         </div>

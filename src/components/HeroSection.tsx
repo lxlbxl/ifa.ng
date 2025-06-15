@@ -47,22 +47,22 @@ const HeroSection = () => {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Column - Hero Content */}
           <div className="text-center lg:text-left animate-fade-in">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight drop-shadow-lg">
               Seek Guidance from{" "}
-              <span className="bg-gradient-to-r from-accent to-warm-light bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-accent to-warm-light bg-clip-text text-transparent drop-shadow-lg">
                 Verified Babalawos
               </span>
             </h1>
             
-            <p className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl">
+            <p className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl drop-shadow">
               Connect with authentic spiritual guides for life-changing consultations through secure audio and video sessions. Your path to wisdom starts here.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
-              <Button size="lg" className="bg-white text-primary hover:bg-white/90 font-semibold px-8 py-4 text-lg">
+              <Button size="lg" className="bg-white text-primary hover:bg-white/90 font-semibold px-8 py-4 text-lg border border-primary shadow">
                 Book Consultation
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-primary font-semibold px-8 py-4 text-lg">
+              <Button size="lg" variant="outline" className="border-white text-primary hover:bg-white hover:text-primary font-semibold px-8 py-4 text-lg bg-white/90 hover:bg-white shadow">
                 Browse Babalawos
               </Button>
             </div>
@@ -71,22 +71,22 @@ const HeroSection = () => {
             <div className="flex flex-wrap justify-center lg:justify-start gap-6 text-white/90">
               <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5" />
-                <span className="text-sm font-medium">100% Verified</span>
+                <span className="text-sm font-medium drop-shadow">100% Verified</span>
               </div>
               <div className="flex items-center gap-2">
                 <Video className="w-5 h-5" />
-                <span className="text-sm font-medium">Secure Sessions</span>
+                <span className="text-sm font-medium drop-shadow">Secure Sessions</span>
               </div>
               <div className="flex items-center gap-2">
                 <Star className="w-5 h-5 fill-current" />
-                <span className="text-sm font-medium">5.0 Average Rating</span>
+                <span className="text-sm font-medium drop-shadow">5.0 Average Rating</span>
               </div>
             </div>
           </div>
 
           {/* Right Column - Testimonial Carousel */}
           <div className="relative animate-fade-in" style={{animationDelay: '0.3s'}}>
-            <div className="bg-white/20 backdrop-blur-sm rounded-3xl p-8 border border-white/30">
+            <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 border border-white/30">
               <div className="text-center">
                 <div className="flex justify-center mb-4">
                   {[...Array(5)].map((_, i) => (
@@ -94,15 +94,15 @@ const HeroSection = () => {
                   ))}
                 </div>
                 
-                <blockquote className="text-lg text-white mb-6 leading-relaxed">
+                <blockquote className="text-lg text-gray-800 mb-6 leading-relaxed">
                   "{testimonials[currentTestimonial].text}"
                 </blockquote>
                 
-                <div className="border-t border-white/20 pt-4">
-                  <p className="font-semibold text-white">
+                <div className="border-t border-gray-200 pt-4">
+                  <p className="font-semibold text-gray-900">
                     {testimonials[currentTestimonial].name}
                   </p>
-                  <p className="text-white/80 text-sm">
+                  <p className="text-gray-600 text-sm">
                     {testimonials[currentTestimonial].location}
                   </p>
                 </div>
@@ -115,7 +115,7 @@ const HeroSection = () => {
                 <button
                   key={index}
                   className={`w-3 h-3 rounded-full transition-all ${
-                    index === currentTestimonial ? 'bg-white' : 'bg-white/50'
+                    index === currentTestimonial ? 'bg-primary' : 'bg-gray-300'
                   }`}
                   onClick={() => setCurrentTestimonial(index)}
                 />

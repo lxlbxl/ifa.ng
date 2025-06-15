@@ -42,7 +42,7 @@ const TrustBadges = () => {
           <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
             Why Choose IFA Connect?
           </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
+          <p className="text-gray-700 max-w-2xl mx-auto">
             Your spiritual journey deserves the highest level of trust, security, and authenticity
           </p>
         </div>
@@ -57,7 +57,7 @@ const TrustBadges = () => {
                 <h3 className="font-semibold text-gray-800 mb-2 text-sm">
                   {badge.title}
                 </h3>
-                <p className="text-xs text-gray-600 leading-relaxed">
+                <p className="text-xs text-gray-700 leading-relaxed">
                   {badge.description}
                 </p>
               </div>
@@ -67,7 +67,7 @@ const TrustBadges = () => {
 
         <div className="text-center mt-12">
           <div className="inline-flex items-center bg-white rounded-full px-8 py-4 shadow-md">
-            <div className="flex items-center space-x-6 text-sm text-gray-700">
+            <div className="flex items-center space-x-6 text-sm text-gray-800">
               <div className="flex items-center">
                 <span className="font-bold text-primary text-lg mr-1">5,000+</span>
                 <span>Happy Users</span>

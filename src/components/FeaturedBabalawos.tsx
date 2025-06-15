@@ -18,15 +18,33 @@ const FeaturedBabalawos: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const { data, error } = await supabase
+        const { data: babalawosData, error: babalawosError } = await supabase
           .from('babalawos')
-          .select('*, profiles(*)');
+          .select('*');
 
-        if (error) {
-          setError(error.message);
-        } else {
-          setBabalawos((data as Babalawo[]) || []);
+        if (babalawosError) throw babalawosError;
+        if (!babalawosData) {
+          setBabalawos([]);
+          setLoading(false);
+          return;
         }
+
+        const profileIds = babalawosData.map((b) => b.id);
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('*')
+          .in('id', profileIds);
+
+        if (profilesError) throw profilesError;
+
+        const profilesMap = new Map(profilesData?.map((p) => [p.id, p]));
+
+        const combinedData = babalawosData.map((babalawo) => ({
+          ...babalawo,
+          profiles: profilesMap.get(babalawo.id) ?? null,
+        }));
+        
+        setBabalawos(combinedData);
       } catch (err: any) {
         setError(err.message || 'An unexpected error occurred.');
       } finally {

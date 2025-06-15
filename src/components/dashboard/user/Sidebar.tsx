@@ -2,13 +2,18 @@
 import React from 'react';
 import { Home, Calendar, History, Users, Settings, LifeBuoy } from 'lucide-react';
 
-const Sidebar = () => {
+interface SidebarProps {
+  activeSection: string;
+  onSectionChange: (section: string) => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange }) => {
   const menuItems = [
-    { icon: Home, text: 'Dashboard', href: '/dashboard' },
-    { icon: Calendar, text: 'My Sessions', href: '#' },
-    { icon: History, text: 'Session History', href: '#' },
-    { icon: Users, text: 'Find a Babalawo', href: '#' },
-    { icon: Settings, text: 'Settings', href: '#' },
+    { icon: Home, text: 'Dashboard', section: 'dashboard' },
+    { icon: Calendar, text: 'My Sessions', section: 'my-sessions' },
+    { icon: History, text: 'Session History', section: 'session-history' },
+    { icon: Users, text: 'Find a Babalawo', section: 'find-babalawo' },
+    { icon: Settings, text: 'Settings', section: 'settings' },
   ];
 
   return (
@@ -23,24 +28,26 @@ const Sidebar = () => {
       </div>
       <nav className="flex-1 p-4 space-y-2">
         {menuItems.map((item) => (
-          <a
+          <button
             key={item.text}
-            href={item.href}
-            className="flex items-center px-4 py-2.5 text-gray-600 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors duration-200"
+            onClick={() => onSectionChange(item.section)}
+            className={`w-full flex items-center px-4 py-2.5 text-gray-600 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors duration-200 ${
+              activeSection === item.section ? 'bg-primary/10 text-primary' : ''
+            }`}
           >
             <item.icon className="h-5 w-5 mr-3" />
             <span className="font-medium">{item.text}</span>
-          </a>
+          </button>
         ))}
       </nav>
       <div className="p-4 border-t">
-        <a
-          href="#"
-          className="flex items-center px-4 py-2.5 text-gray-600 rounded-lg hover:bg-warm-light"
+        <button
+          onClick={() => onSectionChange('support')}
+          className="w-full flex items-center px-4 py-2.5 text-gray-600 rounded-lg hover:bg-warm-light"
         >
           <LifeBuoy className="h-5 w-5 mr-3" />
           <span className="font-medium">Support</span>
-        </a>
+        </button>
       </div>
     </aside>
   );

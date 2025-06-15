@@ -69,7 +69,7 @@ const HowItWorks = () => {
         <div className="text-center mt-12">
           <div className="inline-flex items-center bg-white rounded-full px-6 py-3 shadow-md border border-gray-200">
             <span className="text-gray-800 mr-2 font-semibold">Ready to begin?</span>
-            <button className="bg-gradient-primary text-white px-6 py-2 rounded-full font-semibold hover:opacity-90 transition-opacity shadow">
+            <button className="bg-primary hover:bg-primary-dark text-white px-6 py-2 rounded-full font-semibold transition-all duration-300 shadow">
               Start Now
             </button>
           </div>

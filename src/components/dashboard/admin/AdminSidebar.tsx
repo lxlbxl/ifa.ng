@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { LayoutGrid, Users, UserCheck, Wallet, Settings } from 'lucide-react';
 
 interface AdminSidebarProps {
   activeSection: 'overview' | 'users' | 'babalawos' | 'finance' | 'settings';
   onSectionChange: (section: 'overview' | 'users' | 'babalawos' | 'finance' | 'settings') => void;
+  className?: string;
 }
 
 const menuItems = [
@@ -15,9 +15,9 @@ const menuItems = [
   { icon: Settings, text: 'Settings', section: 'settings' },
 ];
 
-const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeSection, onSectionChange }) => {
+const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeSection, onSectionChange, className }) => {
   return (
-    <aside className="w-64 bg-white text-gray-800 flex-col hidden md:flex border-r border-gray-100 pt-2">
+    <aside className={`w-64 bg-white text-gray-800 flex-col hidden md:flex border-r border-gray-100 pt-2 ${className || ''}`}>
       <div className="p-7 border-b border-gray-100">
         <div className="flex items-center space-x-3">
           <div className="w-11 h-11 bg-indigo-100 rounded-full flex items-center justify-center">

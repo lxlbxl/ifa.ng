@@ -1,131 +1,181 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAdminStats } from "@/hooks/useAdminStats";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Calendar, Star, User } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Star, User, TrendingUp, Clock, CheckCircle, Users, UserCheck, CreditCard, Activity } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 
 const DashboardOverview = () => {
   const { data, isLoading } = useAdminStats();
 
-  // if (isLoading) {
-  //   return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-  // }
+  const quickStats = [
+    {
+      title: "Total Users",
+      value: data?.totalUsers ?? 0,
+      icon: Users,
+      color: "bg-blue-500",
+      bgColor: "bg-blue-50",
+      textColor: "text-blue-600"
+    },
+    {
+      title: "Active Babalawos",
+      value: data?.totalBabalawos ?? 0,
+      icon: UserCheck,
+      color: "bg-green-500",
+      bgColor: "bg-green-50",
+      textColor: "text-green-600"
+    },
+    {
+      title: "Today's Revenue",
+      value: `₦${data?.revenue?.today ?? 0}`,
+      icon: CreditCard,
+      color: "bg-purple-500",
+      bgColor: "bg-purple-50",
+      textColor: "text-purple-600"
+    },
+    {
+      title: "Success Rate",
+      value: `${data?.sessionSuccessRate ?? 0}%`,
+      icon: TrendingUp,
+      color: "bg-orange-500",
+      bgColor: "bg-orange-50",
+      textColor: "text-orange-600"
+    }
+  ];
 
   return (
     <div className="space-y-6">
-      <div className="grid md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Total Users</CardTitle>
+      {/* Quick Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {quickStats.map((stat, index) => (
+          <Card key={index} className="border-0 shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                </div>
+                <div className={`p-3 rounded-full ${stat.bgColor}`}>
+                  <stat.icon className={`w-6 h-6 ${stat.textColor}`} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Revenue Overview */}
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              <Activity className="w-5 h-5 text-green-600" />
+              Revenue Overview
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data?.totalUsers ?? 0}</div>
+          <CardContent className="space-y-4">
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-gray-600">This Week</span>
+                <span className="text-lg font-bold text-gray-900">₦{data?.revenue?.week ?? 0}</span>
+              </div>
+              <Progress value={75} className="h-2" />
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-gray-600">All Time</span>
+                <span className="text-lg font-bold text-gray-900">₦{data?.revenue?.all ?? 0}</span>
+              </div>
+              <Progress value={100} className="h-2" />
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Total Babalawos</CardTitle>
+
+        {/* Session Statistics */}
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              <Clock className="w-5 h-5 text-blue-600" />
+              Session Statistics
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data?.totalBabalawos ?? 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Upcoming Consultations</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data?.consultations?.upcoming ?? 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Completed Consultations</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data?.consultations?.completed ?? 0}</div>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">{data?.consultations?.upcoming ?? 0}</div>
+                <div className="text-sm text-gray-600">Upcoming</div>
+              </div>
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">{data?.consultations?.completed ?? 0}</div>
+                <div className="text-sm text-gray-600">Completed</div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Today's Revenue</CardTitle>
+      {/* Bottom Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Babalawos */}
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              <Star className="w-5 h-5 text-yellow-500" />
+              Top Performing Babalawos
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₦{data?.revenue?.today ?? 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>This Week's Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₦{data?.revenue?.week ?? 0}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>All-Time Revenue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">₦{data?.revenue?.all ?? 0}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Session Success Rate</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data?.sessionSuccessRate ?? 0}%</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Babalawos (by Rating)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul>
-              {(data?.topBabalawos ?? []).map((baba: any) => (
-                <li key={baba.id} className="flex items-center gap-2 mb-2">
-                  <span className="font-semibold">Babalawo #{baba.id.slice(0, 6)}</span>
-                  <span className="ml-2">★ {baba.rating ?? "?"}</span>
-                  <span className="ml-2 text-sm text-gray-500">
-                    Sessions: {baba.total_sessions ?? "?"}
-                  </span>
-                </li>
+            <div className="space-y-3">
+              {(data?.topBabalawos ?? []).slice(0, 5).map((baba: any, index: number) => (
+                <div key={baba.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                      {index + 1}
+                    </div>
+                    <div>
+                      <div className="font-medium text-gray-900">Babalawo #{baba.id.slice(0, 6)}</div>
+                      <div className="text-sm text-gray-500">{baba.total_sessions ?? 0} sessions</div>
+                    </div>
+                  </div>
+                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                    ★ {baba.rating ?? "N/A"}
+                  </Badge>
+                </div>
               ))}
-            </ul>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent User Signups */}
+        <Card className="border-0 shadow-sm">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              <User className="w-5 h-5 text-purple-600" />
+              Recent Signups
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {(data?.recentUsers ?? []).slice(0, 5).map((user: any) => (
+                <div key={user.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={user.avatar_url || ''} />
+                    <AvatarFallback>{user.full_name?.[0] || 'U'}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <div className="font-medium text-gray-900">{user.full_name || "Unnamed User"}</div>
+                    <div className="text-sm text-gray-500">{user.created_at?.slice(0, 10)}</div>
+                  </div>
+                  <Badge variant="outline">New</Badge>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent User Signups</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul>
-            {(data?.recentUsers ?? []).map((user: any) => (
-              <li key={user.id} className="mb-1 flex items-center gap-2">
-                {user.avatar_url && (
-                  <img
-                    src={user.avatar_url}
-                    alt=""
-                    className="rounded-full w-6 h-6 object-cover"
-                  />
-                )}
-                <span className="font-semibold">{user.full_name || "Unnamed User"}</span>
-                <span className="ml-2 text-xs text-gray-500">{user.created_at?.slice(0, 10)}</span>
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
     </div>
   );
 };

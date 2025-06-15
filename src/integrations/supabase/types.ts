@@ -9,7 +9,242 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      admin_settings: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_encrypted: boolean | null
+          setting_key: string
+          setting_value: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_encrypted?: boolean | null
+          setting_key: string
+          setting_value?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_encrypted?: boolean | null
+          setting_key?: string
+          setting_value?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      availability: {
+        Row: {
+          babalawo_id: string
+          created_at: string | null
+          day_of_week: number
+          end_time: string
+          id: string
+          is_available: boolean | null
+          start_time: string
+        }
+        Insert: {
+          babalawo_id: string
+          created_at?: string | null
+          day_of_week: number
+          end_time: string
+          id?: string
+          is_available?: boolean | null
+          start_time: string
+        }
+        Update: {
+          babalawo_id?: string
+          created_at?: string | null
+          day_of_week?: number
+          end_time?: string
+          id?: string
+          is_available?: boolean | null
+          start_time?: string
+        }
+        Relationships: []
+      }
+      babalawos: {
+        Row: {
+          bio: string | null
+          created_at: string | null
+          experience_years: number | null
+          hourly_rate: number | null
+          id: string
+          is_active: boolean | null
+          languages: string[] | null
+          rating: number | null
+          specialties: string[] | null
+          timezone: string | null
+          total_sessions: number | null
+          updated_at: string | null
+          verification_status:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+        }
+        Insert: {
+          bio?: string | null
+          created_at?: string | null
+          experience_years?: number | null
+          hourly_rate?: number | null
+          id: string
+          is_active?: boolean | null
+          languages?: string[] | null
+          rating?: number | null
+          specialties?: string[] | null
+          timezone?: string | null
+          total_sessions?: number | null
+          updated_at?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+        }
+        Update: {
+          bio?: string | null
+          created_at?: string | null
+          experience_years?: number | null
+          hourly_rate?: number | null
+          id?: string
+          is_active?: boolean | null
+          languages?: string[] | null
+          rating?: number | null
+          specialties?: string[] | null
+          timezone?: string | null
+          total_sessions?: number | null
+          updated_at?: string | null
+          verification_status?:
+            | Database["public"]["Enums"]["verification_status"]
+            | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          babalawo_id: string
+          comment: string | null
+          created_at: string | null
+          id: string
+          rating: number
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          babalawo_id: string
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          rating: number
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          babalawo_id?: string
+          comment?: string | null
+          created_at?: string | null
+          id?: string
+          rating?: number
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sessions: {
+        Row: {
+          amount: number
+          babalawo_id: string
+          created_at: string | null
+          end_time: string
+          id: string
+          jitsi_room_name: string | null
+          notes: string | null
+          payment_reference: string | null
+          payment_status: Database["public"]["Enums"]["payment_status"] | null
+          session_date: string
+          start_time: string
+          status: Database["public"]["Enums"]["session_status"] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          babalawo_id: string
+          created_at?: string | null
+          end_time: string
+          id?: string
+          jitsi_room_name?: string | null
+          notes?: string | null
+          payment_reference?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          session_date: string
+          start_time: string
+          status?: Database["public"]["Enums"]["session_status"] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          babalawo_id?: string
+          created_at?: string | null
+          end_time?: string
+          id?: string
+          jitsi_room_name?: string | null
+          notes?: string | null
+          payment_reference?: string | null
+          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          session_date?: string
+          start_time?: string
+          status?: Database["public"]["Enums"]["session_status"] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +253,10 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      payment_status: "pending" | "paid" | "failed" | "refunded"
+      session_status: "pending" | "confirmed" | "completed" | "cancelled"
+      user_role: "user" | "babalawo" | "admin"
+      verification_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +371,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      payment_status: ["pending", "paid", "failed", "refunded"],
+      session_status: ["pending", "confirmed", "completed", "cancelled"],
+      user_role: ["user", "babalawo", "admin"],
+      verification_status: ["pending", "approved", "rejected"],
+    },
   },
 } as const

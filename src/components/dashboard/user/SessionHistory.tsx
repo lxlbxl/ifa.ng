@@ -84,11 +84,13 @@ const SessionHistory = () => {
                 </div>
               </div>
               
-              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm text-gray-600 mb-2">
-                  <strong>Session Notes:</strong> Guidance received about spiritual path and personal growth.
-                </p>
-              </div>
+              {session.notes && (
+                <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                  <p className="text-sm text-gray-600 mb-2">
+                    <strong>Session Notes:</strong> {session.notes}
+                  </p>
+                </div>
+              )}
               
               <div className="mt-4 flex items-center justify-between">
                 <div className="flex space-x-2">

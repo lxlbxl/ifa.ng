@@ -43,7 +43,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange }) => 
       <div className="p-4 border-t">
         <button
           onClick={() => onSectionChange('support')}
-          className="w-full flex items-center px-4 py-2.5 text-gray-600 rounded-lg hover:bg-warm-light"
+          className={`w-full flex items-center px-4 py-2.5 text-gray-600 rounded-lg hover:bg-warm-light ${
+            activeSection === 'support' ? 'bg-primary/10 text-primary' : ''
+          }`}
         >
           <LifeBuoy className="h-5 w-5 mr-3" />
           <span className="font-medium">Support</span>
@@ -52,5 +54,4 @@ const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange }) => 
     </aside>
   );
 };
-
 export default Sidebar;

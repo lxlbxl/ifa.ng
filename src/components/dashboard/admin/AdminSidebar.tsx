@@ -7,18 +7,18 @@ interface AdminSidebarProps {
   onSectionChange: (section: string) => void;
 }
 
-const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeSection, onSectionChange }) => {
-  const menuItems = [
-    { icon: LayoutGrid, text: 'Dashboard', section: 'overview' },
-    { icon: Users, text: 'User Management', section: 'users' },
-    { icon: UserCheck, text: 'Babalawo Management', section: 'babalawos' },
-    { icon: Calendar, text: 'Consultations', section: 'consultations' },
-    { icon: Wallet, text: 'Payments', section: 'payments' },
-    { icon: BarChart, text: 'Analytics', section: 'analytics' },
-    { icon: Shield, text: 'Trust & Safety', section: 'safety' },
-    { icon: Settings, text: 'Settings', section: 'settings' },
-  ];
+const menuItems = [
+  { icon: LayoutGrid, text: 'Dashboard', section: 'overview' },
+  { icon: Users, text: 'User Management', section: 'users' },
+  { icon: UserCheck, text: 'Babalawo Management', section: 'babalawos' },
+  { icon: Calendar, text: 'Consultations', section: 'consultations' },
+  { icon: Wallet, text: 'Payments', section: 'payments' },
+  { icon: BarChart, text: 'Analytics', section: 'analytics' },
+  { icon: Shield, text: 'Trust & Safety', section: 'safety' },
+  { icon: Settings, text: 'Settings', section: 'settings' },
+];
 
+const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeSection, onSectionChange }) => {
   return (
     <aside className="w-64 bg-gray-800 text-white flex-col hidden md:flex">
       <div className="p-6 border-b border-gray-700">
@@ -48,7 +48,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeSection, onSectionCha
       <div className="p-4 border-t border-gray-700">
         <button
           onClick={() => onSectionChange('support')}
-          className="w-full flex items-center px-4 py-2.5 text-gray-300 rounded-lg hover:bg-gray-700"
+          className={`w-full flex items-center px-4 py-2.5 rounded-lg transition-colors duration-200 ${
+            activeSection === 'support'
+              ? 'bg-indigo-500 text-white'
+              : 'text-gray-300 hover:bg-gray-700'
+          }`}
         >
           <LifeBuoy className="h-5 w-5 mr-3" />
           <span className="font-medium">Support</span>

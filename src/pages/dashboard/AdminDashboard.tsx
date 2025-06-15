@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import AdminSidebar from '@/components/dashboard/admin/AdminSidebar';
 import DashboardOverview from '@/components/dashboard/admin/DashboardOverview';
@@ -7,21 +8,60 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import UserManagement from '@/components/dashboard/admin/UserManagement';
 import BabalawoManagement from "@/components/dashboard/admin/BabalawoManagement";
 
+// Section content mapping for modern section switching
+const Payments = () => (
+  <div className="p-10 bg-white rounded-2xl shadow-lg">
+    <h2 className="text-2xl font-bold mb-2 text-indigo-600">Payments</h2>
+    <p>Monitor payments and transactions.</p>
+  </div>
+);
+const Consultations = () => (
+  <div className="p-10 bg-white rounded-2xl shadow-lg">
+    <h2 className="text-2xl font-bold mb-2 text-indigo-600">Consultations</h2>
+    <p>View and manage all consultations.</p>
+  </div>
+);
+
+const Analytics = () => (
+  <div className="p-10 bg-white rounded-2xl shadow-lg">
+    <h2 className="text-2xl font-bold mb-2 text-indigo-600">Analytics</h2>
+    <p>Advanced platform performance overview.</p>
+  </div>
+);
+const Safety = () => (
+  <div className="p-10 bg-white rounded-2xl shadow-lg">
+    <h2 className="text-2xl font-bold mb-2 text-indigo-600">Trust & Safety</h2>
+    <p>Monitor trust and safety policies.</p>
+  </div>
+);
+const Settings = () => (
+  <div className="p-10 bg-white rounded-2xl shadow-lg">
+    <h2 className="text-2xl font-bold mb-2 text-indigo-600">Settings</h2>
+    <p>Update admin settings and profile.</p>
+  </div>
+);
+const Support = () => (
+  <div className="p-10 bg-white rounded-2xl shadow-lg">
+    <h2 className="text-2xl font-bold mb-2 text-indigo-600">Support</h2>
+    <p>Get support. We are here to help!</p>
+  </div>
+);
+
+const SECTION_MAP: { [key: string]: React.ReactNode } = {
+  overview: <DashboardOverview />,
+  users: <UserManagement />,
+  babalawos: <BabalawoManagement />,
+  consultations: <Consultations />,
+  payments: <Payments />,
+  analytics: <Analytics />,
+  safety: <Safety />,
+  settings: <Settings />,
+  support: <Support />,
+};
+
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState('overview');
   const { userProfile } = useAuth();
-
-  const renderContent = () => {
-    switch (activeSection) {
-      case 'users':
-        return <UserManagement />;
-      case 'babalawos':
-        return <BabalawoManagement />;
-      case 'overview':
-      default:
-        return <DashboardOverview />;
-    }
-  };
 
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans">
@@ -47,11 +87,11 @@ const AdminDashboard = () => {
           </div>
         </header>
         <main className="flex-grow p-6 md:p-8 lg:p-10">
-          {renderContent()}
+          {SECTION_MAP[activeSection]}
         </main>
       </div>
+      {/* Footer removed */}
     </div>
   );
 };
-
 export default AdminDashboard;

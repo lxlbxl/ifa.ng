@@ -41,7 +41,7 @@ const BabalawoDashboardSidebar: React.FC<{
               ? "bg-white/20 shadow-md text-white"
               : "hover:bg-white/10 text-white/80"
           )}
-          onClick={onSectionChange ? () => onSectionChange(item.section) : undefined}
+          onClick={() => onSectionChange?.(item.section)}
           aria-current={activeSection === item.section ? "page" : undefined}
         >
           <item.icon className="w-5 h-5" />
@@ -51,8 +51,11 @@ const BabalawoDashboardSidebar: React.FC<{
     </nav>
     <div className="pt-4 pb-8 px-3 border-t border-white/10">
       <button
-        className="flex items-center w-full rounded-lg px-4 py-2 font-medium gap-3 transition-all hover:bg-white/10 text-white/80"
-        onClick={onSectionChange ? () => onSectionChange("support") : undefined}
+        className={cn(
+          "flex items-center w-full rounded-lg px-4 py-2 font-medium gap-3 transition-all hover:bg-white/10 text-white/80",
+          activeSection === "support" && "bg-white/20 shadow-md text-white"
+        )}
+        onClick={() => onSectionChange?.("support")}
       >
         <LifeBuoy className="w-5 h-5" />
         Support
@@ -60,5 +63,4 @@ const BabalawoDashboardSidebar: React.FC<{
     </div>
   </aside>
 );
-
 export default BabalawoDashboardSidebar;

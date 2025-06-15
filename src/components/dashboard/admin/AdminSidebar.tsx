@@ -3,61 +3,45 @@ import React from 'react';
 import { LayoutGrid, Users, UserCheck, Calendar, Wallet, Settings, Shield, BarChart, LifeBuoy } from 'lucide-react';
 
 interface AdminSidebarProps {
-  activeSection: string;
-  onSectionChange: (section: string) => void;
+  activeSection: 'overview' | 'users' | 'babalawos'; // Fix type here!
+  onSectionChange: (section: 'overview' | 'users' | 'babalawos') => void;
 }
 
 const menuItems = [
   { icon: LayoutGrid, text: 'Dashboard', section: 'overview' },
   { icon: Users, text: 'User Management', section: 'users' },
   { icon: UserCheck, text: 'Babalawo Management', section: 'babalawos' },
-  { icon: Calendar, text: 'Consultations', section: 'consultations' },
-  { icon: Wallet, text: 'Payments', section: 'payments' },
-  { icon: BarChart, text: 'Analytics', section: 'analytics' },
-  { icon: Shield, text: 'Trust & Safety', section: 'safety' },
-  { icon: Settings, text: 'Settings', section: 'settings' },
+  // You could add more as needed for your platform
 ];
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeSection, onSectionChange }) => {
   return (
-    <aside className="w-64 bg-gray-800 text-white flex-col hidden md:flex">
-      <div className="p-6 border-b border-gray-700">
+    <aside className="w-64 bg-white text-gray-800 flex-col hidden md:flex border-r border-gray-100 pt-2">
+      <div className="p-7 border-b border-gray-100">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center">
-            <span className="text-white font-bold text-lg">A</span>
+          <div className="w-11 h-11 bg-indigo-100 rounded-full flex items-center justify-center">
+            <span className="text-indigo-600 font-bold text-xl font-playfair">AD</span>
           </div>
-          <span className="text-xl font-bold">Admin Panel</span>
+          <span className="text-xl font-extrabold font-playfair tracking-tight">Admin Panel</span>
         </div>
       </div>
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className="flex-1 p-5 space-y-2">
         {menuItems.map((item) => (
           <button
             key={item.text}
-            onClick={() => onSectionChange(item.section)}
-            className={`w-full flex items-center px-4 py-2.5 rounded-lg transition-colors duration-200 ${
-              activeSection === item.section
-                ? 'bg-indigo-500 text-white'
-                : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-            }`}
+            onClick={() => onSectionChange(item.section as 'overview' | 'users' | 'babalawos')}
+            className={`w-full flex items-center px-5 py-3 rounded-xl transition-colors duration-200 font-semibold
+              ${
+                activeSection === item.section
+                  ? 'bg-indigo-100 text-indigo-700 shadow'
+                  : 'text-gray-500 hover:bg-indigo-50 hover:text-indigo-700'
+              }`}
           >
-            <item.icon className="h-5 w-5 mr-3" />
-            <span className="font-medium">{item.text}</span>
+            <item.icon className="h-5 w-5 mr-4" />
+            <span>{item.text}</span>
           </button>
         ))}
       </nav>
-      <div className="p-4 border-t border-gray-700">
-        <button
-          onClick={() => onSectionChange('support')}
-          className={`w-full flex items-center px-4 py-2.5 rounded-lg transition-colors duration-200 ${
-            activeSection === 'support'
-              ? 'bg-indigo-500 text-white'
-              : 'text-gray-300 hover:bg-gray-700'
-          }`}
-        >
-          <LifeBuoy className="h-5 w-5 mr-3" />
-          <span className="font-medium">Support</span>
-        </button>
-      </div>
     </aside>
   );
 };

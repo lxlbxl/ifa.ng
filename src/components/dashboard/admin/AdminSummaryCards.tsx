@@ -1,47 +1,50 @@
 
-import React from 'react';
-import { Card } from '@/components/ui/card';
-import { Users, UserCheck, CreditCard } from 'lucide-react';
+import React from "react";
+import { Users, UserCheck, CreditCard } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 const summaryStats = [
   {
     icon: Users,
     label: "Total Users",
-    value: "512",
-    color: "bg-indigo-100 text-indigo-600",
-    iconBg: "bg-indigo-50",
-  },
-  {
-    icon: UserCheck,
-    label: "Total Babalawos",
-    value: "34",
-    color: "bg-green-100 text-green-700",
-    iconBg: "bg-green-50",
+    value: "54,235",
+    color: "bg-[#ede6fa]",
+    iconColor: "text-indigo-500",
+    shadow: "shadow-[0_2px_16px_0_rgba(156,136,255,0.14)]",
   },
   {
     icon: CreditCard,
     label: "Total Revenue",
-    value: "$9,825",
-    color: "bg-yellow-100 text-yellow-700",
-    iconBg: "bg-yellow-50",
+    value: "$980,632",
+    color: "bg-[#e4f1fe]",
+    iconColor: "text-blue-500",
+    shadow: "shadow-[0_2px_16px_0_rgba(34,156,255,0.12)]",
+  },
+  {
+    icon: UserCheck,
+    label: "Babalawos",
+    value: "5,490",
+    color: "bg-[#f6f7fb]",
+    iconColor: "text-green-500",
+    shadow: "shadow-[0_2px_16px_0_rgba(76,175,80,0.10)]",
   },
 ];
 
 const AdminSummaryCards: React.FC = () => {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
       {summaryStats.map((stat) => (
         <Card
           key={stat.label}
-          className="flex gap-4 items-center bg-white rounded-2xl shadow-card hover:shadow-xl transition-shadow duration-200 px-6 py-5 border-0"
-          style={{ boxShadow: "0px 4px 28px 0px rgba(44,62,80,0.12)" }}
+          className={`flex flex-col items-start justify-between ${stat.color} ${stat.shadow} rounded-3xl px-6 py-5 border-0`}
+          style={{ minHeight: 114 }}
         >
-          <div className={`flex items-center justify-center rounded-xl ${stat.iconBg} w-12 h-12 shadow-sm`}>
-            <stat.icon className={`${stat.color} w-6 h-6`} />
+          <div className={`rounded-full p-2 mb-3 bg-white/50 ${stat.shadow}`}>
+            <stat.icon className={`w-6 h-6 ${stat.iconColor}`} />
           </div>
           <div>
-            <div className="text-xl font-bold text-gray-900">{stat.value}</div>
-            <div className="text-xs text-gray-500 mt-1 font-medium tracking-tight">{stat.label}</div>
+            <div className="text-2xl font-bold text-gray-900 font-playfair">{stat.value}</div>
+            <div className="text-sm text-gray-500 mt-1 font-medium tracking-tight">{stat.label}</div>
           </div>
         </Card>
       ))}

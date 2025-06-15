@@ -1,50 +1,77 @@
-import React from 'react';
-import { Star, MapPin, Calendar, CheckCircle } from 'lucide-react';
-import { useState } from 'react';
-import BookSessionModal from "./BookSessionModal";
 
-const FindBabalawo = () => {
-  // Mock data for babalawos - in real app this would come from API
-  const babalawos = [
-    {
-      id: 1,
-      name: "Babalawo Adebayo",
-      title: "Ifa Priest & Spiritual Counselor",
-      specialties: ["Ifa Reading", "Destiny Path", "Love & Relationships"],
-      rating: 4.9,
-      reviews: 127,
-      avatar: null,
-      verified: true,
-      nextAvailable: "Tomorrow, 2:00 PM",
-      price: "$85/session"
-    },
-    {
-      id: 2,
-      name: "Babalawo Ogundimu",
-      title: "Traditional Healer",
-      specialties: ["Ebo Rituals", "Health & Healing", "Protection"],
-      rating: 4.8,
-      reviews: 89,
-      avatar: null,
-      verified: true,
-      nextAvailable: "Today, 6:00 PM",
-      price: "$95/session"
-    },
-    {
-      id: 3,
-      name: "Babalawo Folarin",
-      title: "Egbe Specialist",
-      specialties: ["Egbe Consultation", "Career Guidance", "Financial Prosperity"],
-      rating: 4.7,
-      reviews: 156,
-      avatar: null,
-      verified: true,
-      nextAvailable: "Monday, 10:00 AM",
-      price: "$75/session"
+import React, { useEffect, useState } from 'react';
+import { Star, Calendar, CheckCircle } from 'lucide-react';
+import BookSessionModal from "./BookSessionModal";
+import { supabase } from '@/integrations/supabase/client';
+
+interface BabalawoProfile {
+  id: string;
+  full_name?: string;
+  avatar_url?: string;
+  title?: string;
+  specialties?: string[];
+  rating?: number;
+  reviews?: number;
+  verified?: boolean;
+  nextAvailable?: string;
+  price?: string;
+}
+
+const FindBabalawo = ({ openBookModal }: { openBookModal?: (babalawo?: BabalawoProfile) => void }) => {
+  const [babalawos, setBabalawos] = useState<BabalawoProfile[]>([]);
+  const [filteredBabalawos, setFilteredBabalawos] = useState<BabalawoProfile[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [bookingBabalawo, setBookingBabalawo] = useState<BabalawoProfile | null>(null);
+  const [activeSpecialty, setActiveSpecialty] = useState<string>('All Specialties');
+
+  useEffect(() => {
+    async function fetchBabalawos() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('babalawos')
+        .select('id, specialties, rating, total_sessions, verification_status, is_active, profiles:profiles(id, full_name, avatar_url, email)')
+        .eq('verification_status', 'approved')
+        .eq('is_active', true);
+
+      if (error) {
+        setBabalawos([]);
+        setFilteredBabalawos([]);
+        setLoading(false);
+        return;
+      }
+      // Map fields for frontend
+      const mapped = (data || []).map((b: any) => ({
+        id: b.id,
+        full_name: b.profiles?.full_name ?? "Unknown",
+        avatar_url: b.profiles?.avatar_url,
+        title: "Ifa Priest & Spiritual Guide", // Ideally from db, fallback
+        specialties: b.specialties ?? [],
+        rating: b.rating ? Number(b.rating) : 5,
+        reviews: b.total_sessions ?? 0,
+        verified: b.verification_status === 'approved',
+        nextAvailable: 'Flexible', // Could later fetch from availability
+        price: b.hourly_rate ? `₦${Number(b.hourly_rate).toLocaleString()}/hr` : '₦10,000/hr',
+      }));
+      setBabalawos(mapped);
+      setFilteredBabalawos(mapped);
+      setLoading(false);
     }
+    fetchBabalawos();
+  }, []);
+
+  const specialties = [
+    'All Specialties',
+    ...Array.from(new Set(babalawos.flatMap((b) => b.specialties || [])))
   ];
 
-  const [bookingBabalawo, setBookingBabalawo] = useState<any | null>(null);
+  function filterBySpecialty(spec: string) {
+    setActiveSpecialty(spec);
+    if (spec === 'All Specialties') {
+      setFilteredBabalawos(babalawos);
+    } else {
+      setFilteredBabalawos(babalawos.filter((b) => (b.specialties || []).includes(spec)));
+    }
+  }
 
   return (
     <div className="bg-white/50 p-6 rounded-xl shadow-md">
@@ -55,91 +82,101 @@ const FindBabalawo = () => {
 
       <div className="mb-6">
         <div className="flex flex-wrap gap-2">
-          <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-            All Specialties
-          </button>
-          <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-            Ifa Reading
-          </button>
-          <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-            Love & Relationships
-          </button>
-          <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-            Career Guidance
-          </button>
-          <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-            Health & Healing
-          </button>
+          {specialties.map((spec) => (
+            <button
+              key={spec}
+              className={`px-4 py-2 rounded-lg transition-colors ${activeSpecialty === spec
+                ? "bg-primary text-white"
+                : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+              }`}
+              onClick={() => filterBySpecialty(spec)}
+            >
+              {spec}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {babalawos.map((babalawo) => (
-          <div key={babalawo.id} className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
-            <div className="text-center mb-4">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span className="text-2xl font-bold text-primary">
-                  {babalawo.name.split(' ')[1]?.[0] || 'B'}
-                </span>
+      {loading ? (
+        <div className="text-gray-500 py-8 text-center">Loading...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredBabalawos.map((babalawo) => (
+            <div key={babalawo.id} className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
+              <div className="text-center mb-4">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                  {babalawo.avatar_url ?
+                    <img
+                      src={babalawo.avatar_url}
+                      alt={babalawo.full_name || 'Babalawo Avatar'}
+                      className="w-14 h-14 rounded-full object-cover"
+                    /> :
+                    <span className="text-2xl font-bold text-primary">
+                      {babalawo.full_name?.charAt(0).toUpperCase() || 'B'}
+                    </span>
+                  }
+                </div>
+                <div className="flex items-center justify-center mb-1">
+                  <h3 className="font-semibold text-gray-800">{babalawo.full_name}</h3>
+                  {babalawo.verified && (
+                    <CheckCircle className="h-4 w-4 text-green-500 ml-1" />
+                  )}
+                </div>
+                <p className="text-sm text-gray-500">{babalawo.title}</p>
               </div>
-              <div className="flex items-center justify-center mb-1">
-                <h3 className="font-semibold text-gray-800">{babalawo.name}</h3>
-                {babalawo.verified && (
-                  <CheckCircle className="h-4 w-4 text-green-500 ml-1" />
-                )}
-              </div>
-              <p className="text-sm text-gray-500">{babalawo.title}</p>
-            </div>
 
-            <div className="mb-4">
-              <div className="flex items-center justify-center mb-2">
-                <div className="flex items-center">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star key={star} className="h-4 w-4 text-yellow-400 fill-current" />
-                  ))}
-                  <span className="ml-1 text-sm text-gray-600">
-                    {babalawo.rating} ({babalawo.reviews} reviews)
-                  </span>
+              <div className="mb-4">
+                <div className="flex items-center justify-center mb-2">
+                  <div className="flex items-center">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Star key={star} className={`h-4 w-4 ${star <= Math.round(babalawo.rating || 0) ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
+                    ))}
+                    <span className="ml-1 text-sm text-gray-600">
+                      {babalawo.rating?.toFixed(1) || 5.0} ({babalawo.reviews || 0} reviews)
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="mb-4">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Specialties:</h4>
-              <div className="flex flex-wrap gap-1">
-                {babalawo.specialties.map((specialty, index) => (
-                  <span key={index} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
-                    {specialty}
-                  </span>
-                ))}
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Specialties:</h4>
+                <div className="flex flex-wrap gap-1">
+                  {(babalawo.specialties || []).map((specialty, index) => (
+                    <span key={index} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
+                      {specialty}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mb-4 space-y-2">
+                <div className="flex items-center text-sm text-gray-600">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Next available: {babalawo.nextAvailable}
+                </div>
+                <div className="text-sm font-medium text-gray-800">
+                  {babalawo.price}
+                </div>
+              </div>
+
+              <div className="flex space-x-2">
+                <button
+                  className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                  onClick={() => setBookingBabalawo(babalawo)}
+                  type="button"
+                  title="Book session"
+                >
+                  Book Now
+                </button>
+                <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors" type="button" title="View profile">
+                  View Profile
+                </button>
               </div>
             </div>
-
-            <div className="mb-4 space-y-2">
-              <div className="flex items-center text-sm text-gray-600">
-                <Calendar className="h-4 w-4 mr-2" />
-                Next available: {babalawo.nextAvailable}
-              </div>
-              <div className="text-sm font-medium text-gray-800">
-                {babalawo.price}
-              </div>
-            </div>
-
-            <div className="flex space-x-2">
-              <button
-                className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-                onClick={() => setBookingBabalawo(babalawo)}
-                type="button"
-              >
-                Book Now
-              </button>
-              <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
-                View Profile
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
+      {/* Book session modal - controlled by local state */}
       <BookSessionModal
         open={!!bookingBabalawo}
         onOpenChange={(open) => setBookingBabalawo(open ? bookingBabalawo : null)}

@@ -1,14 +1,16 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useUserSessions } from '@/hooks/useUserSessions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Calendar, Video, AlertCircle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
+import FindBabalawo from './FindBabalawo';
 
 const UpcomingSessions = () => {
   const { data: sessions, isLoading, isError, error } = useUserSessions();
+  const [showFinder, setShowFinder] = useState(false);
 
   const upcomingSessions = sessions?.filter(s => new Date(s.session_date) >= new Date() && s.status === 'confirmed');
 
@@ -26,11 +28,21 @@ const UpcomingSessions = () => {
         <div className="text-center text-gray-500 py-8">
           <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-400" />
           <p>No upcoming sessions.</p>
-          <Button variant="secondary" className="mt-4">Book a new session</Button>
+          <Button variant="secondary" className="mt-4" onClick={() => setShowFinder(true)}>
+            Book a new session
+          </Button>
+          {showFinder && (
+            <div className="mt-8">
+              <FindBabalawo />
+              <div className="flex justify-center mt-4">
+                <Button variant="outline" onClick={() => setShowFinder(false)}>Close</Button>
+              </div>
+            </div>
+          )}
         </div>
       );
     }
-    
+
     return (
       <div className="space-y-4">
         {upcomingSessions.map((session: any) => (

@@ -33,25 +33,29 @@ const fetchUserSessions = async (userId: string | undefined) => {
     // Now fetch babalawo details for each session
     const sessionsWithBabalawos = await Promise.all(
         sessions.map(async (session) => {
-            const { data: babalawos, error: babalawosError } = await supabase
-                .from('babalawos')
-                .select(`
-                    id,
-                    specialties,
-                    profiles (
-                        full_name,
-                        avatar_url
-                    )
-                `)
+             const { data: babalawoProfile, error: babalawoProfileError } = await supabase
+                .from('profiles')
+                .select('full_name, avatar_url')
                 .eq('id', session.babalawo_id)
                 .single();
 
-            if (babalawosError) {
-                console.error('Error fetching babalawo:', babalawosError);
-                return { ...session, babalawos: null };
-            }
+            const { data: babalawoData, error: babalawoDataError } = await supabase
+                .from('babalawos')
+                .select('id, specialties')
+                .eq('id', session.babalawo_id)
+                .single();
 
-            return { ...session, babalawos };
+            if (babalawoProfileError || babalawoDataError) {
+                console.error('Error fetching babalawo:', babalawoProfileError || babalawoDataError);
+                return { ...session, babalawo: null };
+            }
+            
+            const babalawo = {
+                ...babalawoData,
+                profiles: babalawoProfile // Nest profile to match component expectation
+            };
+
+            return { ...session, babalawo };
         })
     );
 

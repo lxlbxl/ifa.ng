@@ -1,6 +1,7 @@
-
 import React from 'react';
 import { Star, MapPin, Calendar, CheckCircle } from 'lucide-react';
+import { useState } from 'react';
+import BookSessionModal from "./BookSessionModal";
 
 const FindBabalawo = () => {
   // Mock data for babalawos - in real app this would come from API
@@ -42,6 +43,8 @@ const FindBabalawo = () => {
       price: "$75/session"
     }
   ];
+
+  const [bookingBabalawo, setBookingBabalawo] = useState<any | null>(null);
 
   return (
     <div className="bg-white/50 p-6 rounded-xl shadow-md">
@@ -123,7 +126,11 @@ const FindBabalawo = () => {
             </div>
 
             <div className="flex space-x-2">
-              <button className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+              <button
+                className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                onClick={() => setBookingBabalawo(babalawo)}
+                type="button"
+              >
                 Book Now
               </button>
               <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
@@ -133,6 +140,11 @@ const FindBabalawo = () => {
           </div>
         ))}
       </div>
+      <BookSessionModal
+        open={!!bookingBabalawo}
+        onOpenChange={(open) => setBookingBabalawo(open ? bookingBabalawo : null)}
+        babalawo={bookingBabalawo}
+      />
     </div>
   );
 };

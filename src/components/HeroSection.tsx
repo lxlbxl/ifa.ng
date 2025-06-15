@@ -49,28 +49,28 @@ const HeroSection = () => {
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Column - Hero Content */}
           <div className="text-center lg:text-left animate-fade-in">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight drop-shadow-lg">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight drop-shadow-lg">
               Seek Guidance from{" "}
-              <span className="text-yellow-300 drop-shadow-lg">
+              <span className="text-yellow-500 drop-shadow-lg">
                 Verified Babalawos
               </span>
             </h1>
             
-            <p className="text-lg md:text-xl text-white mb-8 max-w-2xl drop-shadow">
+            <p className="text-lg md:text-xl text-gray-800 mb-8 max-w-2xl drop-shadow">
               Connect with authentic spiritual guides for life-changing consultations through secure audio and video sessions. Your path to wisdom starts here.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
               <Button
                 size="lg"
-                className="bg-white text-primary hover:bg-gray-100 font-semibold px-8 py-4 text-lg shadow-lg border-2 border-white"
+                className="bg-gray-900 text-white hover:bg-gray-800 font-semibold px-8 py-4 text-lg shadow-lg border-2 border-gray-900"
                 onClick={() => navigate('/auth?tab=signin')}
               >
                 Book Consultation
               </Button>
               <Button
                 size="lg"
-                className="bg-transparent text-white hover:bg-white hover:text-primary font-semibold px-8 py-4 text-lg shadow-lg border-2 border-white transition-all duration-300"
+                className="bg-white text-gray-900 hover:bg-gray-100 font-semibold px-8 py-4 text-lg shadow-lg border-2 border-gray-900 transition-all duration-300"
                 onClick={() => navigate('/auth?tab=signin')}
               >
                 Browse Babalawos
@@ -79,17 +79,17 @@ const HeroSection = () => {
 
             {/* Trust Indicators */}
             <div className="flex flex-wrap justify-center lg:justify-start gap-6">
-              <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
-                <Shield className="w-5 h-5 text-white" />
-                <span className="text-sm font-medium text-white drop-shadow">100% Verified</span>
+              <div className="flex items-center gap-2 bg-white/30 backdrop-blur-sm rounded-full px-4 py-2 border border-gray-700/20">
+                <Shield className="w-5 h-5 text-gray-800" />
+                <span className="text-sm font-medium text-gray-800 drop-shadow">100% Verified</span>
               </div>
-              <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
-                <Video className="w-5 h-5 text-white" />
-                <span className="text-sm font-medium text-white drop-shadow">Secure Sessions</span>
+              <div className="flex items-center gap-2 bg-white/30 backdrop-blur-sm rounded-full px-4 py-2 border border-gray-700/20">
+                <Video className="w-5 h-5 text-gray-800" />
+                <span className="text-sm font-medium text-gray-800 drop-shadow">Secure Sessions</span>
               </div>
-              <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
-                <Star className="w-5 h-5 fill-current text-white" />
-                <span className="text-sm font-medium text-white drop-shadow">5.0 Average Rating</span>
+              <div className="flex items-center gap-2 bg-white/30 backdrop-blur-sm rounded-full px-4 py-2 border border-gray-700/20">
+                <Star className="w-5 h-5 fill-current text-gray-800" />
+                <span className="text-sm font-medium text-gray-800 drop-shadow">5.0 Average Rating</span>
               </div>
             </div>
           </div>
@@ -125,7 +125,7 @@ const HeroSection = () => {
                 <button
                   key={index}
                   className={`w-3 h-3 rounded-full transition-all ${
-                    index === currentTestimonial ? 'bg-white shadow-lg' : 'bg-white/50'
+                    index === currentTestimonial ? 'bg-gray-800 shadow-lg' : 'bg-gray-400'
                   }`}
                   onClick={() => setCurrentTestimonial(index)}
                 />

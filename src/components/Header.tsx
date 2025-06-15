@@ -6,10 +6,17 @@ import { Menu, X } from "lucide-react";
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Close menu on route change (optional, in case user navigates from menu)
-  // useEffect(() => {
-  //   setIsMenuOpen(false);
-  // }, [location]); // If using react-router
+  // Handle scroll lock and z-index on mobile overlay
+  // Prevent background scroll when menu open
+  React.useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    // Cleanup
+    return () => { document.body.style.overflow = ""; };
+  }, [isMenuOpen]);
 
   return (
     <header className="bg-white/95 backdrop-blur-sm shadow-lg sticky top-0 z-50">
@@ -24,7 +31,6 @@ const Header = () => {
               IFA Connect
             </span>
           </div>
-
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             <a href="#home" className="text-gray-700 hover:text-primary transition-colors">Home</a>
@@ -32,7 +38,6 @@ const Header = () => {
             <a href="#babalawos" className="text-gray-700 hover:text-primary transition-colors">Babalawos</a>
             <a href="#about" className="text-gray-700 hover:text-primary transition-colors">About</a>
           </nav>
-
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center space-x-4">
             <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white">
@@ -42,7 +47,6 @@ const Header = () => {
               Sign Up
             </Button>
           </div>
-
           {/* Mobile Menu Button */}
           <button
             className="md:hidden p-2"
@@ -53,27 +57,29 @@ const Header = () => {
           </button>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu Backdrop */}
         <div
           className={`fixed inset-0 bg-black/40 z-40 transition-opacity duration-200 ${isMenuOpen ? "block" : "hidden"}`}
           onClick={() => setIsMenuOpen(false)}
           style={{ touchAction: "manipulation" }}
         ></div>
+        {/* Mobile Navigation Menu */}
         <div
-          className={`md:hidden absolute left-0 w-full bg-white shadow-lg mt-4 pb-4 border-t pt-4 z-50 transition-all duration-200 ${
-            isMenuOpen ? "block" : "hidden"
+          className={`md:hidden fixed left-0 top-0 w-full bg-white shadow-lg pt-20 pb-6 border-t z-50 transition-transform duration-200 ${
+            isMenuOpen ? "translate-y-0" : "-translate-y-full"
           }`}
+          style={{ minHeight: "100vh" }}
         >
-          <nav className="flex flex-col space-y-4">
+          <nav className="flex flex-col space-y-4 px-6">
             <a href="#home" className="text-gray-700 hover:text-primary transition-colors" onClick={() => setIsMenuOpen(false)}>Home</a>
             <a href="#how-it-works" className="text-gray-700 hover:text-primary transition-colors" onClick={() => setIsMenuOpen(false)}>How It Works</a>
             <a href="#babalawos" className="text-gray-700 hover:text-primary transition-colors" onClick={() => setIsMenuOpen(false)}>Babalawos</a>
             <a href="#about" className="text-gray-700 hover:text-primary transition-colors" onClick={() => setIsMenuOpen(false)}>About</a>
             <div className="flex flex-col space-y-2 pt-2">
-              <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white">
+              <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white" onClick={() => setIsMenuOpen(false)}>
                 Login
               </Button>
-              <Button className="bg-gradient-primary hover:opacity-90 text-white">
+              <Button className="bg-gradient-primary hover:opacity-90 text-white" onClick={() => setIsMenuOpen(false)}>
                 Sign Up
               </Button>
             </div>

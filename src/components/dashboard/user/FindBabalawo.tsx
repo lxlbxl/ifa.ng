@@ -24,6 +24,7 @@ const FindBabalawo = () => {
   useEffect(() => {
     async function fetchBabalawos() {
       setLoading(true);
+      // ONLY fetch approved & active, no other filter
       const { data, error } = await supabase
         .from('babalawos')
         .select(`
@@ -40,10 +41,15 @@ const FindBabalawo = () => {
         .eq('is_active', true);
 
       if (error) {
+        console.error('[FindBabalawo] Supabase error:', error);
         setBabalawos([]);
         setLoading(false);
-        console.error('Supabase error:', error);
         return;
+      }
+      if (!data || data.length === 0) {
+        console.warn('[FindBabalawo] No babalawos data:', data);
+      } else {
+        console.log('[FindBabalawo] Loaded babalawos:', data);
       }
 
       const mapped = (data || []).map((b: any) => ({
@@ -105,7 +111,6 @@ const FindBabalawo = () => {
                     </div>
                     <p className="text-sm text-gray-500">{babalawo.title}</p>
                   </div>
-
                   <div className="mb-4">
                     <div className="flex items-center justify-center mb-2">
                       <div className="flex items-center">
@@ -118,7 +123,6 @@ const FindBabalawo = () => {
                       </div>
                     </div>
                   </div>
-
                   <div className="mb-4">
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Specialties:</h4>
                     <div className="flex flex-wrap gap-1">
@@ -133,7 +137,6 @@ const FindBabalawo = () => {
                       )}
                     </div>
                   </div>
-
                   <div className="mb-4 space-y-2">
                     <div className="flex items-center text-sm text-gray-600">
                       <Calendar className="h-4 w-4 mr-2" />
@@ -143,7 +146,6 @@ const FindBabalawo = () => {
                       {babalawo.price}
                     </div>
                   </div>
-
                   <div className="flex space-x-2">
                     <button
                       className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"

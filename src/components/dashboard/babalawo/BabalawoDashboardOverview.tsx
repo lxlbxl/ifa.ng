@@ -4,6 +4,7 @@ import { Loader2, Calendar, Star, Bell } from "lucide-react";
 import { useBabalawoDashboardStats } from "@/hooks/useBabalawoDashboardStats";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import BabalawoConsultationPanel from "./BabalawoConsultationPanel";
 
 const StatCard = ({ title, value, icon: Icon, color }: { title: string; value: React.ReactNode; icon: any; color: string; }) => (
   <Card className={`text-white ${color}`}>
@@ -59,6 +60,8 @@ const BabalawoDashboardOverview = () => {
         </Button>
         <span className="text-muted-foreground">Toggle your availability status</span>
       </div>
+      {/* Add Consultation Management Panel */}
+      <BabalawoConsultationPanel />
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>

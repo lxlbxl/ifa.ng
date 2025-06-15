@@ -7,15 +7,15 @@ interface SidebarProps {
   onSectionChange: (section: string) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange }) => {
-  const menuItems = [
-    { icon: Home, text: 'Dashboard', section: 'dashboard' },
-    { icon: Calendar, text: 'My Sessions', section: 'my-sessions' },
-    { icon: History, text: 'Session History', section: 'session-history' },
-    { icon: Users, text: 'Find a Babalawo', section: 'find-babalawo' },
-    { icon: Settings, text: 'Settings', section: 'settings' },
-  ];
+const menuItems = [
+  { icon: Home, text: 'Dashboard', section: 'dashboard' },
+  { icon: Calendar, text: 'My Sessions', section: 'my-sessions' },
+  { icon: History, text: 'Session History', section: 'session-history' },
+  { icon: Users, text: 'Find a Babalawo', section: 'find-babalawo' },
+  { icon: Settings, text: 'Settings', section: 'settings' },
+];
 
+const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange }) => {
   return (
     <aside className="w-64 bg-white shadow-lg flex-col hidden md:flex">
       <div className="p-6 border-b">

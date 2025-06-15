@@ -1,4 +1,3 @@
-
 import React from "react";
 import BabalawoDashboardSidebar from "@/components/dashboard/babalawo/BabalawoDashboardSidebar";
 import BabalawoDashboardOverview from "@/components/dashboard/babalawo/BabalawoDashboardOverview";
@@ -49,12 +48,11 @@ const BabalawoDashboard = () => {
         <div className="hidden md:block">
           <BabalawoDashboardSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
         </div>
-        
         {/* Mobile sidebar button (optional, for future) */}
-        
         <main className="flex-1 min-h-0">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-            {SECTION_MAP[activeSection]}
+            {/* Build error fix: Ensure activeSection is a string for the sidebar */}
+            {SECTION_MAP[`${activeSection}`]}
           </div>
         </main>
       </div>

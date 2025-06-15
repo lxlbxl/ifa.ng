@@ -1,6 +1,6 @@
 
 import React from "react";
-import Sidebar from "./Sidebar";
+import UserSidebarDrawerContent from "./UserSidebarDrawerContent";
 
 interface UserDashboardSidebarDrawerProps {
   activeSection: string;
@@ -13,9 +13,9 @@ const UserDashboardSidebarDrawer: React.FC<UserDashboardSidebarDrawerProps> = ({
   onSectionChange,
   onClose
 }) => {
-  // Wrap Sidebar to allow closing on section change
+  // Wrap content: close drawer on section change
   return (
-    <Sidebar
+    <UserSidebarDrawerContent
       activeSection={activeSection}
       onSectionChange={(section) => {
         onSectionChange(section);

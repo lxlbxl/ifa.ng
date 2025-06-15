@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -9,10 +8,23 @@ import { Input } from "@/components/ui/input";
 import { Loader2, Camera } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
+// Add new specialties list
+const SPECIALTY_OPTIONS = [
+  "Divination",
+  "Spiritual Cleansing",
+  "Ifa Consultation",
+  "Dream Interpretation",
+  "Financial Guidance",
+  "Family Harmony",
+  "Protection Rituals",
+  "Love & Relationship",
+  "General Advice"
+];
+
 const fetchBabalawoProfile = async (id: string) => {
   const { data, error } = await supabase
     .from("babalawos")
-    .select("hourly_rate, is_active")
+    .select("hourly_rate, is_active, specialties")
     .eq("id", id)
     .single();
   if (error) throw error;
@@ -51,7 +63,7 @@ const BabalawoProfileSettings = () => {
   const { user, userProfile, updateProfile, refreshProfile } = useAuth();
   const queryClient = useQueryClient();
 
-  // PROFILE INFO (rate, status)
+  // PROFILE INFO (rate, status, specialties)
   const { data: profile, isLoading: profileLoading } = useQuery({
     queryKey: ["my-babalawo-profile", user?.id],
     queryFn: () => user?.id ? fetchBabalawoProfile(user.id) : null,
@@ -63,6 +75,24 @@ const BabalawoProfileSettings = () => {
   useEffect(() => {
     if (profile?.hourly_rate != null) setRate(profile.hourly_rate.toString());
   }, [profile?.hourly_rate]);
+
+  // SPECIALTIES
+  const [specialties, setSpecialties] = useState<string[]>([]);
+  useEffect(() => {
+    setSpecialties(Array.isArray(profile?.specialties) ? profile.specialties : []);
+  }, [profile?.specialties]);
+  const specialtiesMutation = useMutation({
+    mutationFn: async (specialties: string[]) => {
+      const { error } = await supabase
+        .from("babalawos")
+        .update({ specialties: specialties })
+        .eq("id", user?.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-babalawo-profile", user?.id] });
+    },
+  });
 
   // MUTATION for rate
   const rateMutation = useMutation({
@@ -139,12 +169,55 @@ const BabalawoProfileSettings = () => {
   const removeSlot = (idx: number) =>
     setSlots(s => s.filter((_, i) => i !== idx));
 
+  // New specialty toggle handler
+  function toggleSpecialty(option: string) {
+    setSpecialties(specialties => {
+      if (specialties.includes(option)) {
+        return specialties.filter(s => s !== option);
+      } else {
+        return [...specialties, option];
+      }
+    });
+  }
+
   return (
     <Card className="my-8">
       <CardHeader>
         <CardTitle>My Rate & Availability Settings</CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Specialties Section */}
+        <div className="mb-8">
+          <div className="font-medium mb-2">Your Specialties (Pick All That Apply)</div>
+          <div className="flex flex-wrap gap-2 mb-3">
+            {SPECIALTY_OPTIONS.map(option => (
+              <button
+                key={option}
+                type="button"
+                className={`px-3 py-1 rounded-full border 
+                  ${specialties.includes(option)
+                    ? "bg-primary text-white border-primary"
+                    : "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200"
+                  }
+                `}
+                onClick={() => toggleSpecialty(option)}
+              >
+                {option}
+              </button>
+            ))}
+          </div>
+          <Button
+            size="sm"
+            onClick={() => specialtiesMutation.mutate(specialties)}
+            disabled={specialtiesMutation.isPending}
+          >
+            {specialtiesMutation.isPending ? "Saving..." : "Save Specialties"}
+          </Button>
+          <div className="text-xs text-gray-500 mt-2">
+            These will help users find you for relevant consultations.
+          </div>
+        </div>
+        
         {/* Avatar upload */}
         <div className="mb-6">
           <div className="font-medium mb-2">Profile Picture</div>
@@ -289,4 +362,3 @@ const BabalawoProfileSettings = () => {
 };
 
 export default BabalawoProfileSettings;
-

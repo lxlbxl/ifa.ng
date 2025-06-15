@@ -1,8 +1,12 @@
+
 import React, { useEffect, useState } from 'react';
 import { Database } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
 
-type Babalawo = Database['public']['Views']['babalawos']['Row'];
+type Profile = Database['public']['Tables']['profiles']['Row'];
+type Babalawo = Database['public']['Tables']['babalawos']['Row'] & {
+  profiles: Profile | null;
+};
 
 const FeaturedBabalawos: React.FC = () => {
   const [babalawos, setBabalawos] = useState<Babalawo[]>([]);
@@ -16,12 +20,12 @@ const FeaturedBabalawos: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('babalawos')
-          .select('*');
+          .select('*, profiles(*)');
 
         if (error) {
           setError(error.message);
         } else {
-          setBabalawos(data || []);
+          setBabalawos((data as Babalawo[]) || []);
         }
       } catch (err: any) {
         setError(err.message || 'An unexpected error occurred.');

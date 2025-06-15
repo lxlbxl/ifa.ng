@@ -49,26 +49,26 @@ const HeroSection = () => {
           <div className="text-center lg:text-left animate-fade-in">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight drop-shadow-lg">
               Seek Guidance from{" "}
-              <span className="bg-gradient-to-r from-accent to-warm-light bg-clip-text text-transparent drop-shadow-lg">
+              <span className="text-yellow-300 drop-shadow-lg">
                 Verified Babalawos
               </span>
             </h1>
             
-            <p className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl drop-shadow">
+            <p className="text-lg md:text-xl text-white mb-8 max-w-2xl drop-shadow">
               Connect with authentic spiritual guides for life-changing consultations through secure audio and video sessions. Your path to wisdom starts here.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
-              <Button size="lg" className="bg-white text-primary hover:bg-white/90 font-semibold px-8 py-4 text-lg border border-primary shadow">
+              <Button size="lg" className="bg-white text-primary hover:bg-gray-100 font-semibold px-8 py-4 text-lg shadow-lg">
                 Book Consultation
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-primary hover:bg-white hover:text-primary font-semibold px-8 py-4 text-lg bg-white/90 hover:bg-white shadow">
+              <Button size="lg" className="bg-primary text-white hover:bg-primary/90 font-semibold px-8 py-4 text-lg shadow-lg border-2 border-white">
                 Browse Babalawos
               </Button>
             </div>
 
             {/* Trust Indicators */}
-            <div className="flex flex-wrap justify-center lg:justify-start gap-6 text-white/90">
+            <div className="flex flex-wrap justify-center lg:justify-start gap-6 text-white">
               <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5" />
                 <span className="text-sm font-medium drop-shadow">100% Verified</span>
@@ -86,7 +86,7 @@ const HeroSection = () => {
 
           {/* Right Column - Testimonial Carousel */}
           <div className="relative animate-fade-in" style={{animationDelay: '0.3s'}}>
-            <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 border border-white/30">
+            <div className="bg-white rounded-3xl p-8 shadow-2xl border border-gray-200">
               <div className="text-center">
                 <div className="flex justify-center mb-4">
                   {[...Array(5)].map((_, i) => (
@@ -115,7 +115,7 @@ const HeroSection = () => {
                 <button
                   key={index}
                   className={`w-3 h-3 rounded-full transition-all ${
-                    index === currentTestimonial ? 'bg-primary' : 'bg-gray-300'
+                    index === currentTestimonial ? 'bg-white shadow-lg' : 'bg-white/50'
                   }`}
                   onClick={() => setCurrentTestimonial(index)}
                 />

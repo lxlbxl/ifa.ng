@@ -1,9 +1,9 @@
-
 import { useParams, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useSessionById } from "@/hooks/useSessionById";
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { sanitizeRoomName } from "@/lib/validation";
 
 const JITSI_DOMAIN = 'meet.jit.si';
 
@@ -37,8 +37,11 @@ const SessionVideoRoom = () => {
     function startJitsi() {
       // @ts-ignore
       const JitsiMeetExternalAPI = window.JitsiMeetExternalAPI;
+      // Sanitize the room name
+      const rawRoomName = session.jitsi_room_name || `session-${session.id}`;
+      const safeRoomName = sanitizeRoomName(rawRoomName);
       new JitsiMeetExternalAPI(JITSI_DOMAIN, {
-        roomName: session.jitsi_room_name || `session-${session.id}`,
+        roomName: safeRoomName,
         parentNode: jitsiRef.current,
         userInfo: {
           displayName: userProfile.full_name || "Guest",

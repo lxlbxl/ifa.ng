@@ -109,8 +109,16 @@ const FeaturedBabalawos = () => {
                   <div className="flex items-start space-x-4">
                     <div className="relative">
                       <img
-                        src={profile && profile.avatar_url ? profile.avatar_url : "/placeholder.svg"}
-                        alt={profile && profile.full_name ? profile.full_name : "Babalawo"}
+                        src={
+                          profile && profile.avatar_url
+                            ? profile.avatar_url
+                            : "/placeholder.svg"
+                        }
+                        alt={
+                          profile && profile.full_name
+                            ? profile.full_name
+                            : "Babalawo"
+                        }
                         className="w-16 h-16 rounded-full object-cover border-3 border-white shadow-md"
                       />
                       <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white"></div>
@@ -118,7 +126,9 @@ const FeaturedBabalawos = () => {
 
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-gray-900 text-lg mb-1 truncate">
-                        {profile && profile.full_name ? profile.full_name : "Anonymous"}
+                        {profile && profile.full_name
+                          ? profile.full_name
+                          : "Anonymous"}
                       </h3>
                       <Badge variant="secondary" className="mb-2 text-xs">
                         {babalawo.specialties?.[0] || "General Guidance"}
@@ -127,8 +137,12 @@ const FeaturedBabalawos = () => {
                       <div className="flex items-center space-x-4 text-sm">
                         <div className="flex items-center">
                           <Star className="w-4 h-4 text-accent fill-current mr-1" />
-                          <span className="font-semibold text-gray-900">{babalawo.rating || 0}</span>
-                          <span className="text-gray-600 ml-1">({babalawo.total_sessions || 0})</span>
+                          <span className="font-semibold text-gray-900">
+                            {babalawo.rating || 0}
+                          </span>
+                          <span className="text-gray-600 ml-1">
+                            ({babalawo.total_sessions || 0})
+                          </span>
                         </div>
                         <div className="flex items-center text-gray-600">
                           <Clock className="w-4 h-4 mr-1" />
@@ -142,7 +156,8 @@ const FeaturedBabalawos = () => {
                 {/* Details */}
                 <div className="px-6 pb-4">
                   <p className="text-gray-700 text-sm mb-4 leading-relaxed">
-                    {babalawo.bio || "Experienced spiritual guide ready to help you on your journey."}
+                    {babalawo.bio ||
+                      "Experienced spiritual guide ready to help you on your journey."}
                   </p>
 
                   <div className="space-y-2 text-sm">
@@ -153,16 +168,22 @@ const FeaturedBabalawos = () => {
 
                     <div className="flex items-center text-gray-600">
                       <MessageCircle className="w-4 h-4 mr-2 flex-shrink-0" />
-                      <span>{babalawo.languages?.join(", ") || "English"}</span>
+                      <span>
+                        {babalawo.languages?.join(", ") || "English"}
+                      </span>
                     </div>
 
                     <div className="flex items-center justify-between">
                       <div className="text-gray-600">
                         <span className="text-sm">Rate:</span>
-                        <div className="font-semibold text-gray-900">${babalawo.hourly_rate || 0}/hour</div>
+                        <div className="font-semibold text-gray-900">
+                          ${babalawo.hourly_rate || 0}/hour
+                        </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm text-green-600 font-medium">Available</div>
+                        <div className="text-sm text-green-600 font-medium">
+                          Available
+                        </div>
                       </div>
                     </div>
                   </div>

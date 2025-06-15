@@ -10,7 +10,7 @@ export const useBabalawos = () => {
         .from('babalawos')
         .select(`
           *,
-          profiles!inner(full_name, avatar_url)
+          profiles(full_name, avatar_url)
         `)
         .eq('verification_status', 'approved')
         .eq('is_active', true)
@@ -31,7 +31,7 @@ export const useBabalawoById = (id: string) => {
         .from('babalawos')
         .select(`
           *,
-          profiles!inner(full_name, avatar_url, email, phone)
+          profiles(full_name, avatar_url, email, phone)
         `)
         .eq('id', id)
         .single();

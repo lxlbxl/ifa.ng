@@ -1,3 +1,4 @@
+
 import React from "react";
 import BabalawoDashboardSidebar from "@/components/dashboard/babalawo/BabalawoDashboardSidebar";
 import BabalawoDashboardOverview from "@/components/dashboard/babalawo/BabalawoDashboardOverview";
@@ -39,7 +40,8 @@ const SECTION_MAP: { [key: string]: React.ReactNode } = {
 };
 
 const BabalawoDashboard = () => {
-  const [activeSection, setActiveSection] = React.useState<keyof typeof SECTION_MAP>("dashboard");
+  // Force type to string, not string | number, for setActiveSection
+  const [activeSection, setActiveSection] = React.useState<string>("dashboard");
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-[#f3eafd] to-[#e8ecfa] flex flex-col">

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Star, Calendar, CheckCircle } from 'lucide-react';
 import BookSessionModal from "./BookSessionModal";
@@ -17,12 +16,10 @@ interface BabalawoProfile {
   price?: string;
 }
 
-const FindBabalawo = ({ openBookModal }: { openBookModal?: (babalawo?: BabalawoProfile) => void }) => {
+const FindBabalawo = () => {
   const [babalawos, setBabalawos] = useState<BabalawoProfile[]>([]);
-  const [filteredBabalawos, setFilteredBabalawos] = useState<BabalawoProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [bookingBabalawo, setBookingBabalawo] = useState<BabalawoProfile | null>(null);
-  const [activeSpecialty, setActiveSpecialty] = useState<string>('All Specialties');
 
   useEffect(() => {
     async function fetchBabalawos() {
@@ -44,63 +41,29 @@ const FindBabalawo = ({ openBookModal }: { openBookModal?: (babalawo?: BabalawoP
 
       if (error) {
         setBabalawos([]);
-        setFilteredBabalawos([]);
         setLoading(false);
         console.error('Supabase error:', error);
         return;
       }
 
-      // Log the raw data for debugging
-      console.log('Raw Supabase data:', data);
-
-      // Map fields for frontend
       const mapped = (data || []).map((b: any) => ({
         id: b.id,
         full_name: b.profiles?.full_name ?? "Unknown",
         avatar_url: b.profiles?.avatar_url,
-        title: "Ifa Priest & Spiritual Guide", // Ideally from db, fallback
+        title: "Ifa Priest & Spiritual Guide",
         specialties: Array.isArray(b.specialties) ? b.specialties : [],
         rating: b.rating ? Number(b.rating) : 5,
         reviews: b.total_sessions ?? 0,
         verified: b.verification_status === 'approved',
-        nextAvailable: 'Flexible', // Could later fetch from availability
+        nextAvailable: 'Flexible',
         price: b.hourly_rate ? `₦${Number(b.hourly_rate).toLocaleString()}/hr` : '₦10,000/hr',
       }));
 
-      // Log the mapped data for debugging
-      console.log('Mapped Babalawos:', mapped);
-
       setBabalawos(mapped);
-      setFilteredBabalawos(mapped);
       setLoading(false);
     }
     fetchBabalawos();
   }, []);
-
-  // Compute unique specialties on all babalawos
-  const specialtiesSet = new Set<string>();
-  babalawos.forEach((b) => {
-    (b.specialties || []).forEach((s) => {
-      if (typeof s === "string" && s.trim()) {
-        specialtiesSet.add(s);
-      }
-    });
-  });
-  const specialties = ['All Specialties', ...Array.from(specialtiesSet)];
-
-  // Filter when specialty is changed
-  function filterBySpecialty(spec: string) {
-    setActiveSpecialty(spec);
-    if (spec === 'All Specialties') {
-      setFilteredBabalawos(babalawos);
-    } else {
-      // Filter by specialty
-      setFilteredBabalawos(
-        babalawos.filter((b) => (b.specialties || []).includes(spec))
-      );
-    }
-    console.log('Specialty selected:', spec, 'Filtered:', babalawos.filter((b) => (b.specialties || []).includes(spec)));
-  }
 
   return (
     <div className="bg-white/50 p-6 rounded-xl shadow-md">
@@ -109,35 +72,17 @@ const FindBabalawo = ({ openBookModal }: { openBookModal?: (babalawo?: BabalawoP
         <p className="text-gray-600">Connect with verified spiritual guides for personalized consultations</p>
       </div>
 
-      <div className="mb-6">
-        <div className="flex flex-wrap gap-2">
-          {specialties.map((spec) => (
-            <button
-              key={spec}
-              className={`px-4 py-2 rounded-lg transition-colors ${activeSpecialty === spec
-                ? "bg-primary text-white"
-                : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-              }`}
-              onClick={() => filterBySpecialty(spec)}
-              data-testid={`specialty-chip-${spec}`}
-            >
-              {spec}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {loading ? (
         <div className="text-gray-500 py-8 text-center">Loading...</div>
       ) : (
         <>
-          {filteredBabalawos.length === 0 ? (
+          {babalawos.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-gray-500">No Babalawo found for the selected criteria.</p>
+              <p className="text-gray-500">No Babalawo found at the moment.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredBabalawos.map((babalawo) => (
+              {babalawos.map((babalawo) => (
                 <div key={babalawo.id} className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
                   <div className="text-center mb-4">
                     <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -229,4 +174,3 @@ const FindBabalawo = ({ openBookModal }: { openBookModal?: (babalawo?: BabalawoP
 };
 
 export default FindBabalawo;
-

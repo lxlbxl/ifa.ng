@@ -5,6 +5,7 @@ import { useBabalawoDashboardStats } from "@/hooks/useBabalawoDashboardStats";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import BabalawoConsultationPanel from "./BabalawoConsultationPanel";
+import BabalawoProfileSettings from "./BabalawoProfileSettings";
 
 const StatCard = ({ title, value, icon: Icon, color }: { title: string; value: React.ReactNode; icon: any; color: string; }) => (
   <Card className={`text-white ${color}`}>
@@ -62,6 +63,8 @@ const BabalawoDashboardOverview = () => {
       </div>
       {/* Add Consultation Management Panel */}
       <BabalawoConsultationPanel />
+      {/* NEW: Babalawo can edit their settings */}
+      <BabalawoProfileSettings />
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>

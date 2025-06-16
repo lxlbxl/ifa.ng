@@ -1,86 +1,77 @@
 
-import { Shield, Clock, Star, Users, Lock, Heart } from "lucide-react";
-
-const badges = [
-  {
-    icon: Shield,
-    title: "100% Verified Babalawos",
-    description: "Every spiritual guide undergoes thorough verification process"
-  },
-  {
-    icon: Lock,
-    title: "Secure & Private",
-    description: "End-to-end encrypted sessions for complete privacy"
-  },
-  {
-    icon: Clock,
-    title: "24/7 Support",
-    description: "Round-the-clock customer support for your peace of mind"
-  },
-  {
-    icon: Star,
-    title: "5-Star Rated Platform",
-    description: "Trusted by thousands with excellent user ratings"
-  },
-  {
-    icon: Users,
-    title: "Growing Community",
-    description: "Join thousands of satisfied users on their spiritual journey"
-  },
-  {
-    icon: Heart,
-    title: "Satisfaction Guaranteed",
-    description: "Your spiritual satisfaction is our top priority"
-  }
-];
+import React from 'react';
+import { Shield, Users, Clock, Star } from 'lucide-react';
 
 const TrustBadges = () => {
+  const badges = [
+    {
+      icon: Shield,
+      title: "100% Secure",
+      description: "All sessions are private and confidential"
+    },
+    {
+      icon: Users,
+      title: "50+ Verified Babalawos",
+      description: "Carefully vetted spiritual guides"
+    },
+    {
+      icon: Clock,
+      title: "24/7 Available",
+      description: "Book sessions at your convenience"
+    },
+    {
+      icon: Star,
+      title: "98% Satisfaction Rate",
+      description: "Highly rated by our community"
+    }
+  ];
+
   return (
     <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Why Choose IFA Connect?
           </h2>
-          <p className="text-gray-700 max-w-2xl mx-auto">
-            Your spiritual journey deserves the highest level of trust, security, and authenticity
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Connect with authentic spiritual guides for life-changing consultations through secure sessions.
           </p>
         </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {badges.map((badge, index) => (
-            <div key={index} className="text-center group animate-fade-in" style={{animationDelay: `${index * 0.1}s`}}>
-              <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 group-hover:-translate-y-1 border border-gray-100">
-                <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  <badge.icon className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2 text-sm">
-                  {badge.title}
-                </h3>
-                <p className="text-xs text-gray-700 leading-relaxed">
-                  {badge.description}
-                </p>
+            <div key={index} className="bg-white rounded-xl p-6 text-center shadow-lg hover:shadow-xl transition-shadow">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <badge.icon className="w-8 h-8 text-primary" />
               </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {badge.title}
+              </h3>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                {badge.description}
+              </p>
             </div>
           ))}
         </div>
-
-        <div className="text-center mt-12">
-          <div className="inline-flex items-center bg-white rounded-full px-8 py-4 shadow-md border border-gray-200">
-            <div className="flex items-center space-x-6 text-sm text-gray-800">
-              <div className="flex items-center">
-                <span className="font-bold text-primary text-lg mr-1">5,000+</span>
-                <span className="text-gray-800">Happy Users</span>
+        
+        <div className="mt-12 bg-white rounded-2xl p-8 shadow-lg">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                Satisfaction Guaranteed
+              </h3>
+              <p className="text-gray-600 leading-relaxed">
+                Your spiritual satisfaction is our top priority. If you're not completely satisfied with your consultation, we'll make it right.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-4 text-center">
+              <div className="bg-primary/5 rounded-lg p-4">
+                <div className="text-3xl font-bold text-primary mb-2">50+</div>
+                <div className="text-sm text-gray-600">Verified Babalawos</div>
               </div>
-              <div className="w-px h-6 bg-gray-300"></div>
-              <div className="flex items-center">
-                <span className="font-bold text-secondary text-lg mr-1">50+</span>
-                <span className="text-gray-800">Verified Babalawos</span>
-              </div>
-              <div className="w-px h-6 bg-gray-300"></div>
-              <div className="flex items-center">
-                <span className="font-bold text-accent text-lg mr-1">98%</span>
-                <span className="text-gray-800">Satisfaction Rate</span>
+              <div className="bg-accent/5 rounded-lg p-4">
+                <div className="text-3xl font-bold text-accent mb-2">98%</div>
+                <div className="text-sm text-gray-600">Satisfaction Rate</div>
               </div>
             </div>
           </div>

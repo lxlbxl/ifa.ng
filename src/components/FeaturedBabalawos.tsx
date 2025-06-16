@@ -50,8 +50,7 @@ const FeaturedBabalawos: React.FC = () => {
             total_sessions,
             languages,
             timezone,
-            is_active,
-            profiles:profiles(full_name, avatar_url)
+            is_active
           `)
           .eq('verification_status', 'approved')
           .eq('is_active', true)
@@ -64,13 +63,24 @@ const FeaturedBabalawos: React.FC = () => {
           return;
         }
 
-        // Transform the data to match our interface - fix the profiles structure
-        const transformedData: BabalawoProfile[] = babalawosData.map(babalawo => ({
-          ...babalawo,
-          profiles: Array.isArray(babalawo.profiles) && babalawo.profiles.length > 0 
-            ? babalawo.profiles[0] 
-            : (babalawo.profiles as any) || null
-        }));
+        // Fetch profiles separately to avoid relationship issues
+        const babalawoIds = babalawosData.map(b => b.id);
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', babalawoIds);
+
+        // Combine the data
+        const transformedData: BabalawoProfile[] = babalawosData.map(babalawo => {
+          const profile = profilesData?.find(p => p.id === babalawo.id);
+          return {
+            ...babalawo,
+            profiles: profile ? {
+              full_name: profile.full_name,
+              avatar_url: profile.avatar_url
+            } : null
+          };
+        });
         
         setBabalawos(transformedData);
       } catch (err: any) {

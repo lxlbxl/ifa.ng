@@ -25,8 +25,8 @@ const FindBabalawo = () => {
   useEffect(() => {
     async function fetchBabalawos() {
       setLoading(true);
-      // ONLY fetch approved & active, no other filter
-      const { data, error } = await supabase
+      // Fetch babalawos first
+      const { data: babalawosData, error } = await supabase
         .from('babalawos')
         .select(`
           id,
@@ -35,8 +35,7 @@ const FindBabalawo = () => {
           total_sessions,
           verification_status,
           is_active,
-          hourly_rate,
-          profiles:profiles(id, full_name, avatar_url, email)
+          hourly_rate
         `)
         .eq('verification_status', 'approved')
         .eq('is_active', true);
@@ -47,24 +46,38 @@ const FindBabalawo = () => {
         setLoading(false);
         return;
       }
-      if (!data || data.length === 0) {
-        console.warn('[FindBabalawo] No babalawos data:', data);
-      } else {
-        console.log('[FindBabalawo] Loaded babalawos:', data);
+
+      if (!babalawosData || babalawosData.length === 0) {
+        console.warn('[FindBabalawo] No babalawos data:', babalawosData);
+        setBabalawos([]);
+        setLoading(false);
+        return;
       }
 
-      const mapped = (data || []).map((b: any) => ({
-        id: b.id,
-        full_name: b.profiles?.full_name ?? "Babalawo",
-        avatar_url: b.profiles?.avatar_url,
-        title: "Ifa Priest & Spiritual Guide",
-        specialties: Array.isArray(b.specialties) ? b.specialties : [],
-        rating: b.rating ? Number(b.rating) : 5,
-        reviews: b.total_sessions ?? 0,
-        verified: b.verification_status === 'approved',
-        nextAvailable: 'Flexible',
-        price: b.hourly_rate ? `₦${Number(b.hourly_rate).toLocaleString()}/hr` : '₦10,000/hr',
-      }));
+      // Fetch profiles separately
+      const babalawoIds = babalawosData.map(b => b.id);
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', babalawoIds);
+
+      console.log('[FindBabalawo] Loaded babalawos:', babalawosData);
+
+      const mapped = babalawosData.map((b: any) => {
+        const profile = profilesData?.find(p => p.id === b.id);
+        return {
+          id: b.id,
+          full_name: profile?.full_name ?? "Babalawo",
+          avatar_url: profile?.avatar_url,
+          title: "Ifa Priest & Spiritual Guide",
+          specialties: Array.isArray(b.specialties) ? b.specialties : [],
+          rating: b.rating ? Number(b.rating) : 5,
+          reviews: b.total_sessions ?? 0,
+          verified: b.verification_status === 'approved',
+          nextAvailable: 'Flexible',
+          price: b.hourly_rate ? `₦${Number(b.hourly_rate).toLocaleString()}/hr` : '₦10,000/hr',
+        };
+      });
 
       setBabalawos(mapped);
       setLoading(false);

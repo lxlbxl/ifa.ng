@@ -46,7 +46,8 @@ interface AvailabilitySlot {
 
 const getFlutterwaveSettings = async () => {
   try {
-    console.log("Fetching Flutterwave settings...");
+    console.log("🔍 Fetching Flutterwave settings from database...");
+    
     const { data, error } = await supabase
       .from("admin_settings")
       .select("setting_key, setting_value")
@@ -56,15 +57,15 @@ const getFlutterwaveSettings = async () => {
         "flutterwave_secret_key"
       ]);
 
+    console.log("📊 Database query result:", { data, error });
+
     if (error) {
-      console.error("Error fetching settings:", error);
+      console.error("❌ Database error:", error);
       return null;
     }
 
-    console.log("Raw settings data:", data);
-    
     if (!data || data.length === 0) {
-      console.log("No settings found in database");
+      console.log("⚠️ No settings found in admin_settings table");
       return null;
     }
 
@@ -72,20 +73,23 @@ const getFlutterwaveSettings = async () => {
       data.map((row: any) => [row.setting_key, row.setting_value])
     );
     
-    console.log("Processed settings:", settings);
+    console.log("🔧 Processed settings:", {
+      hasPublicKey: !!settings.flutterwave_public_key,
+      hasSecretKey: !!settings.flutterwave_secret_key,
+      environment: settings.flutterwave_environment,
+      publicKeyLength: settings.flutterwave_public_key?.length || 0
+    });
     
-    // Check if required settings are present and not empty
-    const requiredKeys = ["flutterwave_public_key"];
-    const missingKeys = requiredKeys.filter(key => !settings[key] || settings[key].trim() === "");
-    
-    if (missingKeys.length > 0) {
-      console.log("Missing required settings:", missingKeys);
+    // Check if public key exists and is not empty
+    if (!settings.flutterwave_public_key || settings.flutterwave_public_key.trim() === "") {
+      console.log("❌ Missing or empty Flutterwave public key");
       return null;
     }
     
+    console.log("✅ Flutterwave settings validated successfully");
     return settings;
   } catch (error) {
-    console.error("Exception in getFlutterwaveSettings:", error);
+    console.error("💥 Exception in getFlutterwaveSettings:", error);
     return null;
   }
 };
@@ -175,21 +179,21 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
     setIsLoading(true);
 
     try {
-      console.log("Starting payment process...");
+      console.log("🚀 Starting payment process...");
       const flutterSettings = await getFlutterwaveSettings();
       
-      if (!flutterSettings) {
-        console.log("No Flutterwave settings found");
+      if (!flutterSettings || !flutterSettings.flutterwave_public_key) {
+        console.log("❌ Flutterwave settings validation failed");
         toast({ 
           title: "Payment Setup Required", 
-          description: "Payment system is not configured. Please contact administrator.",
+          description: "Flutterwave payment configuration is missing or incomplete. Please ensure the public key is properly set in admin settings.",
           variant: "destructive" 
         });
         setIsLoading(false);
         return;
       }
 
-      console.log("Flutterwave settings retrieved successfully");
+      console.log("✅ Flutterwave settings validated, loading script...");
       
       await loadFlutterwaveJs();
       const paymentRef = generatePaymentRef();
@@ -198,7 +202,24 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
       const amountStr = babalawo.price.replace(/[^\d]/g, '');
       const amount = parseInt(amountStr) || 5000; // Default to 5000 if parsing fails
 
-      console.log("Initiating Flutterwave payment with amount:", amount);
+      console.log("💳 Initiating Flutterwave payment with:", {
+        amount,
+        currency: "NGN",
+        paymentRef,
+        publicKey: flutterSettings.flutterwave_public_key.substring(0, 10) + "..."
+      });
+
+      // Check if FlutterwaveCheckout is available
+      if (typeof window.FlutterwaveCheckout !== 'function') {
+        console.error("❌ FlutterwaveCheckout not loaded");
+        toast({ 
+          title: "Payment Error", 
+          description: "Payment system could not be initialized. Please try again.",
+          variant: "destructive" 
+        });
+        setIsLoading(false);
+        return;
+      }
 
       // @ts-ignore
       window.FlutterwaveCheckout({
@@ -213,7 +234,7 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
           name: userProfile?.full_name || "User"
         },
         callback: async function(response: any) {
-          console.log("Payment callback received:", response);
+          console.log("📞 Payment callback received:", response);
           if (response.status === "successful") {
             try {
               // Save session
@@ -235,7 +256,7 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
                 .single();
                 
               if (sessionErr) {
-                console.error("Session creation error:", sessionErr);
+                console.error("❌ Session creation error:", sessionErr);
                 toast({ title: "Booking failed after payment! Contact support.", variant: "destructive" });
                 setIsLoading(false);
                 return;
@@ -257,15 +278,19 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
               onOpenChange(false);
               toast({ title: "Booking Successful! Your session is confirmed." });
             } catch (error) {
-              console.error("Error saving session/payment:", error);
+              console.error("❌ Error saving session/payment:", error);
               toast({ title: "Error processing booking after payment", variant: "destructive" });
               setIsLoading(false);
             }
           } else {
-            console.log("Payment not successful:", response);
+            console.log("❌ Payment not successful:", response);
             toast({ title: "Payment cancelled or failed", variant: "destructive" });
             setIsLoading(false);
           }
+        },
+        onclose: function() {
+          console.log("🔒 Payment modal closed");
+          setIsLoading(false);
         },
         customizations: {
           title: "IFA Connect",
@@ -274,7 +299,7 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
         }
       });
     } catch (err) {
-      console.error("Payment error:", err);
+      console.error("💥 Payment error:", err);
       toast({ title: "Payment error: " + (err as any).message, variant: "destructive" });
       setIsLoading(false);
     }

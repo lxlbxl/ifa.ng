@@ -45,21 +45,49 @@ interface AvailabilitySlot {
 }
 
 const getFlutterwaveSettings = async () => {
-  const keys = [
-    "flutterwave_environment",
-    "flutterwave_public_key",
-    "flutterwave_secret_key",
-    "flutterwave_redirect_success",
-    "flutterwave_redirect_failure"
-  ];
-  const { data, error } = await supabase
-    .from("admin_settings")
-    .select("setting_key,setting_value")
-    .in("setting_key", keys);
+  try {
+    console.log("Fetching Flutterwave settings...");
+    const { data, error } = await supabase
+      .from("admin_settings")
+      .select("setting_key, setting_value")
+      .in("setting_key", [
+        "flutterwave_environment",
+        "flutterwave_public_key",
+        "flutterwave_secret_key"
+      ]);
 
-  if (error) return null;
-  const settings = Object.fromEntries((data || []).map((row:any) => [row.setting_key, row.setting_value]));
-  return settings;
+    if (error) {
+      console.error("Error fetching settings:", error);
+      return null;
+    }
+
+    console.log("Raw settings data:", data);
+    
+    if (!data || data.length === 0) {
+      console.log("No settings found in database");
+      return null;
+    }
+
+    const settings = Object.fromEntries(
+      data.map((row: any) => [row.setting_key, row.setting_value])
+    );
+    
+    console.log("Processed settings:", settings);
+    
+    // Check if required settings are present and not empty
+    const requiredKeys = ["flutterwave_public_key"];
+    const missingKeys = requiredKeys.filter(key => !settings[key] || settings[key].trim() === "");
+    
+    if (missingKeys.length > 0) {
+      console.log("Missing required settings:", missingKeys);
+      return null;
+    }
+    
+    return settings;
+  } catch (error) {
+    console.error("Exception in getFlutterwaveSettings:", error);
+    return null;
+  }
 };
 
 const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange, babalawo }) => {
@@ -147,8 +175,11 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
     setIsLoading(true);
 
     try {
+      console.log("Starting payment process...");
       const flutterSettings = await getFlutterwaveSettings();
-      if (!flutterSettings || !flutterSettings.flutterwave_public_key) {
+      
+      if (!flutterSettings) {
+        console.log("No Flutterwave settings found");
         toast({ 
           title: "Payment Setup Required", 
           description: "Payment system is not configured. Please contact administrator.",
@@ -157,15 +188,23 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
         setIsLoading(false);
         return;
       }
+
+      console.log("Flutterwave settings retrieved successfully");
       
       await loadFlutterwaveJs();
       const paymentRef = generatePaymentRef();
+
+      // Extract amount from price string (remove currency symbols and commas)
+      const amountStr = babalawo.price.replace(/[^\d]/g, '');
+      const amount = parseInt(amountStr) || 5000; // Default to 5000 if parsing fails
+
+      console.log("Initiating Flutterwave payment with amount:", amount);
 
       // @ts-ignore
       window.FlutterwaveCheckout({
         public_key: flutterSettings.flutterwave_public_key,
         tx_ref: paymentRef,
-        amount: Number(babalawo.price.replace(/\D/g,"")) || 100,
+        amount: amount,
         currency: "NGN",
         payment_options: "card,account,banktransfer,ussd",
         redirect_url: undefined,
@@ -174,47 +213,56 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
           name: userProfile?.full_name || "User"
         },
         callback: async function(response: any) {
+          console.log("Payment callback received:", response);
           if (response.status === "successful") {
-            // Save session
-            const { data: sessionData, error: sessionErr } = await supabase
-              .from("sessions")
-              .insert({
+            try {
+              // Save session
+              const { data: sessionData, error: sessionErr } = await supabase
+                .from("sessions")
+                .insert({
+                  user_id: user?.id,
+                  babalawo_id: babalawo.id,
+                  session_date: format(date, "yyyy-MM-dd"),
+                  start_time: selectedTime,
+                  end_time: selectedTime,
+                  status: "confirmed",
+                  amount: amount,
+                  payment_status: "paid",
+                  payment_reference: paymentRef,
+                  notes: ""
+                })
+                .select()
+                .single();
+                
+              if (sessionErr) {
+                console.error("Session creation error:", sessionErr);
+                toast({ title: "Booking failed after payment! Contact support.", variant: "destructive" });
+                setIsLoading(false);
+                return;
+              }
+
+              // Save payment record
+              await supabase.from("payments").insert({
                 user_id: user?.id,
                 babalawo_id: babalawo.id,
-                session_date: format(date, "yyyy-MM-dd"),
-                start_time: selectedTime,
-                end_time: selectedTime,
-                status: "confirmed",
-                amount: Number(babalawo.price.replace(/\D/g,"")) || 100,
-                payment_status: "paid",
-                payment_reference: paymentRef,
-                notes: ""
-              })
-              .select()
-              .maybeSingle();
+                session_id: sessionData.id,
+                amount: amount,
+                payment_method: "flutterwave",
+                status: "completed",
+                flutterwave_reference: paymentRef,
+                flutterwave_transaction_id: response.transaction_id
+              });
               
-            if (sessionErr || !sessionData) {
-              toast({ title: "Booking failed after payment! Contact support.", variant: "destructive" });
               setIsLoading(false);
-              return;
+              onOpenChange(false);
+              toast({ title: "Booking Successful! Your session is confirmed." });
+            } catch (error) {
+              console.error("Error saving session/payment:", error);
+              toast({ title: "Error processing booking after payment", variant: "destructive" });
+              setIsLoading(false);
             }
-
-            // Save payment record
-            await supabase.from("payments").insert({
-              user_id: user?.id,
-              babalawo_id: babalawo.id,
-              session_id: sessionData.id,
-              amount: sessionData.amount,
-              payment_method: "flutterwave",
-              status: "completed",
-              flutterwave_reference: paymentRef,
-              flutterwave_transaction_id: response.transaction_id
-            });
-            
-            setIsLoading(false);
-            onOpenChange(false);
-            toast({ title: "Booking Successful! Your session is confirmed." });
           } else {
+            console.log("Payment not successful:", response);
             toast({ title: "Payment cancelled or failed", variant: "destructive" });
             setIsLoading(false);
           }
@@ -226,6 +274,7 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
         }
       });
     } catch (err) {
+      console.error("Payment error:", err);
       toast({ title: "Payment error: " + (err as any).message, variant: "destructive" });
       setIsLoading(false);
     }

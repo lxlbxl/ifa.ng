@@ -53,7 +53,7 @@ interface AvailabilitySlot {
 
 const getFlutterwaveSettings = async () => {
   try {
-    console.log("🔍 Fetching Flutterwave settings...");
+    console.log("🔍 Fetching Flutterwave settings from admin_settings table...");
     
     const { data, error } = await supabase
       .from("admin_settings")
@@ -64,41 +64,46 @@ const getFlutterwaveSettings = async () => {
         "flutterwave_secret_key"
       ]);
 
-    console.log("📊 Raw database response:", { data, error });
+    console.log("📊 Database query result:", { data, error, dataLength: data?.length });
 
     if (error) {
       console.error("❌ Database error:", error);
-      throw new Error(`Database error: ${error.message}`);
+      throw new Error(`Database query failed: ${error.message}`);
     }
 
+    // Check if we got any data back
     if (!data || data.length === 0) {
-      console.log("⚠️ No Flutterwave settings found");
-      throw new Error("No Flutterwave settings configured");
+      console.log("⚠️ No settings found in admin_settings table");
+      throw new Error("No Flutterwave settings found in database. Please configure payment settings in admin panel.");
     }
 
-    const settings = Object.fromEntries(
-      data.map((row: any) => [row.setting_key, row.setting_value])
-    );
-    
-    console.log("🔧 Settings found:", {
-      hasPublicKey: !!settings.flutterwave_public_key,
-      publicKeyPreview: settings.flutterwave_public_key?.substring(0, 10) + "...",
-      environment: settings.flutterwave_environment,
-      settingsCount: Object.keys(settings).length
+    // Convert array to object
+    const settings: Record<string, string> = {};
+    data.forEach((row: any) => {
+      if (row.setting_value && row.setting_value.trim() !== '') {
+        settings[row.setting_key] = row.setting_value;
+      }
     });
     
-    // Validate required settings
-    if (!settings.flutterwave_public_key || settings.flutterwave_public_key.trim() === "") {
-      throw new Error("Flutterwave public key is missing or empty");
+    console.log("🔧 Processed settings:", {
+      keysFound: Object.keys(settings),
+      hasPublicKey: !!settings.flutterwave_public_key,
+      hasSecretKey: !!settings.flutterwave_secret_key,
+      environment: settings.flutterwave_environment
+    });
+    
+    // Validate required settings exist and are not empty
+    const requiredKeys = ['flutterwave_public_key', 'flutterwave_environment'];
+    const missingKeys = requiredKeys.filter(key => !settings[key] || settings[key].trim() === '');
+    
+    if (missingKeys.length > 0) {
+      console.error("❌ Missing required settings:", missingKeys);
+      throw new Error(`Missing required Flutterwave settings: ${missingKeys.join(', ')}. Please configure these in the admin panel.`);
     }
     
-    if (!settings.flutterwave_environment) {
-      throw new Error("Flutterwave environment is not set");
-    }
-    
-    console.log("✅ Flutterwave settings validated successfully");
+    console.log("✅ All required Flutterwave settings validated successfully");
     return settings;
-  } catch (error) {
+  } catch (error: any) {
     console.error("💥 Error in getFlutterwaveSettings:", error);
     throw error;
   }
@@ -191,27 +196,26 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
     try {
       console.log("🚀 Starting payment process...");
       
-      // Get Flutterwave settings with proper error handling
+      // Get Flutterwave settings with enhanced error handling
       let flutterSettings;
       try {
         flutterSettings = await getFlutterwaveSettings();
+        console.log("✅ Successfully retrieved Flutterwave settings");
       } catch (settingsError: any) {
         console.error("❌ Failed to get Flutterwave settings:", settingsError);
         toast({ 
           title: "Payment Configuration Error", 
-          description: `Unable to load payment settings: ${settingsError.message}. Please contact administrator.`,
+          description: settingsError.message || "Unable to load payment settings. Please contact administrator.",
           variant: "destructive" 
         });
         setIsLoading(false);
         return;
       }
 
-      console.log("✅ Flutterwave settings retrieved successfully");
-      
       // Load Flutterwave script
       try {
         await loadFlutterwaveJs();
-        console.log("✅ Flutterwave script loaded");
+        console.log("✅ Flutterwave script loaded successfully");
       } catch (scriptError) {
         console.error("❌ Failed to load Flutterwave script:", scriptError);
         toast({ 
@@ -237,15 +241,20 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
 
       const paymentRef = generatePaymentRef();
 
-      // Extract amount from price string (remove currency symbols and commas)
-      const amountStr = babalawo.price?.toString().replace(/[^\d]/g, '') || babalawo.hourly_rate?.toString() || '5000';
-      const amount = parseInt(amountStr) || 5000;
+      // Extract amount from price string more reliably
+      let amount = 5000; // default fallback
+      if (babalawo.price) {
+        const priceMatch = babalawo.price.toString().match(/\d+/);
+        amount = priceMatch ? parseInt(priceMatch[0]) : 5000;
+      } else if (babalawo.hourly_rate) {
+        amount = parseInt(babalawo.hourly_rate.toString()) || 5000;
+      }
 
       console.log("💳 Initializing Flutterwave payment:", {
         amount,
         currency: "NGN",
         paymentRef,
-        publicKey: flutterSettings.flutterwave_public_key.substring(0, 10) + "...",
+        publicKeyPrefix: flutterSettings.flutterwave_public_key.substring(0, 10) + "...",
         environment: flutterSettings.flutterwave_environment
       });
 

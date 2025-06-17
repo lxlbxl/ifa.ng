@@ -15,7 +15,10 @@ const AdminSettingsPanel = () => {
   const settingsConfig = [
     { key: "flutterwave_public_key", label: "Flutterwave Public Key", type: "text", description: "Your Flutterwave public key" },
     { key: "flutterwave_secret_key", label: "Flutterwave Secret Key", type: "password", description: "Your Flutterwave secret key" },
-    { key: "flutterwave_environment", label: "Environment", type: "select", options: ["sandbox", "live"], description: "Flutterwave environment" },
+    { key: "flutterwave_environment", label: "Flutterwave Environment", type: "select", options: ["sandbox", "live"], description: "Flutterwave environment" },
+    { key: "paystack_public_key", label: "Paystack Public Key", type: "text", description: "Your Paystack public key" },
+    { key: "paystack_secret_key", label: "Paystack Secret Key", type: "password", description: "Your Paystack secret key" },
+    { key: "paystack_environment", label: "Paystack Environment", type: "select", options: ["test", "live"], description: "Paystack environment" },
   ];
 
   useEffect(() => {
@@ -85,47 +88,85 @@ const AdminSettingsPanel = () => {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Payment Settings</CardTitle>
-        <CardDescription>Configure Flutterwave payment integration</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {settingsConfig.map((config) => (
-          <div key={config.key}>
-            <label className="block text-sm font-medium mb-2">{config.label}</label>
-            {config.type === "select" ? (
-              <select
-                value={settings[config.key] || ""}
-                onChange={(e) => handleInputChange(config.key, e.target.value)}
-                className="w-full p-2 border rounded-md"
-              >
-                <option value="">Select {config.label}</option>
-                {config.options?.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <Input
-                type={config.type}
-                value={settings[config.key] || ""}
-                onChange={(e) => handleInputChange(config.key, e.target.value)}
-                placeholder={`Enter ${config.label}`}
-              />
-            )}
-            <p className="text-xs text-gray-500 mt-1">{config.description}</p>
-          </div>
-        ))}
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Flutterwave Settings</CardTitle>
+          <CardDescription>Configure Flutterwave payment integration</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {settingsConfig.filter(c => c.key.startsWith('flutterwave')).map((config) => (
+            <div key={config.key}>
+              <label className="block text-sm font-medium mb-2">{config.label}</label>
+              {config.type === "select" ? (
+                <select
+                  value={settings[config.key] || ""}
+                  onChange={(e) => handleInputChange(config.key, e.target.value)}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="">Select {config.label}</option>
+                  {config.options?.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <Input
+                  type={config.type}
+                  value={settings[config.key] || ""}
+                  onChange={(e) => handleInputChange(config.key, e.target.value)}
+                  placeholder={`Enter ${config.label}`}
+                />
+              )}
+              <p className="text-xs text-gray-500 mt-1">{config.description}</p>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Paystack Settings</CardTitle>
+          <CardDescription>Configure Paystack payment integration</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {settingsConfig.filter(c => c.key.startsWith('paystack')).map((config) => (
+            <div key={config.key}>
+              <label className="block text-sm font-medium mb-2">{config.label}</label>
+              {config.type === "select" ? (
+                <select
+                  value={settings[config.key] || ""}
+                  onChange={(e) => handleInputChange(config.key, e.target.value)}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="">Select {config.label}</option>
+                  {config.options?.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <Input
+                  type={config.type}
+                  value={settings[config.key] || ""}
+                  onChange={(e) => handleInputChange(config.key, e.target.value)}
+                  placeholder={`Enter ${config.label}`}
+                />
+              )}
+              <p className="text-xs text-gray-500 mt-1">{config.description}</p>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
         
-        <div className="pt-4">
-          <Button onClick={saveSettings} disabled={saving}>
-            {saving ? "Saving..." : "Save Settings"}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+      <div className="pt-4">
+        <Button onClick={saveSettings} disabled={saving}>
+          {saving ? "Saving..." : "Save All Settings"}
+        </Button>
+      </div>
+    </div>
   );
 };
 

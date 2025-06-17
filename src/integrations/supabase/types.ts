@@ -135,6 +135,9 @@ export type Database = {
           flutterwave_transaction_id: string | null
           id: string
           payment_method: string | null
+          paystack_reference: string | null
+          paystack_transaction_id: string | null
+          selected_payment_method: string | null
           session_id: string | null
           status: string
           updated_at: string
@@ -151,6 +154,9 @@ export type Database = {
           flutterwave_transaction_id?: string | null
           id?: string
           payment_method?: string | null
+          paystack_reference?: string | null
+          paystack_transaction_id?: string | null
+          selected_payment_method?: string | null
           session_id?: string | null
           status?: string
           updated_at?: string
@@ -167,6 +173,9 @@ export type Database = {
           flutterwave_transaction_id?: string | null
           id?: string
           payment_method?: string | null
+          paystack_reference?: string | null
+          paystack_transaction_id?: string | null
+          selected_payment_method?: string | null
           session_id?: string | null
           status?: string
           updated_at?: string
@@ -413,6 +422,87 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          payment_gateway: string | null
+          payment_reference: string | null
+          session_id: string | null
+          transaction_source: string
+          transaction_type: string
+          user_id: string
+          wallet_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          payment_gateway?: string | null
+          payment_reference?: string | null
+          session_id?: string | null
+          transaction_source: string
+          transaction_type: string
+          user_id: string
+          wallet_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          payment_gateway?: string | null
+          payment_reference?: string | null
+          session_id?: string | null
+          transaction_source?: string
+          transaction_type?: string
+          user_id?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallets: {
+        Row: {
+          balance: number
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -421,6 +511,19 @@ export type Database = {
       is_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      update_wallet_balance: {
+        Args: {
+          p_user_id: string
+          p_amount: number
+          p_transaction_type: string
+          p_transaction_source: string
+          p_payment_gateway?: string
+          p_payment_reference?: string
+          p_session_id?: string
+          p_description?: string
+        }
+        Returns: string
       }
     }
     Enums: {

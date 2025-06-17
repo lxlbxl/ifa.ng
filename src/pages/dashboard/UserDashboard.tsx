@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Sidebar from '@/components/dashboard/user/Sidebar';
 import DashboardHeader from '@/components/dashboard/user/DashboardHeader';
@@ -9,6 +8,7 @@ import SessionHistory from '@/components/dashboard/user/SessionHistory';
 import FindBabalawo from '@/components/dashboard/user/FindBabalawo';
 import Settings from '@/components/dashboard/user/Settings';
 import FeaturedBabalawos from '@/components/FeaturedBabalawos';
+import WalletWidget from '@/components/dashboard/user/WalletWidget';
 
 // Updated section content for card-based, modern layout
 const DashboardContent = () => (
@@ -29,6 +29,7 @@ const DashboardContent = () => (
     </div>
     {/* Right-side summary panel for notifications or tips, as in modern dashboards */}
     <div className="w-full lg:w-96 shrink-0 flex flex-col gap-6">
+      <WalletWidget />
       <div className="bg-gradient-to-br from-white to-orange-50 rounded-2xl shadow-lg px-7 py-7">
         <h3 className="font-bold text-lg mb-2 text-orange-500">Quick Actions</h3>
         <MySessions />
@@ -80,4 +81,3 @@ const UserDashboard = () => {
   );
 };
 export default UserDashboard;
-

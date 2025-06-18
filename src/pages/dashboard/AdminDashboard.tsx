@@ -6,13 +6,23 @@ import AdminSummaryCards from "@/components/dashboard/admin/AdminSummaryCards";
 import AdminSectionTabs from "@/components/dashboard/admin/AdminSectionTabs";
 import AdminAnalyticsPanels from "@/components/dashboard/admin/AdminAnalyticsPanels";
 import AdminSidebarMobile from "@/components/dashboard/admin/AdminSidebarMobile";
+import AdminTransactionHistory from "@/components/dashboard/admin/AdminTransactionHistory";
 import { Menu } from "lucide-react";
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState<
-    'overview' | 'users' | 'babalawos' | 'finance' | 'settings'
+    'overview' | 'users' | 'babalawos' | 'finance' | 'transactions' | 'settings'
   >('overview');
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const renderActiveSection = () => {
+    switch (activeSection) {
+      case 'transactions':
+        return <AdminTransactionHistory />;
+      default:
+        return <AdminAnalyticsPanels />;
+    }
+  };
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-[#f6f8fc] to-[#e9edfb] flex font-poppins relative">
@@ -49,7 +59,7 @@ const AdminDashboard = () => {
           activeSection={activeSection}
           onSectionChange={setActiveSection}
         />
-        <AdminAnalyticsPanels />
+        {renderActiveSection()}
       </main>
     </div>
   );

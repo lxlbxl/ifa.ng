@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Sidebar from '@/components/dashboard/user/Sidebar';
 import DashboardHeader from '@/components/dashboard/user/DashboardHeader';
@@ -7,6 +8,7 @@ import MySessions from '@/components/dashboard/user/MySessions';
 import SessionHistory from '@/components/dashboard/user/SessionHistory';
 import FindBabalawo from '@/components/dashboard/user/FindBabalawo';
 import Settings from '@/components/dashboard/user/Settings';
+import TransactionHistory from '@/components/dashboard/user/TransactionHistory';
 import FeaturedBabalawos from '@/components/FeaturedBabalawos';
 import WalletWidget from '@/components/dashboard/user/WalletWidget';
 
@@ -57,6 +59,7 @@ const SECTION_MAP: { [key: string]: React.ReactNode } = {
   'dashboard': <DashboardContent />,
   'my-sessions': <MySessions />,
   'session-history': <SessionHistory />,
+  'transaction-history': <TransactionHistory />,
   'find-babalawo': <FindBabalawo />,
   'settings': <Settings />,
   'support': <Support />,

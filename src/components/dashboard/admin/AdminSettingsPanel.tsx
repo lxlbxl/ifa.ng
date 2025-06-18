@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import AdminWalletManagement from "./AdminWalletManagement";
 
 const AdminSettingsPanel = () => {
   const [settings, setSettings] = useState<any>({});
@@ -166,6 +167,8 @@ const AdminSettingsPanel = () => {
           {saving ? "Saving..." : "Save All Settings"}
         </Button>
       </div>
+
+      <AdminWalletManagement />
     </div>
   );
 };

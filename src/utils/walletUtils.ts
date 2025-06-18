@@ -57,7 +57,12 @@ export const getWalletTransactions = async (userId: string): Promise<WalletTrans
       .limit(50);
 
     if (error) throw error;
-    return data || [];
+    
+    // Ensure proper typing for transaction_type
+    return (data || []).map(transaction => ({
+      ...transaction,
+      transaction_type: transaction.transaction_type as 'credit' | 'debit'
+    }));
   } catch (error) {
     console.error('Error fetching wallet transactions:', error);
     return [];
@@ -110,6 +115,28 @@ export const deductFromWallet = async (
     return true;
   } catch (error) {
     console.error('Error deducting from wallet:', error);
+    return false;
+  }
+};
+
+export const adminCreditWallet = async (
+  userId: string,
+  amount: number,
+  description: string
+): Promise<boolean> => {
+  try {
+    const { error } = await supabase.rpc('update_wallet_balance', {
+      p_user_id: userId,
+      p_amount: amount,
+      p_transaction_type: 'credit',
+      p_transaction_source: 'admin_adjustment',
+      p_description: description
+    });
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error crediting wallet (admin):', error);
     return false;
   }
 };

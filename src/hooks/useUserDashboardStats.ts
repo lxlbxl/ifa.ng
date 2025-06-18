@@ -20,25 +20,14 @@ const fetchUserDashboardStats = async (userId: string | undefined) => {
     .eq('user_id', userId)
     .eq('status', 'completed');
 
-  // Fetch wallet balance: sum of payments - sum of refunds for the user
-  // Find all successful payments made by this user
-  const { data: payments } = await supabase
-    .from('payments')
-    .select('amount, status, user_id')
+  // Get wallet balance
+  const { data: walletData } = await supabase
+    .from('wallets')
+    .select('balance')
     .eq('user_id', userId)
-    .eq('status', 'successful');
-  // Find all successful refunds made to this user
-  const { data: refunds } = await supabase
-    .from('refunds')
-    .select('amount, status')
-    .eq('status', 'approved');
+    .single();
 
-  const totalPaid =
-    payments?.reduce((sum, p) => sum + Number(p.amount || 0), 0) || 0;
-  const totalRefunded =
-    refunds?.reduce((sum, r) => sum + Number(r.amount || 0), 0) || 0;
-
-  const walletBalance = totalPaid - totalRefunded;
+  const walletBalance = walletData?.balance || 0;
 
   return {
     upcoming: upcomingCount ?? 0,

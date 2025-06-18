@@ -34,56 +34,75 @@ const AdminTransactionHistory: React.FC = () => {
     try {
       setLoading(true);
       
-      // Fetch wallet transactions with user details
+      // Fetch wallet transactions
       const { data: walletTransactions, error: walletError } = await supabase
         .from('wallet_transactions')
-        .select(`
-          *,
-          profiles!inner(email, full_name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(500);
 
       if (walletError) throw walletError;
 
-      // Fetch payment records with user details
+      // Fetch payments
       const { data: payments, error: paymentsError } = await supabase
         .from('payments')
-        .select(`
-          *,
-          profiles!inner(email, full_name)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(500);
 
       if (paymentsError) throw paymentsError;
 
+      // Get all unique user IDs
+      const userIds = [
+        ...new Set([
+          ...(walletTransactions || []).map(t => t.user_id),
+          ...(payments || []).map(p => p.user_id)
+        ])
+      ];
+
+      // Fetch user profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, email, full_name')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Create a map for quick profile lookup
+      const profileMap = new Map(profiles.map(p => [p.id, p]));
+
       // Combine and format transactions
       const allTransactions: AdminTransaction[] = [
-        ...(walletTransactions || []).map(t => ({
-          id: t.id,
-          user_email: t.profiles.email,
-          user_name: t.profiles.full_name || 'N/A',
-          amount: t.amount,
-          transaction_type: t.transaction_type as 'credit' | 'debit',
-          transaction_source: t.transaction_source,
-          payment_gateway: t.payment_gateway,
-          description: t.description,
-          created_at: t.created_at,
-          status: 'completed'
-        })),
-        ...(payments || []).map(p => ({
-          id: p.id,
-          user_email: p.profiles.email,
-          user_name: p.profiles.full_name || 'N/A',
-          amount: p.amount,
-          transaction_type: 'debit' as 'credit' | 'debit',
-          transaction_source: 'session_payment',
-          payment_gateway: p.selected_payment_method || p.payment_method,
-          description: `Session payment - ${p.selected_payment_method || p.payment_method}`,
-          created_at: p.created_at,
-          status: p.status
-        }))
+        ...(walletTransactions || []).map(t => {
+          const profile = profileMap.get(t.user_id);
+          return {
+            id: t.id,
+            user_email: profile?.email || 'Unknown',
+            user_name: profile?.full_name || 'N/A',
+            amount: t.amount,
+            transaction_type: t.transaction_type as 'credit' | 'debit',
+            transaction_source: t.transaction_source,
+            payment_gateway: t.payment_gateway,
+            description: t.description,
+            created_at: t.created_at,
+            status: 'completed'
+          };
+        }),
+        ...(payments || []).map(p => {
+          const profile = profileMap.get(p.user_id);
+          return {
+            id: p.id,
+            user_email: profile?.email || 'Unknown',
+            user_name: profile?.full_name || 'N/A',
+            amount: p.amount,
+            transaction_type: 'debit' as 'credit' | 'debit',
+            transaction_source: 'session_payment',
+            payment_gateway: p.selected_payment_method || p.payment_method,
+            description: `Session payment - ${p.selected_payment_method || p.payment_method}`,
+            created_at: p.created_at,
+            status: p.status
+          };
+        })
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       setTransactions(allTransactions);
@@ -128,7 +147,7 @@ const AdminTransactionHistory: React.FC = () => {
   }
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
         <CardTitle>All Transactions</CardTitle>
       </CardHeader>
@@ -152,14 +171,14 @@ const AdminTransactionHistory: React.FC = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Source</TableHead>
-                  <TableHead>Gateway</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead className="min-w-[150px]">User</TableHead>
+                  <TableHead className="min-w-[100px]">Type</TableHead>
+                  <TableHead className="min-w-[120px]">Amount</TableHead>
+                  <TableHead className="min-w-[120px]">Source</TableHead>
+                  <TableHead className="min-w-[100px]">Gateway</TableHead>
+                  <TableHead className="min-w-[200px]">Description</TableHead>
+                  <TableHead className="min-w-[100px]">Status</TableHead>
+                  <TableHead className="min-w-[150px]">Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -167,24 +186,30 @@ const AdminTransactionHistory: React.FC = () => {
                   <TableRow key={transaction.id}>
                     <TableCell>
                       <div>
-                        <div className="font-medium">{transaction.user_name}</div>
-                        <div className="text-sm text-gray-500">{transaction.user_email}</div>
+                        <div className="font-medium text-sm">{transaction.user_name}</div>
+                        <div className="text-xs text-gray-500 break-all">{transaction.user_email}</div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {getTransactionIcon(transaction.transaction_type)}
-                        <span className="capitalize">{transaction.transaction_type}</span>
+                        <span className="capitalize text-sm">{transaction.transaction_type}</span>
                       </div>
                     </TableCell>
                     <TableCell className={transaction.transaction_type === 'credit' ? 'text-green-600' : 'text-red-600'}>
-                      {transaction.transaction_type === 'credit' ? '+' : '-'}₦{transaction.amount.toLocaleString()}
+                      <span className="font-medium">
+                        {transaction.transaction_type === 'credit' ? '+' : '-'}₦{transaction.amount.toLocaleString()}
+                      </span>
                     </TableCell>
-                    <TableCell className="capitalize">{transaction.transaction_source.replace('_', ' ')}</TableCell>
-                    <TableCell className="capitalize">{transaction.payment_gateway || 'N/A'}</TableCell>
-                    <TableCell className="max-w-48 truncate">{transaction.description || 'N/A'}</TableCell>
+                    <TableCell className="capitalize text-sm">{transaction.transaction_source.replace('_', ' ')}</TableCell>
+                    <TableCell className="capitalize text-sm">{transaction.payment_gateway || 'N/A'}</TableCell>
+                    <TableCell className="max-w-48">
+                      <div className="truncate text-sm" title={transaction.description || 'N/A'}>
+                        {transaction.description || 'N/A'}
+                      </div>
+                    </TableCell>
                     <TableCell>{getStatusBadge(transaction.status || 'completed')}</TableCell>
-                    <TableCell>{format(new Date(transaction.created_at), 'MMM d, yyyy h:mm a')}</TableCell>
+                    <TableCell className="text-sm">{format(new Date(transaction.created_at), 'MMM d, yyyy h:mm a')}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

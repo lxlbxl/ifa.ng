@@ -1,72 +1,28 @@
 
-import React from 'react';
-import { Card } from '@/components/ui/card';
-import DashboardOverview from '@/components/dashboard/admin/DashboardOverview';
-import UserManagement from '@/components/dashboard/admin/UserManagement';
-import BabalawoManagement from '@/components/dashboard/admin/BabalawoManagement';
-import PaymentsFinancePanel from "@/components/dashboard/admin/PaymentsFinancePanel";
-import AdminSettingsPanel from "@/components/dashboard/admin/AdminSettingsPanel";
+import React from "react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-type Section = 'overview' | 'users' | 'babalawos' | 'finance' | 'settings';
-
-const SECTION_MAP: { [key in Section]: React.ReactNode } = {
-  overview: <DashboardOverview />,
-  users: <UserManagement />,
-  babalawos: <BabalawoManagement />,
-  finance: <PaymentsFinancePanel />,
-  settings: <AdminSettingsPanel />,
-};
-
-interface Props {
-  activeSection: Section;
-  onSectionChange: (section: Section) => void;
+interface AdminSectionTabsProps {
+  activeSection: string;
+  onSectionChange: (section: 'overview' | 'users' | 'babalawos' | 'finance' | 'transactions' | 'wallet-management' | 'settings') => void;
 }
 
-const AdminSectionTabs: React.FC<Props> = ({ activeSection, onSectionChange }) => (
-  <div className="mb-8">
-    <Card className="p-0 overflow-hidden border-0 bg-transparent shadow-none">
-      <div className="flex space-x-1 border-b border-[#e7e7ef] bg-transparent">
-        <button
-          className={`flex-1 py-3 font-semibold text-sm transition-colors
-            ${activeSection === 'overview'
-              ? 'border-b-2 border-indigo-600 text-indigo-700 bg-indigo-50'
-              : 'text-gray-600 hover:bg-gray-100'}`}
-          onClick={() => onSectionChange('overview')}
-        >Overview</button>
-        <button
-          className={`flex-1 py-3 font-semibold text-sm transition-colors
-            ${activeSection === 'users'
-              ? 'border-b-2 border-indigo-600 text-indigo-700 bg-indigo-50'
-              : 'text-gray-600 hover:bg-gray-100'}`}
-          onClick={() => onSectionChange('users')}
-        >Users</button>
-        <button
-          className={`flex-1 py-3 font-semibold text-sm transition-colors
-            ${activeSection === 'babalawos'
-              ? 'border-b-2 border-indigo-600 text-indigo-700 bg-indigo-50'
-              : 'text-gray-600 hover:bg-gray-100'}`}
-          onClick={() => onSectionChange('babalawos')}
-        >Babalawos</button>
-        <button
-          className={`flex-1 py-3 font-semibold text-sm transition-colors
-            ${activeSection === 'finance'
-              ? 'border-b-2 border-indigo-600 text-indigo-700 bg-indigo-50'
-              : 'text-gray-600 hover:bg-gray-100'}`}
-          onClick={() => onSectionChange('finance')}
-        >Finance</button>
-        <button
-          className={`flex-1 py-3 font-semibold text-sm transition-colors
-            ${activeSection === 'settings'
-              ? 'border-b-2 border-indigo-600 text-indigo-700 bg-indigo-50'
-              : 'text-gray-600 hover:bg-gray-100'}`}
-          onClick={() => onSectionChange('settings')}
-        >Settings</button>
-      </div>
-      <div className="p-0 pt-6">
-        {SECTION_MAP[activeSection]}
-      </div>
-    </Card>
-  </div>
-);
+const AdminSectionTabs: React.FC<AdminSectionTabsProps> = ({ activeSection, onSectionChange }) => {
+  return (
+    <div className="w-full overflow-x-auto">
+      <Tabs value={activeSection} onValueChange={onSectionChange} className="w-full">
+        <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 lg:grid-cols-7 min-w-max">
+          <TabsTrigger value="overview" className="text-xs sm:text-sm whitespace-nowrap">Overview</TabsTrigger>
+          <TabsTrigger value="users" className="text-xs sm:text-sm whitespace-nowrap">Users</TabsTrigger>
+          <TabsTrigger value="babalawos" className="text-xs sm:text-sm whitespace-nowrap">Babalawos</TabsTrigger>
+          <TabsTrigger value="finance" className="text-xs sm:text-sm whitespace-nowrap">Finance</TabsTrigger>
+          <TabsTrigger value="transactions" className="text-xs sm:text-sm whitespace-nowrap">Transactions</TabsTrigger>
+          <TabsTrigger value="wallet-management" className="text-xs sm:text-sm whitespace-nowrap">Wallet Mgmt</TabsTrigger>
+          <TabsTrigger value="settings" className="text-xs sm:text-sm whitespace-nowrap">Settings</TabsTrigger>
+        </TabsList>
+      </Tabs>
+    </div>
+  );
+};
 
 export default AdminSectionTabs;

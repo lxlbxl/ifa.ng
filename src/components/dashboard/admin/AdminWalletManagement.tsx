@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,22 +36,30 @@ const AdminWalletManagement = () => {
       // Fetch users with their wallet balances
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select(`
-          id,
-          email,
-          full_name,
-          wallets(balance)
-        `)
+        .select('id, email, full_name')
         .eq('role', 'user');
 
       if (profilesError) throw profilesError;
 
-      const usersWithWallets = profilesData.map(profile => ({
-        id: profile.id,
-        email: profile.email,
-        full_name: profile.full_name,
-        wallet_balance: profile.wallets?.[0]?.balance || 0
-      }));
+      // Fetch wallet balances separately
+      const userIds = profilesData.map(p => p.id);
+      const { data: walletsData, error: walletsError } = await supabase
+        .from('wallets')
+        .select('user_id, balance')
+        .in('user_id', userIds);
+
+      if (walletsError) throw walletsError;
+
+      // Combine users with their wallet balances
+      const usersWithWallets = profilesData.map(profile => {
+        const wallet = walletsData.find(w => w.user_id === profile.id);
+        return {
+          id: profile.id,
+          email: profile.email,
+          full_name: profile.full_name,
+          wallet_balance: wallet?.balance || 0
+        };
+      });
 
       setUsers(usersWithWallets);
     } catch (error) {
@@ -96,7 +105,7 @@ const AdminWalletManagement = () => {
 
   const filteredUsers = users.filter(user =>
     user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.full_name.toLowerCase().includes(searchTerm.toLowerCase())
+    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -129,13 +138,15 @@ const AdminWalletManagement = () => {
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-3 max-h-96 overflow-y-auto">
             {filteredUsers.length === 0 ? (
-              <p className="text-center py-8 text-gray-500">No users found</p>
+              <p className="text-center py-8 text-gray-500">
+                {searchTerm ? 'No users found matching search criteria' : 'No users found'}
+              </p>
             ) : (
               filteredUsers.map((user) => (
-                <div key={user.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
+                <div key={user.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg gap-3">
+                  <div className="flex-1">
                     <div className="font-medium">{user.full_name || 'No Name'}</div>
                     <div className="text-sm text-gray-500">{user.email}</div>
                     <div className="text-sm font-medium text-green-600">
@@ -145,7 +156,7 @@ const AdminWalletManagement = () => {
                   <Button
                     size="sm"
                     onClick={() => setSelectedUser(user)}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 w-full sm:w-auto"
                   >
                     <Plus className="h-4 w-4" />
                     Credit Wallet
@@ -158,7 +169,7 @@ const AdminWalletManagement = () => {
       </Card>
 
       <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Credit Wallet</DialogTitle>
           </DialogHeader>
@@ -196,14 +207,15 @@ const AdminWalletManagement = () => {
             </div>
           </div>
           
-          <DialogFooter>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button
               onClick={handleCreditWallet}
               disabled={processing || !creditAmount || !creditDescription}
+              className="w-full sm:w-auto"
             >
               {processing ? "Processing..." : "Credit Wallet"}
             </Button>
-            <Button variant="outline" onClick={() => setSelectedUser(null)}>
+            <Button variant="outline" onClick={() => setSelectedUser(null)} className="w-full sm:w-auto">
               Cancel
             </Button>
           </DialogFooter>

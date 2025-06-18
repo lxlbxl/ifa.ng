@@ -8,6 +8,10 @@ import AdminAnalyticsPanels from "@/components/dashboard/admin/AdminAnalyticsPan
 import AdminSidebarMobile from "@/components/dashboard/admin/AdminSidebarMobile";
 import AdminTransactionHistory from "@/components/dashboard/admin/AdminTransactionHistory";
 import AdminWalletManagement from "@/components/dashboard/admin/AdminWalletManagement";
+import UserManagement from "@/components/dashboard/admin/UserManagement";
+import BabalawoManagement from "@/components/dashboard/admin/BabalawoManagement";
+import PaymentsFinancePanel from "@/components/dashboard/admin/PaymentsFinancePanel";
+import AdminSettingsPanel from "@/components/dashboard/admin/AdminSettingsPanel";
 import { Menu } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -18,10 +22,20 @@ const AdminDashboard = () => {
 
   const renderActiveSection = () => {
     switch (activeSection) {
+      case 'overview':
+        return <AdminAnalyticsPanels />;
+      case 'users':
+        return <UserManagement />;
+      case 'babalawos':
+        return <BabalawoManagement />;
+      case 'finance':
+        return <PaymentsFinancePanel />;
       case 'transactions':
         return <AdminTransactionHistory />;
       case 'wallet-management':
         return <AdminWalletManagement />;
+      case 'settings':
+        return <AdminSettingsPanel />;
       default:
         return <AdminAnalyticsPanels />;
     }

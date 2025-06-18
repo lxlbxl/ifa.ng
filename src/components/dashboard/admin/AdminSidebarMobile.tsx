@@ -7,13 +7,13 @@ import {
   DrawerOverlay,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { LayoutGrid, Users, UserCheck, Wallet, Settings, X } from "lucide-react";
+import { LayoutGrid, Users, UserCheck, Wallet, Settings, X, CreditCard, History } from "lucide-react";
 
 interface AdminSidebarMobileProps {
   open: boolean;
   onClose: () => void;
-  activeSection: 'overview' | 'users' | 'babalawos' | 'finance' | 'settings';
-  onSectionChange: (section: 'overview' | 'users' | 'babalawos' | 'finance' | 'settings') => void;
+  activeSection: 'overview' | 'users' | 'babalawos' | 'finance' | 'transactions' | 'wallet-management' | 'settings';
+  onSectionChange: (section: 'overview' | 'users' | 'babalawos' | 'finance' | 'transactions' | 'wallet-management' | 'settings') => void;
 }
 
 const menuItems = [
@@ -21,6 +21,8 @@ const menuItems = [
   { icon: Users, text: 'User Management', section: 'users' },
   { icon: UserCheck, text: 'Babalawo Management', section: 'babalawos' },
   { icon: Wallet, text: 'Finance', section: 'finance' },
+  { icon: History, text: 'Transactions', section: 'transactions' },
+  { icon: CreditCard, text: 'Wallet Management', section: 'wallet-management' },
   { icon: Settings, text: 'Settings', section: 'settings' },
 ];
 

@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { adminCreditWallet } from "@/utils/walletUtils";
-import { Loader2, Plus, Search } from "lucide-react";
+import { Loader2, Plus, Search, RefreshCw } from "lucide-react";
 
 interface User {
   id: string;
@@ -32,14 +32,26 @@ const AdminWalletManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
+      console.log('Fetching users for wallet management...');
       
       // Fetch users with their wallet balances
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, email, full_name')
-        .eq('role', 'user');
+        .eq('role', 'user')
+        .order('created_at', { ascending: false });
 
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
+      }
+
+      console.log('Profiles fetched:', profilesData?.length);
+
+      if (!profilesData || profilesData.length === 0) {
+        setUsers([]);
+        return;
+      }
 
       // Fetch wallet balances separately
       const userIds = profilesData.map(p => p.id);
@@ -48,23 +60,33 @@ const AdminWalletManagement = () => {
         .select('user_id, balance')
         .in('user_id', userIds);
 
-      if (walletsError) throw walletsError;
+      if (walletsError) {
+        console.error('Error fetching wallets:', walletsError);
+        // Continue without wallet data if there's an error
+      }
+
+      console.log('Wallets fetched:', walletsData?.length);
 
       // Combine users with their wallet balances
       const usersWithWallets = profilesData.map(profile => {
-        const wallet = walletsData.find(w => w.user_id === profile.id);
+        const wallet = walletsData?.find(w => w.user_id === profile.id);
         return {
           id: profile.id,
-          email: profile.email,
-          full_name: profile.full_name,
+          email: profile.email || '',
+          full_name: profile.full_name || 'No Name',
           wallet_balance: wallet?.balance || 0
         };
       });
 
+      console.log('Users with wallets:', usersWithWallets);
       setUsers(usersWithWallets);
     } catch (error) {
       console.error('Error fetching users:', error);
-      toast({ title: "Error fetching users", variant: "destructive" });
+      toast({ 
+        title: "Error fetching users", 
+        description: "Please try refreshing the page",
+        variant: "destructive" 
+      });
     } finally {
       setLoading(false);
     }
@@ -103,62 +125,90 @@ const AdminWalletManagement = () => {
     }
   };
 
-  const filteredUsers = users.filter(user =>
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredUsers = users.filter(user => {
+    if (!searchTerm) return true;
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      user.email.toLowerCase().includes(searchLower) ||
+      user.full_name.toLowerCase().includes(searchLower)
+    );
+  });
 
   if (loading) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center p-8">
-          <Loader2 className="h-6 w-6 animate-spin" />
+          <Loader2 className="h-6 w-6 animate-spin mr-2" />
+          <span>Loading users...</span>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <Card>
-        <CardHeader>
-          <CardTitle>Wallet Management</CardTitle>
-          <CardDescription>Manage user wallet balances and credit wallets manually</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                placeholder="Search by email or name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
+        <CardHeader className="pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <CardTitle className="text-lg sm:text-xl">Wallet Management</CardTitle>
+              <CardDescription className="text-sm">Manage user wallet balances and credit wallets manually</CardDescription>
             </div>
+            <Button
+              onClick={fetchUsers}
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 w-full sm:w-auto"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Refresh
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search by email or name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          <div className="text-sm text-gray-500 mb-2">
+            {filteredUsers.length} user{filteredUsers.length !== 1 ? 's' : ''} found
           </div>
 
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {filteredUsers.length === 0 ? (
-              <p className="text-center py-8 text-gray-500">
-                {searchTerm ? 'No users found matching search criteria' : 'No users found'}
-              </p>
+              <div className="text-center py-8">
+                <p className="text-gray-500 mb-4">
+                  {searchTerm ? 'No users found matching search criteria' : 'No users found'}
+                </p>
+                {users.length === 0 && (
+                  <Button onClick={fetchUsers} variant="outline" size="sm">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Retry Loading Users
+                  </Button>
+                )}
+              </div>
             ) : (
               filteredUsers.map((user) => (
-                <div key={user.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg gap-3">
-                  <div className="flex-1">
-                    <div className="font-medium">{user.full_name || 'No Name'}</div>
-                    <div className="text-sm text-gray-500">{user.email}</div>
-                    <div className="text-sm font-medium text-green-600">
+                <div key={user.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg gap-3 hover:bg-gray-50">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-sm sm:text-base truncate">{user.full_name}</div>
+                    <div className="text-xs sm:text-sm text-gray-500 truncate">{user.email}</div>
+                    <div className="text-xs sm:text-sm font-medium text-green-600">
                       Balance: ₦{user.wallet_balance?.toLocaleString() || '0'}
                     </div>
                   </div>
                   <Button
                     size="sm"
                     onClick={() => setSelectedUser(user)}
-                    className="flex items-center gap-2 w-full sm:w-auto"
+                    className="flex items-center gap-2 w-full sm:w-auto text-xs sm:text-sm"
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
                     Credit Wallet
                   </Button>
                 </div>
@@ -169,7 +219,7 @@ const AdminWalletManagement = () => {
       </Card>
 
       <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md mx-4 sm:mx-auto">
           <DialogHeader>
             <DialogTitle>Credit Wallet</DialogTitle>
           </DialogHeader>
@@ -177,9 +227,9 @@ const AdminWalletManagement = () => {
             <div>
               <label className="block text-sm font-medium mb-2">User</label>
               <div className="p-3 bg-gray-50 rounded">
-                <div className="font-medium">{selectedUser?.full_name}</div>
-                <div className="text-sm text-gray-500">{selectedUser?.email}</div>
-                <div className="text-sm text-green-600">
+                <div className="font-medium text-sm">{selectedUser?.full_name}</div>
+                <div className="text-xs text-gray-500 break-all">{selectedUser?.email}</div>
+                <div className="text-xs text-green-600">
                   Current Balance: ₦{selectedUser?.wallet_balance?.toLocaleString() || '0'}
                 </div>
               </div>
@@ -213,7 +263,14 @@ const AdminWalletManagement = () => {
               disabled={processing || !creditAmount || !creditDescription}
               className="w-full sm:w-auto"
             >
-              {processing ? "Processing..." : "Credit Wallet"}
+              {processing ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Processing...
+                </>
+              ) : (
+                "Credit Wallet"
+              )}
             </Button>
             <Button variant="outline" onClick={() => setSelectedUser(null)} className="w-full sm:w-auto">
               Cancel

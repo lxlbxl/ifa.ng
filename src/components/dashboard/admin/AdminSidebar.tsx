@@ -1,11 +1,11 @@
 
 import React from 'react';
-import { LayoutGrid, Users, UserCheck, Wallet, Settings, LogOut } from 'lucide-react';
+import { LayoutGrid, Users, UserCheck, Wallet, Settings, LogOut, CreditCard, History } from 'lucide-react';
 import { useAuth } from "@/hooks/useAuth";
 
 interface AdminSidebarProps {
-  activeSection: 'overview' | 'users' | 'babalawos' | 'finance' | 'settings';
-  onSectionChange: (section: 'overview' | 'users' | 'babalawos' | 'finance' | 'settings') => void;
+  activeSection: 'overview' | 'users' | 'babalawos' | 'finance' | 'transactions' | 'wallet-management' | 'settings';
+  onSectionChange: (section: 'overview' | 'users' | 'babalawos' | 'finance' | 'transactions' | 'wallet-management' | 'settings') => void;
   className?: string;
 }
 
@@ -14,6 +14,8 @@ const menuItems = [
   { icon: Users, text: 'User Management', section: 'users' },
   { icon: UserCheck, text: 'Babalawo Management', section: 'babalawos' },
   { icon: Wallet, text: 'Finance', section: 'finance' },
+  { icon: History, text: 'Transactions', section: 'transactions' },
+  { icon: CreditCard, text: 'Wallet Management', section: 'wallet-management' },
   { icon: Settings, text: 'Settings', section: 'settings' },
 ];
 

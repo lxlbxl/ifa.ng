@@ -3,17 +3,19 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import AdminWalletManagement from "./AdminWalletManagement";
+import AdminAgoraSettings from "./AdminAgoraSettings";
 
 const AdminSettingsPanel = () => {
   const [settings, setSettings] = useState<any>({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const settingsConfig = [
+  const paymentSettingsConfig = [
     { key: "flutterwave_public_key", label: "Flutterwave Public Key", type: "text", description: "Your Flutterwave public key" },
     { key: "flutterwave_secret_key", label: "Flutterwave Secret Key", type: "password", description: "Your Flutterwave secret key" },
     { key: "flutterwave_environment", label: "Flutterwave Environment", type: "select", options: ["sandbox", "live"], description: "Flutterwave environment" },
@@ -31,7 +33,8 @@ const AdminSettingsPanel = () => {
     try {
       const { data, error } = await supabase
         .from("admin_settings")
-        .select("setting_key, setting_value");
+        .select("setting_key, setting_value")
+        .in("setting_key", paymentSettingsConfig.map(c => c.key));
 
       if (error) throw error;
 
@@ -48,11 +51,11 @@ const AdminSettingsPanel = () => {
     setLoading(false);
   };
 
-  const saveSettings = async () => {
+  const savePaymentSettings = async () => {
     setSaving(true);
     try {
       // Upsert each setting
-      for (const config of settingsConfig) {
+      for (const config of paymentSettingsConfig) {
         const value = settings[config.key] || "";
         await supabase
           .from("admin_settings")
@@ -66,7 +69,7 @@ const AdminSettingsPanel = () => {
           );
       }
 
-      toast({ title: "Settings saved successfully!" });
+      toast({ title: "Payment settings saved successfully!" });
     } catch (error) {
       console.error("Error saving settings:", error);
       toast({ title: "Error saving settings", variant: "destructive" });
@@ -90,85 +93,103 @@ const AdminSettingsPanel = () => {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Flutterwave Settings</CardTitle>
-          <CardDescription>Configure Flutterwave payment integration</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {settingsConfig.filter(c => c.key.startsWith('flutterwave')).map((config) => (
-            <div key={config.key}>
-              <label className="block text-sm font-medium mb-2">{config.label}</label>
-              {config.type === "select" ? (
-                <select
-                  value={settings[config.key] || ""}
-                  onChange={(e) => handleInputChange(config.key, e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="">Select {config.label}</option>
-                  {config.options?.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <Input
-                  type={config.type}
-                  value={settings[config.key] || ""}
-                  onChange={(e) => handleInputChange(config.key, e.target.value)}
-                  placeholder={`Enter ${config.label}`}
-                />
-              )}
-              <p className="text-xs text-gray-500 mt-1">{config.description}</p>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Paystack Settings</CardTitle>
-          <CardDescription>Configure Paystack payment integration</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {settingsConfig.filter(c => c.key.startsWith('paystack')).map((config) => (
-            <div key={config.key}>
-              <label className="block text-sm font-medium mb-2">{config.label}</label>
-              {config.type === "select" ? (
-                <select
-                  value={settings[config.key] || ""}
-                  onChange={(e) => handleInputChange(config.key, e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="">Select {config.label}</option>
-                  {config.options?.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <Input
-                  type={config.type}
-                  value={settings[config.key] || ""}
-                  onChange={(e) => handleInputChange(config.key, e.target.value)}
-                  placeholder={`Enter ${config.label}`}
-                />
-              )}
-              <p className="text-xs text-gray-500 mt-1">{config.description}</p>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="agora" className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="agora">Agora Video</TabsTrigger>
+          <TabsTrigger value="payments">Payment Gateways</TabsTrigger>
+          <TabsTrigger value="wallet">Wallet Management</TabsTrigger>
+        </TabsList>
         
-      <div className="pt-4">
-        <Button onClick={saveSettings} disabled={saving}>
-          {saving ? "Saving..." : "Save All Settings"}
-        </Button>
-      </div>
+        <TabsContent value="agora">
+          <AdminAgoraSettings />
+        </TabsContent>
+        
+        <TabsContent value="payments">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Flutterwave Settings</CardTitle>
+                <CardDescription>Configure Flutterwave payment integration</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {paymentSettingsConfig.filter(c => c.key.startsWith('flutterwave')).map((config) => (
+                  <div key={config.key}>
+                    <label className="block text-sm font-medium mb-2">{config.label}</label>
+                    {config.type === "select" ? (
+                      <select
+                        value={settings[config.key] || ""}
+                        onChange={(e) => handleInputChange(config.key, e.target.value)}
+                        className="w-full p-2 border rounded-md"
+                      >
+                        <option value="">Select {config.label}</option>
+                        {config.options?.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <Input
+                        type={config.type}
+                        value={settings[config.key] || ""}
+                        onChange={(e) => handleInputChange(config.key, e.target.value)}
+                        placeholder={`Enter ${config.label}`}
+                      />
+                    )}
+                    <p className="text-xs text-gray-500 mt-1">{config.description}</p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
 
-      <AdminWalletManagement />
+            <Card>
+              <CardHeader>
+                <CardTitle>Paystack Settings</CardTitle>
+                <CardDescription>Configure Paystack payment integration</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {paymentSettingsConfig.filter(c => c.key.startsWith('paystack')).map((config) => (
+                  <div key={config.key}>
+                    <label className="block text-sm font-medium mb-2">{config.label}</label>
+                    {config.type === "select" ? (
+                      <select
+                        value={settings[config.key] || ""}
+                        onChange={(e) => handleInputChange(config.key, e.target.value)}
+                        className="w-full p-2 border rounded-md"
+                      >
+                        <option value="">Select {config.label}</option>
+                        {config.options?.map((option) => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <Input
+                        type={config.type}
+                        value={settings[config.key] || ""}
+                        onChange={(e) => handleInputChange(config.key, e.target.value)}
+                        placeholder={`Enter ${config.label}`}
+                      />
+                    )}
+                    <p className="text-xs text-gray-500 mt-1">{config.description}</p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+              
+            <div className="pt-4">
+              <Button onClick={savePaymentSettings} disabled={saving}>
+                {saving ? "Saving..." : "Save Payment Settings"}
+              </Button>
+            </div>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="wallet">
+          <AdminWalletManagement />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

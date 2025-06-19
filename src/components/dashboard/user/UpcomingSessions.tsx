@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Calendar, Video, AlertCircle } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { format } from 'date-fns';
+import { format, isAfter, subMinutes } from 'date-fns';
 import FindBabalawo from './FindBabalawo';
 
 const UpcomingSessions = () => {
@@ -13,6 +13,14 @@ const UpcomingSessions = () => {
   const [showFinder, setShowFinder] = useState(false);
 
   const upcomingSessions = sessions?.filter(s => new Date(s.session_date) >= new Date() && s.status === 'confirmed');
+
+  const canJoinSession = (session: any) => {
+    const sessionDateTime = new Date(`${session.session_date}T${session.start_time}`);
+    const now = new Date();
+    // Allow joining 10 minutes before the session
+    const joinTime = subMinutes(sessionDateTime, 10);
+    return isAfter(now, joinTime);
+  };
 
   const renderContent = () => {
     if (isLoading) {
@@ -59,9 +67,13 @@ const UpcomingSessions = () => {
                 </p>
               </div>
             </div>
-            <Button className="w-full sm:w-auto text-sm">
+            <Button 
+              className="w-full sm:w-auto text-sm"
+              disabled={!canJoinSession(session)}
+              onClick={() => window.open(`/sessions/${session.id}/video`, "_blank")}
+            >
               <Video className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              Join Session
+              {canJoinSession(session) ? "Join Session" : "Available 10 min before"}
             </Button>
           </div>
         ))}

@@ -371,8 +371,46 @@ export type Database = {
           },
         ]
       }
+      session_logs: {
+        Row: {
+          action: string
+          id: string
+          metadata: Json | null
+          session_id: string
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          id?: string
+          metadata?: Json | null
+          session_id: string
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          id?: string
+          metadata?: Json | null
+          session_id?: string
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_logs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sessions: {
         Row: {
+          agora_channel_name: string | null
+          agora_token_babalawo: string | null
+          agora_token_user: string | null
           amount: number
           babalawo_id: string
           created_at: string | null
@@ -383,12 +421,17 @@ export type Database = {
           payment_reference: string | null
           payment_status: Database["public"]["Enums"]["payment_status"] | null
           session_date: string
+          session_ended_at: string | null
+          session_started_at: string | null
           start_time: string
           status: Database["public"]["Enums"]["session_status"] | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          agora_channel_name?: string | null
+          agora_token_babalawo?: string | null
+          agora_token_user?: string | null
           amount: number
           babalawo_id: string
           created_at?: string | null
@@ -399,12 +442,17 @@ export type Database = {
           payment_reference?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           session_date: string
+          session_ended_at?: string | null
+          session_started_at?: string | null
           start_time: string
           status?: Database["public"]["Enums"]["session_status"] | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          agora_channel_name?: string | null
+          agora_token_babalawo?: string | null
+          agora_token_user?: string | null
           amount?: number
           babalawo_id?: string
           created_at?: string | null
@@ -415,6 +463,8 @@ export type Database = {
           payment_reference?: string | null
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           session_date?: string
+          session_ended_at?: string | null
+          session_started_at?: string | null
           start_time?: string
           status?: Database["public"]["Enums"]["session_status"] | null
           updated_at?: string | null

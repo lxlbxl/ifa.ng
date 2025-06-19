@@ -47,13 +47,17 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
     }
     setIsLoading(true);
 
-    // Extract amount from price string more reliably
-    let amount = 5000; // default fallback
-    if (babalawo.price) {
+    // Extract amount from babalawo data more reliably
+    let amount = 15000; // default fallback
+    if (babalawo.hourly_rate) {
+      amount = parseInt(babalawo.hourly_rate.toString()) || 15000;
+    } else if (babalawo.price) {
       const priceMatch = babalawo.price.toString().match(/\d+/);
-      amount = priceMatch ? parseInt(priceMatch[0]) : 5000;
-    } else if (babalawo.hourly_rate) {
-      amount = parseInt(babalawo.hourly_rate.toString()) || 5000;
+      amount = priceMatch ? parseInt(priceMatch[0]) : 15000;
+      // If the matched price seems too low (like 15 instead of 15000), multiply by 1000
+      if (amount < 1000) {
+        amount = amount * 1000;
+      }
     }
 
     await handlePaymentAndBooking(
@@ -87,26 +91,30 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
   }
 
   // Extract amount for display
-  let amount = 5000;
-  if (babalawo.price) {
+  let amount = 15000;
+  if (babalawo.hourly_rate) {
+    amount = parseInt(babalawo.hourly_rate.toString()) || 15000;
+  } else if (babalawo.price) {
     const priceMatch = babalawo.price.toString().match(/\d+/);
-    amount = priceMatch ? parseInt(priceMatch[0]) : 5000;
-  } else if (babalawo.hourly_rate) {
-    amount = parseInt(babalawo.hourly_rate.toString()) || 5000;
+    amount = priceMatch ? parseInt(priceMatch[0]) : 15000;
+    // If the matched price seems too low, multiply by 1000
+    if (amount < 1000) {
+      amount = amount * 1000;
+    }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
         <DialogHeader>
-          <DialogTitle>Book Session</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">Book Session</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleBookAndPay} className="space-y-4">
-          <div>
-            <div className="font-semibold">{babalawo.full_name || babalawo.name}</div>
-            <div className="text-sm text-gray-500">{babalawo.title}</div>
+          <div className="text-center sm:text-left">
+            <div className="font-semibold text-base sm:text-lg">{babalawo.full_name || babalawo.name || "Babalawo"}</div>
+            <div className="text-sm text-gray-500">{babalawo.title || "Ifa Priest & Spiritual Guide"}</div>
             <div className="mt-2">
-              <span className="text-primary font-bold text-xl">
+              <span className="text-primary font-bold text-xl sm:text-2xl">
                 ₦{amount.toLocaleString()}
               </span>
             </div>
@@ -127,12 +135,12 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
             amount={amount}
           />
           
-          <DialogFooter>
-            <Button type="submit" disabled={isLoading || !date || !selectedTime}>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button type="submit" disabled={isLoading || !date || !selectedTime} className="w-full sm:w-auto">
               {isLoading ? "Processing..." : "Confirm & Pay"}
             </Button>
             <DialogClose asChild>
-              <Button variant="secondary" type="button" disabled={isLoading}>Cancel</Button>
+              <Button variant="secondary" type="button" disabled={isLoading} className="w-full sm:w-auto">Cancel</Button>
             </DialogClose>
           </DialogFooter>
         </form>

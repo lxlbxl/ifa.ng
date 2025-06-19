@@ -15,6 +15,7 @@ interface BabalawoProfile {
   verified?: boolean;
   nextAvailable?: string;
   price?: string;
+  hourly_rate?: number;
 }
 
 const FindBabalawo = () => {
@@ -75,7 +76,8 @@ const FindBabalawo = () => {
           reviews: b.total_sessions ?? 0,
           verified: b.verification_status === 'approved',
           nextAvailable: 'Flexible',
-          price: b.hourly_rate ? `₦${Number(b.hourly_rate).toLocaleString()}/hr` : '₦10,000/hr',
+          hourly_rate: b.hourly_rate ? Number(b.hourly_rate) : 15000,
+          price: b.hourly_rate ? `₦${Number(b.hourly_rate).toLocaleString()}/hr` : '₦15,000/hr',
         };
       });
 
@@ -86,10 +88,10 @@ const FindBabalawo = () => {
   }, []);
 
   return (
-    <div className="bg-white/50 p-6 rounded-xl shadow-md">
-      <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-2">Find a Babalawo</h2>
-        <p className="text-gray-600">Connect with verified spiritual guides for personalized consultations</p>
+    <div className="bg-white/50 p-4 sm:p-6 rounded-xl shadow-md">
+      <div className="mb-4 sm:mb-6">
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-2">Find a Babalawo</h2>
+        <p className="text-sm sm:text-base text-gray-600">Connect with verified spiritual guides for personalized consultations</p>
       </div>
 
       {loading ? (
@@ -101,44 +103,44 @@ const FindBabalawo = () => {
               <p className="text-gray-500">No Babalawo found at the moment.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {babalawos.map((babalawo) => (
-                <div key={babalawo.id} className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
+                <div key={babalawo.id} className="bg-white p-4 sm:p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
                   <div className="text-center mb-4">
-                    <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
                       {babalawo.avatar_url ?
                         <img
                           src={babalawo.avatar_url}
                           alt={babalawo.full_name || 'Babalawo Avatar'}
-                          className="w-14 h-14 rounded-full object-cover"
+                          className="w-10 h-10 sm:w-14 sm:h-14 rounded-full object-cover"
                         /> :
-                        <span className="text-2xl font-bold text-primary">
+                        <span className="text-lg sm:text-2xl font-bold text-primary">
                           {babalawo.full_name?.charAt(0).toUpperCase() || 'B'}
                         </span>
                       }
                     </div>
                     <div className="flex items-center justify-center mb-1">
-                      <h3 className="font-semibold text-gray-800">{babalawo.full_name}</h3>
+                      <h3 className="font-semibold text-sm sm:text-base text-gray-800">{babalawo.full_name}</h3>
                       {babalawo.verified && (
-                        <CheckCircle className="h-4 w-4 text-green-500 ml-1" />
+                        <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 ml-1" />
                       )}
                     </div>
-                    <p className="text-sm text-gray-500">{babalawo.title}</p>
+                    <p className="text-xs sm:text-sm text-gray-500">{babalawo.title}</p>
                   </div>
                   <div className="mb-4">
                     <div className="flex items-center justify-center mb-2">
                       <div className="flex items-center">
                         {[1, 2, 3, 4, 5].map((star) => (
-                          <Star key={star} className={`h-4 w-4 ${star <= Math.round(babalawo.rating || 0) ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
+                          <Star key={star} className={`h-3 w-3 sm:h-4 sm:w-4 ${star <= Math.round(babalawo.rating || 0) ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
                         ))}
-                        <span className="ml-1 text-sm text-gray-600">
+                        <span className="ml-1 text-xs sm:text-sm text-gray-600">
                           {babalawo.rating?.toFixed(1) || 5.0} ({babalawo.reviews || 0} reviews)
                         </span>
                       </div>
                     </div>
                   </div>
                   <div className="mb-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Specialties:</h4>
+                    <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-2">Specialties:</h4>
                     <div className="flex flex-wrap gap-1">
                       {(babalawo.specialties && babalawo.specialties.length > 0) ? (
                         babalawo.specialties.map((specialty, index) => (
@@ -152,24 +154,24 @@ const FindBabalawo = () => {
                     </div>
                   </div>
                   <div className="mb-4 space-y-2">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Calendar className="h-4 w-4 mr-2" />
+                    <div className="flex items-center text-xs sm:text-sm text-gray-600">
+                      <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
                       Next available: {babalawo.nextAvailable}
                     </div>
-                    <div className="text-sm font-medium text-gray-800">
-                      {babalawo.price}
+                    <div className="text-xs sm:text-sm font-medium text-gray-800">
+                      ₦{(babalawo.hourly_rate || 15000).toLocaleString()}/session
                     </div>
                   </div>
-                  <div className="flex space-x-2">
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                     <button
-                      className="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                      className="flex-1 px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-xs sm:text-sm"
                       onClick={() => setBookingBabalawo(babalawo)}
                       type="button"
                       title="Book session"
                     >
                       Book Now
                     </button>
-                    <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors" type="button" title="View profile">
+                    <button className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-xs sm:text-sm" type="button" title="View profile">
                       View Profile
                     </button>
                   </div>

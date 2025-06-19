@@ -117,6 +117,10 @@ const FeaturedBabalawos: React.FC = () => {
     setBookingBabalawo(babalawForModal);
   };
 
+  const handleViewProfile = (babalawoId: string) => {
+    navigate(`/babalawo/${babalawoId}`);
+  };
+
   if (loading) {
     return <div className="text-center">Loading babalawos...</div>;
   }
@@ -178,13 +182,21 @@ const FeaturedBabalawos: React.FC = () => {
             <div className="text-sm font-semibold text-gray-800 mb-3">
               ₦{(babalawo.hourly_rate || 15000).toLocaleString()}/session
             </div>
-            {/* Action Button */}
-            <button 
-              className="w-full bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors text-sm sm:text-base"
-              onClick={() => handleBookSession(babalawo)}
-            >
-              Book Session
-            </button>
+            {/* Action Buttons */}
+            <div className="w-full space-y-2">
+              <button 
+                className="w-full bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors text-sm sm:text-base"
+                onClick={() => handleBookSession(babalawo)}
+              >
+                Book Session
+              </button>
+              <button 
+                className="w-full border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base"
+                onClick={() => handleViewProfile(babalawo.id)}
+              >
+                View Profile
+              </button>
+            </div>
           </div>
         ))}
       </div>

@@ -1,8 +1,8 @@
-
 import React, { useEffect, useState } from 'react';
 import { Star, Calendar, CheckCircle } from 'lucide-react';
 import BookSessionModal from "./BookSessionModal";
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 interface BabalawoProfile {
   id: string;
@@ -22,6 +22,7 @@ const FindBabalawo = () => {
   const [babalawos, setBabalawos] = useState<BabalawoProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [bookingBabalawo, setBookingBabalawo] = useState<BabalawoProfile | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchBabalawos() {
@@ -86,6 +87,10 @@ const FindBabalawo = () => {
     }
     fetchBabalawos();
   }, []);
+
+  const handleViewProfile = (babalawoId: string) => {
+    navigate(`/babalawo/${babalawoId}`);
+  };
 
   return (
     <div className="bg-white/50 p-4 sm:p-6 rounded-xl shadow-md">
@@ -171,7 +176,12 @@ const FindBabalawo = () => {
                     >
                       Book Now
                     </button>
-                    <button className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-xs sm:text-sm" type="button" title="View profile">
+                    <button 
+                      className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-xs sm:text-sm" 
+                      type="button" 
+                      title="View profile"
+                      onClick={() => handleViewProfile(babalawo.id)}
+                    >
                       View Profile
                     </button>
                   </div>

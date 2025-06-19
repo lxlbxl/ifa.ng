@@ -1,306 +1,280 @@
 
-import React, { useEffect, useRef, useState } from 'react';
-import { useParams, Navigate } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import AgoraRTC, { 
+  IAgoraRTCClient, 
+  ICameraVideoTrack, 
+  IMicrophoneAudioTrack,
+  IAgoraRTCRemoteUser
+} from 'agora-rtc-sdk-ng';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useSessionById } from '@/hooks/useSessionById';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Loader2, Phone, PhoneOff, Mic, MicOff, Video, VideoOff } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
-import AgoraRTC, { IAgoraRTCClient, ICameraVideoTrack, IMicrophoneAudioTrack } from 'agora-rtc-sdk-ng';
+import { Mic, MicOff, Video, VideoOff, PhoneOff } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const AgoraVideoRoom = () => {
-  const { user, userProfile } = useAuth();
   const { sessionId } = useParams();
-  const { data: session, isLoading, error } = useSessionById(sessionId || "");
-  
-  const [client, setClient] = useState<IAgoraRTCClient | null>(null);
+  const { user } = useAuth();
+  const { data: session } = useSessionById(sessionId || "");
+  const { toast } = useToast();
+
+  const [client] = useState<IAgoraRTCClient>(AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' }));
   const [localVideoTrack, setLocalVideoTrack] = useState<ICameraVideoTrack | null>(null);
   const [localAudioTrack, setLocalAudioTrack] = useState<IMicrophoneAudioTrack | null>(null);
-  const [isJoined, setIsJoined] = useState(false);
+  const [remoteUsers, setRemoteUsers] = useState<IAgoraRTCRemoteUser[]>([]);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
-  const [isConnecting, setIsConnecting] = useState(false);
-  
+  const [isJoined, setIsJoined] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
   const localVideoRef = useRef<HTMLDivElement>(null);
   const remoteVideoRef = useRef<HTMLDivElement>(null);
 
-  // Only allow the session user or babalawo to join
-  if (!isLoading && session && user) {
-    if (user.id !== session.user_id && user.id !== session.babalawo_id) {
-      return <Navigate to="/" replace />;
-    }
-  }
+  useEffect(() => {
+    const setupAgora = async () => {
+      // Set up client event handlers
+      client.on('user-published', async (user, mediaType) => {
+        await client.subscribe(user, mediaType);
+        
+        if (mediaType === 'video' && remoteVideoRef.current) {
+          user.videoTrack?.play(remoteVideoRef.current);
+        }
+        if (mediaType === 'audio') {
+          user.audioTrack?.play();
+        }
+        
+        setRemoteUsers(prevUsers => {
+          const existingUser = prevUsers.find(u => u.uid === user.uid);
+          if (existingUser) {
+            return prevUsers.map(u => u.uid === user.uid ? user : u);
+          }
+          return [...prevUsers, user];
+        });
+      });
 
-  const getUserRole = () => {
-    if (!session || !user) return null;
-    return user.id === session.user_id ? 'user' : 'babalawo';
-  };
+      client.on('user-unpublished', (user) => {
+        setRemoteUsers(prevUsers => prevUsers.filter(u => u.uid !== user.uid));
+      });
 
-  const joinChannel = async () => {
+      client.on('user-left', (user) => {
+        setRemoteUsers(prevUsers => prevUsers.filter(u => u.uid !== user.uid));
+      });
+    };
+
+    setupAgora();
+
+    return () => {
+      leaveSession();
+    };
+  }, [client]);
+
+  const joinSession = async () => {
     if (!session || !user) return;
-    
-    setIsConnecting(true);
-    
+
+    setIsLoading(true);
     try {
-      // Get Agora token from our edge function
+      // Generate Agora token
       const { data, error } = await supabase.functions.invoke('generate-agora-token', {
         body: {
-          session_id: session.id,
-          role: getUserRole()
+          session_id: sessionId,
+          role: user.id === session.babalawo_id ? 'babalawo' : 'user'
         }
       });
 
-      if (error || !data) {
-        console.error('Error getting token:', error);
+      if (error) {
+        console.error('Token generation error:', error);
         toast({
-          title: "Connection Error",
-          description: "Failed to get session token",
-          variant: "destructive"
+          title: "Error",
+          description: "Failed to generate session token",
+          variant: "destructive",
         });
         return;
       }
 
-      const { channelName, token, uid, appId } = data;
+      const { channelName, token, uid } = data;
 
-      // Initialize Agora client
-      const agoraClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
-      setClient(agoraClient);
-
-      // Join the channel
-      await agoraClient.join(appId, channelName, token, uid);
-      
       // Create local tracks
-      const [videoTrack, audioTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
+      const videoTrack = await AgoraRTC.createCameraVideoTrack();
+      const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+      
       setLocalVideoTrack(videoTrack);
       setLocalAudioTrack(audioTrack);
+
+      // Join the channel
+      await client.join(data.appId, channelName, token, uid);
+      
+      // Publish local tracks
+      await client.publish([videoTrack, audioTrack]);
 
       // Play local video
       if (localVideoRef.current) {
         videoTrack.play(localVideoRef.current);
       }
 
-      // Publish local tracks
-      await agoraClient.publish([videoTrack, audioTrack]);
-
-      // Handle remote users
-      agoraClient.on("user-published", async (remoteUser, mediaType) => {
-        await agoraClient.subscribe(remoteUser, mediaType);
-        
-        if (mediaType === "video" && remoteVideoRef.current) {
-          remoteUser.videoTrack?.play(remoteVideoRef.current);
-        }
-        
-        if (mediaType === "audio") {
-          remoteUser.audioTrack?.play();
-        }
-      });
-
-      agoraClient.on("user-unpublished", (remoteUser) => {
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.innerHTML = "";
-        }
-      });
-
       setIsJoined(true);
-      
+
       // Log session start
-      await logSessionAction('joined');
+      await supabase.from('session_logs').insert({
+        session_id: sessionId,
+        user_id: user.id,
+        action: 'joined',
+        metadata: { timestamp: new Date().toISOString() }
+      });
 
       toast({
-        title: "Connected",
-        description: "Successfully joined the consultation session"
+        title: "Joined Session",
+        description: "You have successfully joined the consultation session",
       });
 
     } catch (error) {
-      console.error('Error joining channel:', error);
+      console.error('Failed to join session:', error);
       toast({
-        title: "Connection Error",
-        description: "Failed to join the session",
-        variant: "destructive"
+        title: "Error",
+        description: "Failed to join session",
+        variant: "destructive",
       });
     } finally {
-      setIsConnecting(false);
+      setIsLoading(false);
     }
   };
 
-  const leaveChannel = async () => {
-    if (client && isJoined) {
-      // Clean up local tracks
-      localVideoTrack?.close();
-      localAudioTrack?.close();
-      
-      // Leave channel
+  const leaveSession = async () => {
+    try {
+      // Stop and close local tracks
+      if (localVideoTrack) {
+        localVideoTrack.stop();
+        localVideoTrack.close();
+      }
+      if (localAudioTrack) {
+        localAudioTrack.stop();
+        localAudioTrack.close();
+      }
+
+      // Leave the channel
       await client.leave();
-      
-      // Log session end
-      await logSessionAction('left');
-      
-      setIsJoined(false);
-      setClient(null);
+
       setLocalVideoTrack(null);
       setLocalAudioTrack(null);
-      
+      setRemoteUsers([]);
+      setIsJoined(false);
+
+      // Log session end
+      if (user && sessionId) {
+        await supabase.from('session_logs').insert({
+          session_id: sessionId,
+          user_id: user.id,
+          action: 'left',
+          metadata: { timestamp: new Date().toISOString() }
+        });
+      }
+
       toast({
-        title: "Session Ended",
-        description: "You have left the consultation session"
+        title: "Left Session",
+        description: "You have left the consultation session",
       });
+
+    } catch (error) {
+      console.error('Failed to leave session:', error);
     }
   };
 
   const toggleVideo = async () => {
     if (localVideoTrack) {
-      if (isVideoEnabled) {
-        localVideoTrack.setEnabled(false);
-        setIsVideoEnabled(false);
-      } else {
-        localVideoTrack.setEnabled(true);
-        setIsVideoEnabled(true);
-      }
+      await localVideoTrack.setEnabled(!isVideoEnabled);
+      setIsVideoEnabled(!isVideoEnabled);
     }
   };
 
   const toggleAudio = async () => {
     if (localAudioTrack) {
-      if (isAudioEnabled) {
-        localAudioTrack.setEnabled(false);
-        setIsAudioEnabled(false);
-      } else {
-        localAudioTrack.setEnabled(true);
-        setIsAudioEnabled(true);
-      }
+      await localAudioTrack.setEnabled(!isAudioEnabled);
+      setIsAudioEnabled(!isAudioEnabled);
     }
   };
-
-  const logSessionAction = async (action: string) => {
-    if (!session || !user) return;
-    
-    try {
-      await supabase.from('session_logs').insert({
-        session_id: session.id,
-        user_id: user.id,
-        action,
-        metadata: { 
-          role: getUserRole(),
-          timestamp: new Date().toISOString()
-        }
-      });
-    } catch (error) {
-      console.error('Error logging session action:', error);
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      // Cleanup on unmount
-      if (isJoined) {
-        leaveChannel();
-      }
-    };
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  if (error || !session) {
-    return (
-      <div className="text-center mt-8 text-red-600">
-        Session not found or you do not have access.
-      </div>
-    );
-  }
 
   return (
-    <div className="w-full h-screen flex flex-col bg-gray-900">
+    <div className="min-h-screen bg-gray-900 flex flex-col">
       {/* Header */}
-      <div className="h-16 flex items-center justify-between bg-slate-900 text-white px-4">
-        <h1 className="font-bold text-xl">IFA Connect - Agora Session</h1>
-        <span className="text-sm">
-          Session: {session.id.slice(0, 8)}...
-        </span>
+      <div className="bg-gray-800 p-4 text-white">
+        <h1 className="text-xl font-semibold">Spiritual Consultation Session</h1>
+        <p className="text-gray-300">Session with {session?.profiles?.full_name}</p>
       </div>
 
-      {/* Video Container */}
-      <div className="flex-1 flex">
-        {/* Remote Video */}
-        <div className="flex-1 relative bg-black">
-          <div ref={remoteVideoRef} className="w-full h-full" />
-          {!isJoined && (
-            <div className="absolute inset-0 flex items-center justify-center text-white">
-              <div className="text-center">
-                <Phone className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <p className="text-lg">Waiting for connection...</p>
+      {/* Video Area */}
+      <div className="flex-1 p-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Local Video */}
+        <div className="relative bg-gray-800 rounded-lg overflow-hidden">
+          <div 
+            ref={localVideoRef}
+            className="w-full h-64 lg:h-96 bg-gray-700 flex items-center justify-center"
+          >
+            {!isJoined && (
+              <div className="text-white text-center">
+                <p className="mb-4">Ready to join the session?</p>
+                <Button onClick={joinSession} disabled={isLoading}>
+                  {isLoading ? 'Joining...' : 'Join Session'}
+                </Button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+          <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+            You {!isVideoEnabled && '(Video Off)'}
+          </div>
         </div>
 
-        {/* Local Video */}
-        <div className="w-80 h-60 absolute bottom-20 right-4 bg-black rounded-lg overflow-hidden border-2 border-white">
-          <div ref={localVideoRef} className="w-full h-full" />
-          {!isVideoEnabled && (
-            <div className="absolute inset-0 flex items-center justify-center text-white bg-gray-800">
-              <VideoOff className="h-8 w-8" />
+        {/* Remote Video */}
+        <div className="relative bg-gray-800 rounded-lg overflow-hidden">
+          <div 
+            ref={remoteVideoRef}
+            className="w-full h-64 lg:h-96 bg-gray-700 flex items-center justify-center"
+          >
+            {remoteUsers.length === 0 && isJoined && (
+              <div className="text-white text-center">
+                <p>Waiting for the other participant to join...</p>
+              </div>
+            )}
+          </div>
+          {remoteUsers.length > 0 && (
+            <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
+              {session?.profiles?.full_name || 'Participant'}
             </div>
           )}
         </div>
       </div>
 
       {/* Controls */}
-      <div className="h-20 bg-slate-800 flex items-center justify-center gap-4">
-        {!isJoined ? (
+      {isJoined && (
+        <div className="bg-gray-800 p-4 flex justify-center space-x-4">
           <Button
-            onClick={joinChannel}
-            disabled={isConnecting}
-            className="bg-green-600 hover:bg-green-700 text-white px-8 py-3"
+            variant={isAudioEnabled ? "default" : "destructive"}
+            size="lg"
+            onClick={toggleAudio}
+            className="rounded-full w-12 h-12"
           >
-            {isConnecting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Connecting...
-              </>
-            ) : (
-              <>
-                <Phone className="mr-2 h-4 w-4" />
-                Join Session
-              </>
-            )}
+            {isAudioEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
           </Button>
-        ) : (
-          <>
-            <Button
-              onClick={toggleAudio}
-              variant={isAudioEnabled ? "secondary" : "destructive"}
-              size="lg"
-            >
-              {isAudioEnabled ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
-            </Button>
-            
-            <Button
-              onClick={toggleVideo}
-              variant={isVideoEnabled ? "secondary" : "destructive"}
-              size="lg"
-            >
-              {isVideoEnabled ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
-            </Button>
-            
-            <Button
-              onClick={leaveChannel}
-              variant="destructive"
-              size="lg"
-              className="px-8"
-            >
-              <PhoneOff className="mr-2 h-4 w-4" />
-              End Session
-            </Button>
-          </>
-        )}
-      </div>
+          
+          <Button
+            variant={isVideoEnabled ? "default" : "destructive"}
+            size="lg"
+            onClick={toggleVideo}
+            className="rounded-full w-12 h-12"
+          >
+            {isVideoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
+          </Button>
+          
+          <Button
+            variant="destructive"
+            size="lg"
+            onClick={leaveSession}
+            className="rounded-full w-12 h-12"
+          >
+            <PhoneOff className="w-5 h-5" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

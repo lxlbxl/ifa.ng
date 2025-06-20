@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { CheckCircle, MapPin } from 'lucide-react';
 
 interface BabalawoProfile {
   id: string;
@@ -31,33 +32,54 @@ const BabalawoCard: React.FC<BabalawoCardProps> = ({
   onBookSession,
   onViewProfile
 }) => {
+  const displayName = babalawo.profiles?.full_name || "Babalawo";
+  const isVerified = babalawo.verification_status === 'approved';
+  
   return (
     <div className="bg-white rounded-xl shadow-md p-4 sm:p-5 flex flex-col items-center text-center fade-in">
       {/* Avatar */}
-      <Avatar className="w-16 h-16 sm:w-20 sm:h-20 mb-3 border-2 border-primary">
-        {babalawo.profiles?.avatar_url ? (
-          <AvatarImage
-            src={babalawo.profiles.avatar_url}
-            alt={babalawo.profiles.full_name || "Babalawo"}
-          />
-        ) : (
-          <AvatarFallback className="text-lg sm:text-xl">
-            {babalawo.profiles?.full_name
-              ? babalawo.profiles.full_name.charAt(0).toUpperCase()
-              : "B"}
-          </AvatarFallback>
+      <div className="relative mb-3">
+        <Avatar className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-primary">
+          {babalawo.profiles?.avatar_url ? (
+            <AvatarImage
+              src={babalawo.profiles.avatar_url}
+              alt={displayName}
+            />
+          ) : (
+            <AvatarFallback className="text-lg sm:text-xl bg-primary/10 text-primary">
+              {displayName.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          )}
+        </Avatar>
+        {isVerified && (
+          <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1">
+            <CheckCircle className="w-4 h-4 text-white" />
+          </div>
         )}
-      </Avatar>
+      </div>
       
-      {/* Name */}
-      <div className="font-semibold text-base sm:text-lg text-gray-900 mb-1 text-center">
-        {babalawo.profiles?.full_name || "Babalawo"}
+      {/* Name and Title */}
+      <div className="mb-2">
+        <div className="font-semibold text-base sm:text-lg text-gray-900 mb-1 text-center">
+          {displayName}
+        </div>
+        <div className="text-sm text-gray-600">
+          Ifa Priest & Spiritual Guide
+        </div>
       </div>
       
       {/* Rating and Sessions */}
       <div className="text-xs sm:text-sm text-gray-600 mb-2">
         ⭐ {babalawo.rating || 0} • {babalawo.total_sessions || 0} sessions
       </div>
+      
+      {/* Location/Timezone */}
+      {babalawo.timezone && (
+        <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
+          <MapPin className="w-3 h-3" />
+          <span>{babalawo.timezone}</span>
+        </div>
+      )}
       
       {/* Specialties */}
       {babalawo.specialties && babalawo.specialties.length > 0 && (
@@ -67,6 +89,11 @@ const BabalawoCard: React.FC<BabalawoCardProps> = ({
               {specialty}
             </span>
           ))}
+          {babalawo.specialties.length > 2 && (
+            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+              +{babalawo.specialties.length - 2} more
+            </span>
+          )}
         </div>
       )}
       

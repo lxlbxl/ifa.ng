@@ -44,19 +44,6 @@ const BabalawoGrid: React.FC<BabalawoGridProps> = ({
       {babalawos.map((babalawo) => (
         <BabalawoCard
           key={babalawo.id}
-          babalawo={bab) => {
-    return (
-      <div className="text-center py-8">
-        <p className="text-gray-500">No verified babalawos available at the moment.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-      {babalawos.map((babalawo) => (
-        <BabalawoCard
-          key={babalawo.id}
           babalawo={babalawo}
           onBookSession={onBookSession}
           onViewProfile={onViewProfile}

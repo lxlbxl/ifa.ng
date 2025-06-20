@@ -1,5 +1,6 @@
+
 import React, { useEffect, useState } from 'react';
-import { Star, Calendar, CheckCircle } from 'lucide-react';
+import { Star, Calendar, CheckCircle, MapPin } from 'lucide-react';
 import BookSessionModal from "./BookSessionModal";
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
@@ -16,6 +17,7 @@ interface BabalawoProfile {
   nextAvailable?: string;
   price?: string;
   hourly_rate?: number;
+  timezone?: string;
 }
 
 const FindBabalawo = () => {
@@ -37,7 +39,8 @@ const FindBabalawo = () => {
           total_sessions,
           verification_status,
           is_active,
-          hourly_rate
+          hourly_rate,
+          timezone
         `)
         .eq('verification_status', 'approved')
         .eq('is_active', true);
@@ -79,6 +82,7 @@ const FindBabalawo = () => {
           nextAvailable: 'Flexible',
           hourly_rate: b.hourly_rate ? Number(b.hourly_rate) : 15000,
           price: b.hourly_rate ? `₦${Number(b.hourly_rate).toLocaleString()}/hr` : '₦15,000/hr',
+          timezone: b.timezone || 'UTC',
         };
       });
 
@@ -112,7 +116,7 @@ const FindBabalawo = () => {
               {babalawos.map((babalawo) => (
                 <div key={babalawo.id} className="bg-white p-4 sm:p-6 rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
                   <div className="text-center mb-4">
-                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <div className="relative w-12 h-12 sm:w-16 sm:h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
                       {babalawo.avatar_url ?
                         <img
                           src={babalawo.avatar_url}
@@ -123,15 +127,26 @@ const FindBabalawo = () => {
                           {babalawo.full_name?.charAt(0).toUpperCase() || 'B'}
                         </span>
                       }
-                    </div>
-                    <div className="flex items-center justify-center mb-1">
-                      <h3 className="font-semibold text-sm sm:text-base text-gray-800">{babalawo.full_name}</h3>
                       {babalawo.verified && (
-                        <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 ml-1" />
+                        <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1">
+                          <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-white" />
+                        </div>
                       )}
                     </div>
+                    <div className="mb-1">
+                      <h3 className="font-semibold text-sm sm:text-base text-gray-800">{babalawo.full_name}</h3>
+                    </div>
                     <p className="text-xs sm:text-sm text-gray-500">{babalawo.title}</p>
+                    
+                    {/* Location/Timezone */}
+                    {babalawo.timezone && (
+                      <div className="flex items-center justify-center gap-1 text-xs text-gray-500 mt-1">
+                        <MapPin className="w-3 h-3" />
+                        <span>{babalawo.timezone}</span>
+                      </div>
+                    )}
                   </div>
+                  
                   <div className="mb-4">
                     <div className="flex items-center justify-center mb-2">
                       <div className="flex items-center">
@@ -144,11 +159,12 @@ const FindBabalawo = () => {
                       </div>
                     </div>
                   </div>
+                  
                   <div className="mb-4">
                     <h4 className="text-xs sm:text-sm font-medium text-gray-700 mb-2">Specialties:</h4>
                     <div className="flex flex-wrap gap-1">
                       {(babalawo.specialties && babalawo.specialties.length > 0) ? (
-                        babalawo.specialties.map((specialty, index) => (
+                        babalawo.specialties.slice(0, 2).map((specialty, index) => (
                           <span key={index} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
                             {specialty}
                           </span>
@@ -156,8 +172,14 @@ const FindBabalawo = () => {
                       ) : (
                         <span className="text-gray-400 text-xs">None listed</span>
                       )}
+                      {babalawo.specialties && babalawo.specialties.length > 2 && (
+                        <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                          +{babalawo.specialties.length - 2} more
+                        </span>
+                      )}
                     </div>
                   </div>
+                  
                   <div className="mb-4 space-y-2">
                     <div className="flex items-center text-xs sm:text-sm text-gray-600">
                       <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
@@ -167,6 +189,7 @@ const FindBabalawo = () => {
                       ₦{(babalawo.hourly_rate || 15000).toLocaleString()}/session
                     </div>
                   </div>
+                  
                   <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                     <button
                       className="flex-1 px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-xs sm:text-sm"
@@ -191,7 +214,7 @@ const FindBabalawo = () => {
           )}
         </>
       )}
-      {/* Book session modal - controlled by local state */}
+      
       <BookSessionModal
         open={!!bookingBabalawo}
         onOpenChange={(open) => setBookingBabalawo(open ? bookingBabalawo : null)}

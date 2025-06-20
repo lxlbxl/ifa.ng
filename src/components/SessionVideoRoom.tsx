@@ -25,11 +25,15 @@ const SessionVideoRoom = () => {
     );
   }
   
-  if (error || !session) {
+  if (error || !session || !sessionId) {
     return <div className="text-center mt-8 text-red-600">Session not found or you do not have access.</div>;
   }
 
-  return <AgoraVideoRoom />;
+  const handleLeave = () => {
+    window.location.href = "/dashboard";
+  };
+
+  return <AgoraVideoRoom sessionId={sessionId} onLeave={handleLeave} />;
 };
 
 export default SessionVideoRoom;

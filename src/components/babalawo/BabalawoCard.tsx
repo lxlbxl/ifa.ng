@@ -70,7 +70,7 @@ const BabalawoCard: React.FC<BabalawoCardProps> = ({
       
       {/* Rating and Sessions */}
       <div className="text-xs sm:text-sm text-gray-600 mb-2">
-        ⭐ {babalawo.rating || 0} • {babalawo.total_sessions || 0} sessions
+        ⭐ {babalawo.rating || 5.0} • {babalawo.total_sessions || 0} sessions
       </div>
       
       {/* Location/Timezone */}

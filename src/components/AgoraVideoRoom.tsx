@@ -1,13 +1,8 @@
 
-import { useEffect, useRef, useState } from 'react';
-import AgoraRTC, { IAgoraRTCRemoteUser, ICameraVideoTrack, IMicrophoneAudioTrack } from 'agora-rtc-sdk-ng';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mic, MicOff, Video, VideoOff, Phone, Settings } from 'lucide-react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { toast } from '@/hooks/use-toast';
+import React, { useState, useEffect, useRef } from "react";
+import AgoraRTC, { IAgoraRTCRemoteUser, ICameraVideoTrack, IMicrophoneAudioTrack } from "agora-rtc-sdk-ng";
+import { Button } from "@/components/ui/button";
+import { Mic, MicOff, Video, VideoOff, PhoneOff } from "lucide-react";
 
 interface AgoraVideoRoomProps {
   sessionId: string;
@@ -15,128 +10,92 @@ interface AgoraVideoRoomProps {
 }
 
 const AgoraVideoRoom: React.FC<AgoraVideoRoomProps> = ({ sessionId, onLeave }) => {
-  const { user } = useAuth();
-  const [client] = useState(() => AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' }));
   const [localVideoTrack, setLocalVideoTrack] = useState<ICameraVideoTrack | null>(null);
   const [localAudioTrack, setLocalAudioTrack] = useState<IMicrophoneAudioTrack | null>(null);
   const [remoteUsers, setRemoteUsers] = useState<IAgoraRTCRemoteUser[]>([]);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [isJoined, setIsJoined] = useState(false);
-  const [sessionData, setSessionData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const localVideoRef = useRef<HTMLDivElement>(null);
   const remoteVideoRef = useRef<HTMLDivElement>(null);
+  const clientRef = useRef<any>(null);
 
   useEffect(() => {
-    const initializeSession = async () => {
+    const initializeAgora = async () => {
       try {
-        setLoading(true);
-        
-        // Fetch session data
-        const { data: session, error: sessionError } = await supabase
-          .from('sessions')
-          .select(`
-            *,
-            babalawos!inner (
-              id,
-              profiles (
-                id,
-                full_name,
-                avatar_url
-              )
-            )
-          `)
-          .eq('id', sessionId)
-          .single();
+        // Initialize Agora client
+        const client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+        clientRef.current = client;
 
-        if (sessionError) throw sessionError;
-        if (!session) throw new Error('Session not found');
-
-        setSessionData(session);
-
-        // Generate Agora token
-        const { data: tokenData, error: tokenError } = await supabase.functions.invoke('generate-agora-token', {
-          body: { 
-            session_id: sessionId,
-            role: session.user_id === user?.id ? 'user' : 'babalawo'
+        // Event handlers
+        client.on("user-published", async (user, mediaType) => {
+          await client.subscribe(user, mediaType);
+          if (mediaType === "video") {
+            const remoteVideoTrack = user.videoTrack;
+            if (remoteVideoTrack && remoteVideoRef.current) {
+              remoteVideoTrack.play(remoteVideoRef.current);
+            }
           }
+          if (mediaType === "audio") {
+            const remoteAudioTrack = user.audioTrack;
+            if (remoteAudioTrack) {
+              remoteAudioTrack.play();
+            }
+          }
+          setRemoteUsers(prevUsers => [...prevUsers.filter(u => u.uid !== user.uid), user]);
         });
 
-        if (tokenError) throw tokenError;
+        client.on("user-unpublished", (user) => {
+          setRemoteUsers(prevUsers => prevUsers.filter(u => u.uid !== user.uid));
+        });
 
-        const { channelName, token, uid } = tokenData;
+        client.on("user-left", (user) => {
+          setRemoteUsers(prevUsers => prevUsers.filter(u => u.uid !== user.uid));
+        });
 
-        // Initialize Agora client
-        await client.join(tokenData.appId, channelName, token, uid);
-        
-        // Create local tracks
+        // Get token from your backend
+        const response = await fetch('/api/agora-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId })
+        });
+        const { token } = await response.json();
+
+        // Join channel
+        await client.join(
+          process.env.REACT_APP_AGORA_APP_ID || "",
+          sessionId,
+          token,
+          null
+        );
+
+        // Create and publish local tracks
         const [videoTrack, audioTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
         setLocalVideoTrack(videoTrack);
         setLocalAudioTrack(audioTrack);
 
-        // Publish local tracks
-        await client.publish([videoTrack, audioTrack]);
-        
         // Play local video
         if (localVideoRef.current) {
           videoTrack.play(localVideoRef.current);
         }
 
+        // Publish tracks
+        await client.publish([videoTrack, audioTrack]);
         setIsJoined(true);
-        
-        // Log session start
-        await supabase.from('session_logs').insert({
-          session_id: sessionId,
-          user_id: user?.id,
-          action: 'joined',
-          metadata: { timestamp: new Date().toISOString() }
-        });
 
-      } catch (err: any) {
-        console.error('Failed to initialize session:', err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
+      } catch (error) {
+        console.error("Failed to initialize Agora:", error);
       }
     };
 
-    if (sessionId && user) {
-      initializeSession();
-    }
-
-    // Setup event listeners
-    const handleUserPublished = async (user: IAgoraRTCRemoteUser, mediaType: 'video' | 'audio') => {
-      await client.subscribe(user, mediaType);
-      
-      if (mediaType === 'video') {
-        setRemoteUsers(prev => [...prev.filter(u => u.uid !== user.uid), user]);
-        if (remoteVideoRef.current && user.videoTrack) {
-          user.videoTrack.play(remoteVideoRef.current);
-        }
-      }
-    };
-
-    const handleUserUnpublished = (user: IAgoraRTCRemoteUser) => {
-      setRemoteUsers(prev => prev.filter(u => u.uid !== user.uid));
-    };
-
-    const handleUserLeft = (user: IAgoraRTCRemoteUser) => {
-      setRemoteUsers(prev => prev.filter(u => u.uid !== user.uid));
-    };
-
-    client.on('user-published', handleUserPublished);
-    client.on('user-unpublished', handleUserUnpublished);
-    client.on('user-left', handleUserLeft);
+    initializeAgora();
 
     return () => {
-      client.off('user-published', handleUserPublished);
-      client.off('user-unpublished', handleUserUnpublished);
-      client.off('user-left', handleUserLeft);
+      if (clientRef.current) {
+        clientRef.current.leave();
+      }
     };
-  }, [sessionId, user, client]);
+  }, [sessionId]);
 
   const toggleVideo = async () => {
     if (localVideoTrack) {
@@ -152,139 +111,52 @@ const AgoraVideoRoom: React.FC<AgoraVideoRoomProps> = ({ sessionId, onLeave }) =
     }
   };
 
-  const leaveSession = async () => {
-    try {
-      // Stop and close local tracks
-      if (localVideoTrack) {
-        localVideoTrack.stop();
-        localVideoTrack.close();
-      }
-      if (localAudioTrack) {
-        localAudioTrack.stop();
-        localAudioTrack.close();
-      }
-
-      // Leave channel
-      await client.leave();
-      
-      // Log session end
-      await supabase.from('session_logs').insert({
-        session_id: sessionId,
-        user_id: user?.id,
-        action: 'left',
-        metadata: { timestamp: new Date().toISOString() }
-      });
-
-      // Update session end time
-      await supabase
-        .from('sessions')
-        .update({ session_ended_at: new Date().toISOString() })
-        .eq('id', sessionId);
-
-      onLeave();
-    } catch (err: any) {
-      console.error('Error leaving session:', err);
-      toast({
-        title: "Error",
-        description: "Failed to leave session properly",
-        variant: "destructive"
-      });
+  const handleLeave = async () => {
+    if (localVideoTrack) {
+      localVideoTrack.stop();
+      localVideoTrack.close();
     }
+    if (localAudioTrack) {
+      localAudioTrack.stop();
+      localAudioTrack.close();
+    }
+    if (clientRef.current) {
+      await clientRef.current.leave();
+    }
+    onLeave();
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Connecting to session...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-red-600">Connection Error</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 mb-4">{error}</p>
-            <Button onClick={onLeave} variant="outline" className="w-full">
-              Go Back
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const babalawoProfile = sessionData?.babalawos?.profiles;
 
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col">
-      {/* Header */}
-      <div className="bg-gray-800 p-4 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={babalawoProfile?.avatar_url} />
-            <AvatarFallback>{babalawoProfile?.full_name?.[0] || 'B'}</AvatarFallback>
-          </Avatar>
-          <div>
-            <h2 className="text-white font-semibold">{babalawoProfile?.full_name || "Babalawo"}</h2>
-            <p className="text-gray-400 text-sm">Consultation Session</p>
-          </div>
-        </div>
-        <div className="text-white text-sm">
-          {isJoined ? 'Connected' : 'Connecting...'}
-        </div>
-      </div>
-
-      {/* Video Area */}
-      <div className="flex-1 flex">
-        {/* Remote Video (Babalawo) */}
-        <div className="flex-1 relative bg-gray-800">
-          <div ref={remoteVideoRef} className="w-full h-full"></div>
-          {remoteUsers.length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center text-white">
-                <Avatar className="h-24 w-24 mx-auto mb-4">
-                  <AvatarImage src={babalawoProfile?.avatar_url} />
-                  <AvatarFallback className="text-2xl">{babalawoProfile?.full_name?.[0] || 'B'}</AvatarFallback>
-                </Avatar>
-                <p>Waiting for {babalawoProfile?.full_name || "Babalawo"} to join...</p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Local Video (User) */}
-        <div className="w-80 bg-gray-700 relative">
-          <div ref={localVideoRef} className="w-full h-full"></div>
-          {!isVideoEnabled && (
-            <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
-              <Avatar className="h-16 w-16">
-                <AvatarFallback className="text-xl">{user?.email?.[0]?.toUpperCase()}</AvatarFallback>
-              </Avatar>
-            </div>
-          )}
-          <div className="absolute bottom-4 left-4 text-white text-sm">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+        {/* Local Video */}
+        <div className="relative bg-gray-800 rounded-lg overflow-hidden">
+          <div ref={localVideoRef} className="w-full h-full min-h-[300px]" />
+          <div className="absolute bottom-4 left-4 text-white bg-black bg-opacity-50 px-2 py-1 rounded">
             You
           </div>
+        </div>
+
+        {/* Remote Video */}
+        <div className="relative bg-gray-800 rounded-lg overflow-hidden">
+          <div ref={remoteVideoRef} className="w-full h-full min-h-[300px]" />
+          {remoteUsers.length > 0 && (
+            <div className="absolute bottom-4 left-4 text-white bg-black bg-opacity-50 px-2 py-1 rounded">
+              Remote User
+            </div>
+          )}
         </div>
       </div>
 
       {/* Controls */}
-      <div className="bg-gray-800 p-4 flex justify-center gap-4">
+      <div className="flex justify-center gap-4 p-6 bg-gray-800">
         <Button
           onClick={toggleAudio}
           variant={isAudioEnabled ? "default" : "destructive"}
           size="lg"
           className="rounded-full w-12 h-12 p-0"
         >
-          {isAudioEnabled ? <Mic className="h-5 w-5" /> : <MicOff className="h-5 w-5" />}
+          {isAudioEnabled ? <Mic className="h-6 w-6" /> : <MicOff className="h-6 w-6" />}
         </Button>
         
         <Button
@@ -293,16 +165,16 @@ const AgoraVideoRoom: React.FC<AgoraVideoRoomProps> = ({ sessionId, onLeave }) =
           size="lg"
           className="rounded-full w-12 h-12 p-0"
         >
-          {isVideoEnabled ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
+          {isVideoEnabled ? <Video className="h-6 w-6" /> : <VideoOff className="h-6 w-6" />}
         </Button>
-
+        
         <Button
-          onClick={leaveSession}
+          onClick={handleLeave}
           variant="destructive"
           size="lg"
           className="rounded-full w-12 h-12 p-0"
         >
-          <Phone className="h-5 w-5" />
+          <PhoneOff className="h-6 w-6" />
         </Button>
       </div>
     </div>

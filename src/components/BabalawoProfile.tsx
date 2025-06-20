@@ -68,20 +68,6 @@ const BabalawoProfile = () => {
       return;
     }
     
-    const babalawoForModal = {
-      id: babalawo.id,
-      full_name: displayName,
-      avatar_url: avatarUrl,
-      title: "Ifa Priest & Spiritual Guide",
-      specialties: Array.isArray(babalawo.specialties) ? babalawo.specialties : [],
-      rating: babalawo.rating ? Number(babalawo.rating) : 5,
-      reviews: babalawo.total_sessions ?? 0,
-      verified: babalawo.verification_status === 'approved',
-      nextAvailable: 'Flexible',
-      hourly_rate: babalawo.hourly_rate ? Number(babalawo.hourly_rate) : 15000,
-      price: babalawo.hourly_rate ? `₦${Number(babalawo.hourly_rate).toLocaleString()}/hr` : '₦15,000/hr',
-    };
-    
     setShowBookingModal(true);
   };
 

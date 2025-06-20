@@ -58,7 +58,8 @@ const BabalawoProfile = () => {
     );
   }
 
-  const profile = babalawo.profiles;
+  // Access the profile data correctly - it's an array from the join
+  const profile = Array.isArray(babalawo.profiles) ? babalawo.profiles[0] : babalawo.profiles;
   const displayName = profile?.full_name || "Babalawo";
   const avatarUrl = profile?.avatar_url;
 

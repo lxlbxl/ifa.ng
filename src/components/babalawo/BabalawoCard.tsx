@@ -33,16 +33,19 @@ const BabalawoCard: React.FC<BabalawoCardProps> = ({
   onViewProfile
 }) => {
   const displayName = babalawo.profiles?.full_name || "Babalawo";
+  const avatarUrl = babalawo.profiles?.avatar_url;
   const isVerified = babalawo.verification_status === 'approved';
+  
+  console.log('[BabalawoCard] Rendering babalawo:', babalawo.id, 'with name:', displayName);
   
   return (
     <div className="bg-white rounded-xl shadow-md p-4 sm:p-5 flex flex-col items-center text-center fade-in">
       {/* Avatar */}
       <div className="relative mb-3">
         <Avatar className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-primary">
-          {babalawo.profiles?.avatar_url ? (
+          {avatarUrl ? (
             <AvatarImage
-              src={babalawo.profiles.avatar_url}
+              src={avatarUrl}
               alt={displayName}
             />
           ) : (

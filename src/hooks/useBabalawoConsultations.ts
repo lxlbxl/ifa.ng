@@ -21,7 +21,7 @@ const fetchConsultations = async (babalawoId: string) => {
     .select("id, session_date, start_time, end_time, status, user_id, notes")
     .eq("babalawo_id", babalawoId)
     .in("status", ["completed", "cancelled"])
-    .lt("session_date", todayStr)
+    .lte("session_date", todayStr)
     .order("session_date", { ascending: false })
     .order("start_time", { ascending: false });
 

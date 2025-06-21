@@ -34,6 +34,7 @@ const BabalawoManagement = () => {
     experience_years: "",
     bio: "",
     specialties: "",
+    commission_percentage: "",
   });
   const [addForm, setAddForm] = useState({
     email: "",
@@ -43,6 +44,7 @@ const BabalawoManagement = () => {
     hourly_rate: "",
     bio: "",
     languages: "",
+    commission_percentage: "",
   });
   const [isAdding, setIsAdding] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -95,6 +97,7 @@ const BabalawoManagement = () => {
     hourly_rate: "",
     bio: "",
     languages: "",
+    commission_percentage: "",
   });
 
   const resetEditForm = () => setEditForm({
@@ -102,6 +105,7 @@ const BabalawoManagement = () => {
     experience_years: "",
     bio: "",
     specialties: "",
+    commission_percentage: "",
   });
 
   const handleAddBabalawo = async () => {
@@ -401,6 +405,7 @@ const BabalawoManagement = () => {
                               experience_years: babalawo.experience_years?.toString() || "",
                               bio: babalawo.bio || "",
                               specialties: babalawo.specialties?.join(", ") || "",
+                              commission_percentage: (babalawo as any).commission_babalawo_percent?.toString() || "",
                             });
                             setIsEditModalOpen(true);
                           }}>

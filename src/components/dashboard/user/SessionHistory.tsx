@@ -182,9 +182,10 @@ const SessionHistory = () => {
                         <User className="h-6 w-6 text-primary" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-800">
-                          {session.babalawo?.profile?.full_name || 'Babalawo'}
-                        </h3>
+                      {(() => { console.log('[SessionHistory] session.babalawo.profile:', session.babalawo?.profile); return null; })()}
+                      <h3 className="font-semibold text-gray-800">
+                        {session.babalawo?.profile?.full_name ?? 'Babalawo (Name Missing)'}
+                      </h3>
                         <p className="text-sm text-gray-500 mb-2">
                           {session.babalawo?.specialties?.join(', ') || 'General consultation'}
                         </p>

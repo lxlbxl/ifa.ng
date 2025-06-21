@@ -1,6 +1,17 @@
 
 import React from 'react';
-import { Home, Calendar, History, Users, Settings, LifeBuoy } from 'lucide-react';
+import { 
+  Home, 
+  Calendar, 
+  History, 
+  Users, 
+  Settings, 
+  LifeBuoy, 
+  BookOpen, 
+  CreditCard, 
+  Bell, 
+  Award 
+} from 'lucide-react';
 
 interface UserSidebarDrawerContentProps {
   activeSection: string;
@@ -11,7 +22,11 @@ const menuItems = [
   { icon: Home, text: 'Dashboard', section: 'dashboard' },
   { icon: Calendar, text: 'My Sessions', section: 'my-sessions' },
   { icon: History, text: 'Session History', section: 'session-history' },
+  { icon: BookOpen, text: 'Spiritual Journey', section: 'spiritual-journey' },
   { icon: Users, text: 'Find a Babalawo', section: 'find-babalawo' },
+  { icon: CreditCard, text: 'Transactions', section: 'transaction-history' },
+  { icon: Bell, text: 'Notifications', section: 'notifications' },
+  { icon: Award, text: 'Loyalty & Rewards', section: 'loyalty' },
   { icon: Settings, text: 'Settings', section: 'settings' },
 ];
 

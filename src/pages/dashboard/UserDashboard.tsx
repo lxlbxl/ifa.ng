@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import Sidebar from '@/components/dashboard/user/Sidebar';
 import DashboardHeader from '@/components/dashboard/user/DashboardHeader';
@@ -11,6 +10,10 @@ import Settings from '@/components/dashboard/user/Settings';
 import TransactionHistory from '@/components/dashboard/user/TransactionHistory';
 import FeaturedBabalawos from '@/components/FeaturedBabalawos';
 import WalletWidget from '@/components/dashboard/user/WalletWidget';
+import SpiritualJourney from '@/components/dashboard/user/SpiritualJourney';
+import Notifications from '@/components/dashboard/user/Notifications';
+import Loyalty from '@/components/dashboard/user/Loyalty';
+import Support from '@/components/dashboard/user/Support';
 
 // Updated section content for card-based, modern layout
 const DashboardContent = () => (
@@ -48,19 +51,15 @@ const DashboardContent = () => (
   </div>
 );
 
-const Support = () => (
-  <div className="p-6 sm:p-8 lg:p-10 bg-white rounded-2xl shadow-lg">
-    <h2 className="text-xl sm:text-2xl font-bold mb-2 text-primary">Support</h2>
-    <p>Get support. We are here to help!</p>
-  </div>
-);
-
 const SECTION_MAP: { [key: string]: React.ReactNode } = {
   'dashboard': <DashboardContent />,
   'my-sessions': <MySessions />,
   'session-history': <SessionHistory />,
-  'transaction-history': <TransactionHistory />,
+  'spiritual-journey': <SpiritualJourney />,
   'find-babalawo': <FindBabalawo />,
+  'transaction-history': <TransactionHistory />,
+  'notifications': <Notifications />,
+  'loyalty': <Loyalty />,
   'settings': <Settings />,
   'support': <Support />,
 };

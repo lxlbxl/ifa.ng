@@ -1,6 +1,18 @@
 
 import React from 'react';
-import { Home, Calendar, History, CreditCard, Search, Settings, HelpCircle, Wallet } from 'lucide-react';
+import { 
+  Home, 
+  Calendar, 
+  History, 
+  CreditCard, 
+  Search, 
+  Settings, 
+  HelpCircle, 
+  Wallet, 
+  BookOpen, 
+  Bell, 
+  Award 
+} from 'lucide-react';
 
 interface SidebarProps {
   activeSection: string;
@@ -12,8 +24,11 @@ const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange }) => 
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'my-sessions', label: 'My Sessions', icon: Calendar },
     { id: 'session-history', label: 'Session History', icon: History },
-    { id: 'transaction-history', label: 'Transactions', icon: CreditCard },
+    { id: 'spiritual-journey', label: 'Spiritual Journey', icon: BookOpen },
     { id: 'find-babalawo', label: 'Find Babalawo', icon: Search },
+    { id: 'transaction-history', label: 'Transactions', icon: CreditCard },
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'loyalty', label: 'Loyalty & Rewards', icon: Award },
     { id: 'settings', label: 'Settings', icon: Settings },
     { id: 'support', label: 'Support', icon: HelpCircle },
   ];

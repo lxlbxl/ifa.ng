@@ -1,18 +1,87 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useUserSessions } from '@/hooks/useUserSessions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Calendar, Video, AlertCircle } from 'lucide-react';
+import { 
+  Loader2, 
+  Calendar, 
+  Video, 
+  AlertCircle, 
+  Clock, 
+  CheckCircle, 
+  XCircle, 
+  AlertTriangle,
+  MoreHorizontal
+} from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { format, isAfter, subMinutes } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from '@/components/ui/dialog';
+import { format, isAfter, subMinutes, differenceInMinutes, differenceInHours, differenceInDays } from 'date-fns';
 import FindBabalawo from './FindBabalawo';
 
 const UpcomingSessions = () => {
   const { data: sessions, isLoading, isError, error } = useUserSessions();
   const [showFinder, setShowFinder] = useState(false);
+  const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [selectedSession, setSelectedSession] = useState<any>(null);
+  const [countdowns, setCountdowns] = useState<{[key: string]: string}>({});
 
-  const upcomingSessions = sessions?.filter(s => new Date(s.session_date) >= new Date() && s.status === 'confirmed');
+  const upcomingSessions = sessions?.filter(s => 
+    (new Date(`${s.session_date}T${s.start_time}`) >= new Date() && 
+    ['confirmed', 'pending', 'awaiting_payment'].includes(s.status))
+  );
+
+  // Update countdowns every minute
+  useEffect(() => {
+    if (!upcomingSessions || upcomingSessions.length === 0) return;
+    
+    const updateCountdowns = () => {
+      const newCountdowns: {[key: string]: string} = {};
+      
+      upcomingSessions.forEach((session: any) => {
+        const sessionDateTime = new Date(`${session.session_date}T${session.start_time}`);
+        const now = new Date();
+        const diffMinutes = differenceInMinutes(sessionDateTime, now);
+        const diffHours = differenceInHours(sessionDateTime, now);
+        const diffDays = differenceInDays(sessionDateTime, now);
+        
+        let countdownText = '';
+        
+        if (diffDays > 0) {
+          countdownText = `${diffDays}d ${diffHours % 24}h`;
+        } else if (diffHours > 0) {
+          countdownText = `${diffHours}h ${diffMinutes % 60}m`;
+        } else if (diffMinutes > 0) {
+          countdownText = `${diffMinutes}m`;
+        } else {
+          countdownText = 'Now';
+        }
+        
+        newCountdowns[session.id] = countdownText;
+      });
+      
+      setCountdowns(newCountdowns);
+    };
+    
+    updateCountdowns();
+    const interval = setInterval(updateCountdowns, 60000); // Update every minute
+    
+    return () => clearInterval(interval);
+  }, [upcomingSessions]);
 
   const canJoinSession = (session: any) => {
     const sessionDateTime = new Date(`${session.session_date}T${session.start_time}`);
@@ -20,6 +89,57 @@ const UpcomingSessions = () => {
     // Allow joining 10 minutes before the session
     const joinTime = subMinutes(sessionDateTime, 10);
     return isAfter(now, joinTime);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Confirmed</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">Pending</Badge>;
+      case 'awaiting_payment':
+        return <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-200">Awaiting Payment</Badge>;
+      case 'cancelled':
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-200">Cancelled</Badge>;
+      default:
+        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200">{status}</Badge>;
+    }
+  };
+
+  const getSessionDuration = (startTime: string, endTime: string) => {
+    const start = new Date(`2000-01-01T${startTime}`);
+    const end = new Date(`2000-01-01T${endTime}`);
+    const durationMinutes = differenceInMinutes(end, start);
+    
+    if (durationMinutes < 60) {
+      return `${durationMinutes} min`;
+    } else {
+      const hours = Math.floor(durationMinutes / 60);
+      const minutes = durationMinutes % 60;
+      return minutes > 0 ? `${hours}h ${minutes}m` : `${hours}h`;
+    }
+  };
+
+  const handleReschedule = (session: any) => {
+    setSelectedSession(session);
+    setShowRescheduleDialog(true);
+  };
+
+  const handleCancel = (session: any) => {
+    setSelectedSession(session);
+    setShowCancelDialog(true);
+  };
+
+  const confirmReschedule = () => {
+    // Reschedule logic would go here
+    alert('Reschedule request sent. You will be notified once the Babalawo confirms the new time.');
+    setShowRescheduleDialog(false);
+  };
+
+  const confirmCancel = () => {
+    // Cancel logic would go here
+    alert('Session cancelled successfully.');
+    setShowCancelDialog(false);
   };
 
   const renderContent = () => {
@@ -52,44 +172,188 @@ const UpcomingSessions = () => {
     }
 
     return (
-      <div className="space-y-3 sm:space-y-4">
+      <div className="space-y-4 sm:space-y-5">
         {upcomingSessions.map((session: any) => (
-          <div key={session.id} className="bg-white p-3 sm:p-4 rounded-lg shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-            <div className="flex items-center gap-3 sm:gap-4">
-              <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
-                <AvatarImage src={session.babalawos?.profiles?.avatar_url} />
-                <AvatarFallback>{session.babalawos?.profiles?.full_name?.[0] || 'B'}</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-semibold text-sm sm:text-base text-gray-800">{session.babalawos?.profiles?.full_name || "Babalawo"}</p>
-                <p className="text-xs sm:text-sm text-gray-500">
-                  {format(new Date(`${session.session_date}T${session.start_time}`), 'EEE, MMM d, yyyy')} at {format(new Date(`${session.session_date}T${session.start_time}`), 'p')}
-                </p>
+          <Card key={session.id} className="overflow-hidden">
+            <div className="bg-white p-4 sm:p-5 flex flex-col gap-4">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <Avatar className="h-12 w-12 sm:h-14 sm:w-14 border-2 border-primary/10">
+                    <AvatarImage src={session.babalawo?.profile?.avatar_url} />
+                    <AvatarFallback>{session.babalawo?.profile?.full_name?.[0] || 'B'}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-base sm:text-lg text-gray-800">
+                        {session.babalawo?.profile?.full_name || "Babalawo"}
+                      </h3>
+                      {getStatusBadge(session.status)}
+                    </div>
+                    <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                      {session.babalawo?.specialties?.join(', ') || "Ifá Consultation"}
+                    </p>
+                  </div>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreHorizontal className="h-4 w-4" />
+                      <span className="sr-only">More options</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleReschedule(session)}>
+                      <Calendar className="mr-2 h-4 w-4" />
+                      <span>Reschedule</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleCancel(session)} className="text-red-600">
+                      <XCircle className="mr-2 h-4 w-4" />
+                      <span>Cancel Session</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-sm">
+                <div className="flex flex-col">
+                  <span className="text-gray-500 text-xs mb-1 flex items-center">
+                    <Calendar className="h-3 w-3 mr-1" /> Date
+                  </span>
+                  <span className="font-medium">
+                    {format(new Date(session.session_date), 'EEE, MMM d, yyyy')}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-gray-500 text-xs mb-1 flex items-center">
+                    <Clock className="h-3 w-3 mr-1" /> Time
+                  </span>
+                  <span className="font-medium">
+                    {format(new Date(`2000-01-01T${session.start_time}`), 'h:mm a')}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-gray-500 text-xs mb-1 flex items-center">
+                    <Clock className="h-3 w-3 mr-1" /> Duration
+                  </span>
+                  <span className="font-medium">
+                    {getSessionDuration(session.start_time, session.end_time)}
+                  </span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-gray-500 text-xs mb-1 flex items-center">
+                    <AlertCircle className="h-3 w-3 mr-1" /> Countdown
+                  </span>
+                  <span className="font-medium text-primary">
+                    {countdowns[session.id] || 'Calculating...'}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 pt-2 border-t border-gray-100">
+                <div className="flex items-center text-xs text-gray-500">
+                  <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
+                  <span>
+                    {session.status === 'confirmed' 
+                      ? 'Your session is confirmed and ready to go!' 
+                      : session.status === 'pending' 
+                        ? 'Waiting for Babalawo to confirm' 
+                        : 'Please complete payment to confirm'}
+                  </span>
+                </div>
+                <Button 
+                  className="w-full sm:w-auto"
+                  disabled={!canJoinSession(session) || session.status !== 'confirmed'}
+                  onClick={() => window.open(`/sessions/${session.id}/video`, "_blank")}
+                >
+                  <Video className="mr-2 h-4 w-4" />
+                  {canJoinSession(session) && session.status === 'confirmed' 
+                    ? "Join Session" 
+                    : session.status !== 'confirmed'
+                      ? "Session not ready"
+                      : "Available 10 min before"}
+                </Button>
               </div>
             </div>
-            <Button 
-              className="w-full sm:w-auto text-sm"
-              disabled={!canJoinSession(session)}
-              onClick={() => window.open(`/sessions/${session.id}/video`, "_blank")}
-            >
-              <Video className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              {canJoinSession(session) ? "Join Session" : "Available 10 min before"}
-            </Button>
-          </div>
+          </Card>
         ))}
       </div>
     );
   };
 
   return (
-    <Card className="shadow-lg bg-white/50">
-      <CardHeader className="pb-3 sm:pb-6">
-        <CardTitle className="text-lg sm:text-xl">Upcoming Consultations</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {renderContent()}
-      </CardContent>
-    </Card>
+    <>
+      <Card className="shadow-lg bg-white/50">
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="text-lg sm:text-xl">Your Upcoming Sessions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {renderContent()}
+        </CardContent>
+      </Card>
+
+      {/* Reschedule Dialog */}
+      <Dialog open={showRescheduleDialog} onOpenChange={setShowRescheduleDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reschedule Session</DialogTitle>
+            <DialogDescription>
+              You can request to reschedule your session with {selectedSession?.babalawo?.profile?.full_name || "the Babalawo"}.
+              The Babalawo will need to confirm the new time.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-gray-500 mb-4">
+              Current session: {selectedSession && format(new Date(selectedSession.session_date), 'EEE, MMM d, yyyy')} at {selectedSession && format(new Date(`2000-01-01T${selectedSession.start_time}`), 'h:mm a')}
+            </p>
+            <div className="bg-yellow-50 p-3 rounded-md flex items-start gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
+              <div>
+                <p className="text-sm text-yellow-700">
+                  Rescheduling less than 24 hours before your session may incur a fee.
+                </p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-500 mt-4">
+              Please note: This is a placeholder for the rescheduling interface. In a complete implementation, 
+              you would see a calendar and time picker here.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRescheduleDialog(false)}>Cancel</Button>
+            <Button onClick={confirmReschedule}>Request Reschedule</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Dialog */}
+      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Session</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel your session with {selectedSession?.babalawo?.profile?.full_name || "the Babalawo"}?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-gray-500 mb-4">
+              Session details: {selectedSession && format(new Date(selectedSession.session_date), 'EEE, MMM d, yyyy')} at {selectedSession && format(new Date(`2000-01-01T${selectedSession.start_time}`), 'h:mm a')}
+            </p>
+            <div className="bg-red-50 p-3 rounded-md flex items-start gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5" />
+              <div>
+                <p className="text-sm text-red-700">
+                  Cancellations less than 24 hours before your session may not be eligible for a refund.
+                </p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCancelDialog(false)}>Keep Session</Button>
+            <Button variant="destructive" onClick={confirmCancel}>Cancel Session</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

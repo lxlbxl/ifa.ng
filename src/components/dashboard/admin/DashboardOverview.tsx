@@ -1,11 +1,11 @@
 
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAdminStats } from "@/hooks/useAdminStats";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Star, User, TrendingUp, Clock, CheckCircle, Users, UserCheck, CreditCard, Activity } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { Calendar, Star, User, TrendingUp, Clock, CheckCircle, Users, UserCheck, CreditCard, Activity, AlertCircle } from "lucide-react";
 
 const DashboardOverview = () => {
   const { data, isLoading } = useAdminStats();
@@ -15,145 +15,166 @@ const DashboardOverview = () => {
       title: "Total Users",
       value: data?.totalUsers ?? 0,
       icon: Users,
-      color: "bg-blue-500",
-      bgColor: "bg-blue-50",
-      textColor: "text-blue-600"
+      color: "#3490dc",
     },
     {
       title: "Active Babalawos",
       value: data?.totalBabalawos ?? 0,
       icon: UserCheck,
-      color: "bg-green-500",
-      bgColor: "bg-green-50",
-      textColor: "text-green-600"
+      color: "#38c172",
     },
     {
-      title: "Today's Revenue",
-      value: `₦${data?.revenue?.today ?? 0}`,
-      icon: CreditCard,
-      color: "bg-purple-500",
-      bgColor: "bg-purple-50",
-      textColor: "text-purple-600"
+      title: "Cancelled Consultations",
+      value: data?.consultations?.cancelled ?? 0,
+      icon: Calendar,
+      color: "#e3342f",
     },
     {
       title: "Success Rate",
       value: `${data?.sessionSuccessRate ?? 0}%`,
       icon: TrendingUp,
-      color: "bg-orange-500",
-      bgColor: "bg-orange-50",
-      textColor: "text-orange-600"
-    }
+      color: "#f6993f",
+    },
+  ];
+
+  const revenueStats = [
+    {
+      title: "Today's Revenue",
+      value: `₦${data?.revenue?.today ?? 0}`,
+      icon: CreditCard,
+      color: "#9b59b6",
+    },
+    {
+      title: "This Week",
+      value: `₦${data?.revenue?.week ?? 0}`,
+      icon: CreditCard,
+      color: "#8e44ad",
+    },
+    {
+      title: "This Month",
+      value: `₦${data?.revenue?.month ?? 0}`,
+      icon: CreditCard,
+      color: "#7d3c98",
+    },
+    {
+      title: "All Time",
+      value: `₦${data?.revenue?.all ?? 0}`,
+      icon: CreditCard,
+      color: "#6c3483",
+    },
   ];
 
   return (
     <div className="space-y-6">
       {/* Quick Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {quickStats.map((stat, index) => (
-          <Card key={index} className="border-0 shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">{stat.title}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                </div>
-                <div className={`p-3 rounded-full ${stat.bgColor}`}>
-                  <stat.icon className={`w-6 h-6 ${stat.textColor}`} />
-                </div>
-              </div>
+        {quickStats.map((stat) => (
+          <Card key={stat.title} className="shadow-lg border-l-4 bg-white" style={{ borderLeftColor: stat.color }}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-500">{stat.title}</CardTitle>
+              <stat.icon className="h-5 w-5" style={{ color: stat.color }} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-800">{stat.value}</div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue Overview */}
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <Activity className="w-5 h-5 text-green-600" />
-              Revenue Overview
-            </CardTitle>
+      {/* Revenue Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {revenueStats.map((stat) => (
+          <Card key={stat.title} className="shadow-lg border-l-4 bg-white" style={{ borderLeftColor: stat.color }}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-500">{stat.title}</CardTitle>
+              <stat.icon className="h-5 w-5" style={{ color: stat.color }} />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-gray-800">{stat.value}</div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Session Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="shadow-lg border-l-4 bg-white" style={{ borderLeftColor: "#3490dc" }}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500">Upcoming Consultations</CardTitle>
+            <Calendar className="h-5 w-5" style={{ color: "#3490dc" }} />
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-600">This Week</span>
-                <span className="text-lg font-bold text-gray-900">₦{data?.revenue?.week ?? 0}</span>
-              </div>
-              <Progress value={75} className="h-2" />
-            </div>
-            <div className="space-y-3">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-600">All Time</span>
-                <span className="text-lg font-bold text-gray-900">₦{data?.revenue?.all ?? 0}</span>
-              </div>
-              <Progress value={100} className="h-2" />
-            </div>
+          <CardContent>
+            <div className="text-3xl font-bold text-gray-800">{data?.consultations?.upcoming ?? 0}</div>
           </CardContent>
         </Card>
-
-        {/* Session Statistics */}
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <Clock className="w-5 h-5 text-blue-600" />
-              Session Statistics
-            </CardTitle>
+        <Card className="shadow-lg border-l-4 bg-white" style={{ borderLeftColor: "#38c172" }}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500">Completed Consultations</CardTitle>
+            <CheckCircle className="h-5 w-5" style={{ color: "#38c172" }} />
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{data?.consultations?.upcoming ?? 0}</div>
-                <div className="text-sm text-gray-600">Upcoming</div>
-              </div>
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">{data?.consultations?.completed ?? 0}</div>
-                <div className="text-sm text-gray-600">Completed</div>
-              </div>
-            </div>
+          <CardContent>
+            <div className="text-3xl font-bold text-gray-800">{data?.consultations?.completed ?? 0}</div>
+          </CardContent>
+        </Card>
+        <Card className="shadow-lg border-l-4 bg-white" style={{ borderLeftColor: "#e3342f" }}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500">Cancelled Consultations</CardTitle>
+            <Calendar className="h-5 w-5" style={{ color: "#e3342f" }} />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold text-gray-800">{data?.consultations?.cancelled ?? 0}</div>
           </CardContent>
         </Card>
       </div>
 
+      {/* System Alerts */}
+      <Card className="shadow-lg border-l-4 bg-white" style={{ borderLeftColor: "#e74c3c" }}>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium text-gray-500">System Alerts</CardTitle>
+          <AlertCircle className="h-5 w-5" style={{ color: "#e74c3c" }} />
+        </CardHeader>
+        <CardContent>
+          <div className="text-3xl font-bold text-gray-800">{data?.systemAlerts?.failedPayments ?? 0} Failed Payments</div>
+        </CardContent>
+      </Card>
+
       {/* Bottom Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Babalawos */}
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <Star className="w-5 h-5 text-yellow-500" />
+        <Card className="shadow-lg border-l-4 bg-white" style={{ borderLeftColor: "#f1c40f" }}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
+              <Star className="h-5 w-5" style={{ color: "#f1c40f" }} />
               Top Performing Babalawos
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {(data?.topBabalawos ?? []).slice(0, 5).map((baba: any, index: number) => (
-                <div key={baba.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <div className="font-medium text-gray-900">Babalawo #{baba.id.slice(0, 6)}</div>
-                      <div className="text-sm text-gray-500">{baba.total_sessions ?? 0} sessions</div>
-                    </div>
-                  </div>
-                  <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-                    ★ {baba.rating ?? "N/A"}
-                  </Badge>
+          {(data?.topBabalowos ?? []).slice(0, 5).map((baba: any, index: number) => (
+            <div key={baba.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold">
+                  {index + 1}
                 </div>
-              ))}
+                <div>
+                  <div className="font-medium text-gray-900">Babalawo #{baba.id.slice(0, 6)}</div>
+                  <div className="text-sm text-gray-500">{baba.total_sessions ?? 0} sessions</div>
+                </div>
+              </div>
+              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+                ★ {baba.rating ?? "N/A"}
+              </Badge>
+            </div>
+          ))}
             </div>
           </CardContent>
         </Card>
 
         {/* Recent User Signups */}
-        <Card className="border-0 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <User className="w-5 h-5 text-purple-600" />
+        <Card className="shadow-lg border-l-4 bg-white" style={{ borderLeftColor: "#9b59b6" }}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
+              <User className="h-5 w-5" style={{ color: "#9b59b6" }} />
               Recent Signups
             </CardTitle>
           </CardHeader>

@@ -41,6 +41,10 @@ export const useAdminStats = () => {
     weekAgo.setDate(weekAgo.getDate() - 7);
     const weekAgoStr = weekAgo.toISOString().substring(0, 10);
 
+    const monthAgo = new Date();
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+    const monthAgoStr = monthAgo.toISOString().substring(0, 10);
+
     const { data: completedSessionsToday } = await supabase
       .from('sessions')
       .select('amount, session_date, status')
@@ -54,6 +58,13 @@ export const useAdminStats = () => {
       .gte('session_date', weekAgoStr)
       .lte('session_date', todayStr);
 
+    const { data: completedSessionsThisMonth } = await supabase
+      .from('sessions')
+      .select('amount, session_date, status')
+      .eq('status', 'completed')
+      .gte('session_date', monthAgoStr)
+      .lte('session_date', todayStr);
+
     const { data: allCompletedSessions } = await supabase
       .from('sessions')
       .select('amount, status')
@@ -61,13 +72,14 @@ export const useAdminStats = () => {
 
     const todayRevenue = completedSessionsToday?.reduce((sum, s) => sum + (Number(s.amount) || 0), 0) || 0;
     const weekRevenue = completedSessionsThisWeek?.reduce((sum, s) => sum + (Number(s.amount) || 0), 0) || 0;
+    const monthRevenue = completedSessionsThisMonth?.reduce((sum, s) => sum + (Number(s.amount) || 0), 0) || 0;
     const allRevenue = allCompletedSessions?.reduce((sum, s) => sum + (Number(s.amount) || 0), 0) || 0;
 
     // Session Success Rate
     const totalSessions = sessions?.length ?? 0;
     const sessionSuccessRate = totalSessions > 0 ? Math.round((completed / totalSessions) * 100) : 0;
 
-    // Top Babalawos (by rating, fallback to bookings)
+    // Top Babalowos (by rating, fallback to bookings)
     // We try to get the most rated, sorted descending, then fallback by popular (by sessions)
     let topBabalawosData: any[] = [];
     const { data: topBabalawoRows } = await supabase
@@ -85,6 +97,14 @@ export const useAdminStats = () => {
       .order('created_at', { ascending: false })
       .limit(5);
 
+    // System Alerts - failed payments count
+    const { data: failedPayments } = await supabase
+      .from('payments')
+      .select('id')
+      .eq('payment_status', 'failed');
+
+    const failedPaymentsCount = failedPayments?.length ?? 0;
+
     return {
       totalUsers,
       totalBabalawos,
@@ -96,11 +116,15 @@ export const useAdminStats = () => {
       revenue: {
         today: todayRevenue,
         week: weekRevenue,
+        month: monthRevenue,
         all: allRevenue,
       },
       sessionSuccessRate,
-      topBabalawos: topBabalawosData,
-      recentUsers: recentUsers ?? []
+      topBabalowos: topBabalawosData,
+      recentUsers: recentUsers ?? [],
+      systemAlerts: {
+        failedPayments: failedPaymentsCount,
+      },
     };
   };
 

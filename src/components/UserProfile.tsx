@@ -132,7 +132,7 @@ const UserProfile = () => {
         <Button 
           onClick={handleSignOut} 
           variant="outline" 
-          className="w-full"
+          className="w-full block md:hidden"
         >
           <LogOut className="mr-2 h-4 w-4" />
           Sign Out

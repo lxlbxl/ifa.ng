@@ -83,7 +83,7 @@ const BabalawoProfileSettings = () => {
   const full_name = userProfile?.full_name ?? "B";
 
   return (
-    <Card className="my-8">
+    <Card className="my-8 max-w-full px-4 sm:px-6 md:px-8">
       <CardHeader>
         <CardTitle>My Rate & Availability Settings</CardTitle>
       </CardHeader>

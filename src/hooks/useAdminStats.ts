@@ -70,6 +70,14 @@ export const useAdminStats = () => {
       .select('amount, status')
       .eq('status', 'completed');
 
+    // Fetch total commission and babalawo earnings from payments table
+    const { data: commissionData } = await supabase
+      .from('payments')
+      .select('commission_amount, babalawo_amount');
+
+    const totalCommission = commissionData?.reduce((sum, p) => sum + (Number(p.commission_amount) || 0), 0) || 0;
+    const totalBabalawoEarnings = commissionData?.reduce((sum, p) => sum + (Number(p.babalawo_amount) || 0), 0) || 0;
+
     const todayRevenue = completedSessionsToday?.reduce((sum, s) => sum + (Number(s.amount) || 0), 0) || 0;
     const weekRevenue = completedSessionsThisWeek?.reduce((sum, s) => sum + (Number(s.amount) || 0), 0) || 0;
     const monthRevenue = completedSessionsThisMonth?.reduce((sum, s) => sum + (Number(s.amount) || 0), 0) || 0;
@@ -119,6 +127,8 @@ export const useAdminStats = () => {
         month: monthRevenue,
         all: allRevenue,
       },
+      totalCommission,
+      totalBabalawoEarnings,
       sessionSuccessRate,
       topBabalowos: topBabalawosData,
       recentUsers: recentUsers ?? [],

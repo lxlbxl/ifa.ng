@@ -45,7 +45,7 @@ const BabalawoDashboardSidebar: React.FC<{
         <span className="font-extrabold text-lg tracking-wider uppercase">IFA.ng</span>
         <span className="text-xs mt-1 opacity-60">Babalawo</span>
       </div>
-      <nav className="flex-1 flex flex-col gap-1 mt-2 px-3">
+      <nav className="flex-1 flex flex-col gap-1 mt-2 px-3 overflow-y-auto">
         {menu.map((item) => (
           <button
             key={item.section}

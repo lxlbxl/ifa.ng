@@ -41,7 +41,7 @@ const SummaryCard = ({
     <div className="text-4xl font-extrabold text-violet-700 my-2">
       ₦{balance}
     </div>
-    <Button className="w-full mt-2 mb-6" variant="default">
+    <Button className="w-full mt-2 mb-6" variant="default" onClick={() => window.dispatchEvent(new CustomEvent('openWithdrawalModal'))}>
       Withdraw
     </Button>
     <div className="mt-4">

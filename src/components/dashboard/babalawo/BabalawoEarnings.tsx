@@ -1,9 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import { useBabalawoEarningsStats } from "@/hooks/useBabalawoEarningsStats";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import WithdrawalRequestModal from "./WithdrawalRequestModal";
+import BankDetailsModal from "./BankDetailsModal";
+import { Button } from "@/components/ui/button";
 
 const BabalawoEarnings = () => {
   const { data, isLoading, isError } = useBabalawoEarningsStats();
+  const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
+  const [bankDetailsModalOpen, setBankDetailsModalOpen] = useState(false);
 
   if (isLoading) {
     return <div>Loading earnings data...</div>;
@@ -28,8 +33,8 @@ const BabalawoEarnings = () => {
 
       <section>
         <h3 className="text-xl font-semibold mb-4">Total Earnings</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          <Card className="shadow-lg border-l-4 border-violet-600">
+        <div className="grid grid-cols-1 gap-6">
+          <Card className="shadow-lg border-l-4 border-violet-600 w-full max-w-full">
             <CardHeader>
               <CardTitle>All Time</CardTitle>
             </CardHeader>
@@ -43,15 +48,21 @@ const BabalawoEarnings = () => {
 
       <section>
         <h3 className="text-xl font-semibold mb-4">Balance</h3>
-        <Card className="shadow-lg border-l-4 border-green-600 p-4">
-          <p className="text-lg font-medium">Available Balance: ₦{availableBalance.toLocaleString()}</p>
-          <p className="text-lg font-medium">Pending Payouts: ₦{pendingPayouts.toLocaleString()}</p>
+        <Card className="shadow-lg border-l-4 border-green-600 p-4 w-full max-w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <p className="text-lg font-medium">Available Balance: ₦{availableBalance.toLocaleString()}</p>
+            <p className="text-lg font-medium">Pending Payouts: ₦{pendingPayouts.toLocaleString()}</p>
+          </div>
+          <div className="flex gap-4">
+            <Button onClick={() => setWithdrawalModalOpen(true)}>Request Withdrawal</Button>
+            <Button variant="outline" onClick={() => setBankDetailsModalOpen(true)}>Set / Update Bank Details</Button>
+          </div>
         </Card>
       </section>
 
       <section>
         <h3 className="text-xl font-semibold mb-4">Withdrawal Requests</h3>
-        <Card className="shadow-lg border-l-4 border-yellow-600 p-4 overflow-x-auto">
+        <Card className="shadow-lg border-l-4 border-yellow-600 p-4 overflow-x-auto w-full max-w-full">
           <table className="w-full text-left">
             <thead>
               <tr>
@@ -83,7 +94,7 @@ const BabalawoEarnings = () => {
 
       <section>
         <h3 className="text-xl font-semibold mb-4">Payout History</h3>
-        <Card className="shadow-lg border-l-4 border-blue-600 p-4 overflow-x-auto">
+        <Card className="shadow-lg border-l-4 border-blue-600 p-4 overflow-x-auto w-full max-w-full">
           <table className="w-full text-left">
             <thead>
               <tr>
@@ -123,10 +134,20 @@ const BabalawoEarnings = () => {
         </Card>
       </section>
 
-      <section>
-        <h3 className="text-xl font-semibold mb-4">Bank Details</h3>
-        <p>Feature to set or update bank details coming soon.</p>
-      </section>
+      <WithdrawalRequestModal
+        open={withdrawalModalOpen}
+        onOpenChange={setWithdrawalModalOpen}
+        onSuccess={() => {
+          // Optionally refetch data or show toast
+        }}
+      />
+      <BankDetailsModal
+        open={bankDetailsModalOpen}
+        onOpenChange={setBankDetailsModalOpen}
+        onSuccess={() => {
+          // Optionally refetch data or show toast
+        }}
+      />
     </div>
   );
 };

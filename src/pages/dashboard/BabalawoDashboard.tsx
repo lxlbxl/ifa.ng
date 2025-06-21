@@ -10,32 +10,15 @@ import { Menu } from "lucide-react";
 import BabalawoConsultationsPanel from "@/components/dashboard/babalawo/BabalawoConsultationPanel";
 import BabalawoProfileSettings from "@/components/dashboard/babalawo/BabalawoProfileSettings";
 
-// Dummy components for demonstration (replace with actual when ready)
-const Earnings = () => (
-  <div className="p-10 bg-white rounded-2xl shadow-lg">
-    <h2 className="text-2xl font-bold mb-2 text-violet-700">Earnings</h2>
-    <p>Track your completed sessions and income here.</p>
-  </div>
-);
+import BabalawoEarnings from "@/components/dashboard/babalawo/BabalawoEarnings";
 
-const Settings = () => (
-  <div className="p-10 bg-white rounded-2xl shadow-lg">
-    <h2 className="text-2xl font-bold mb-2 text-violet-700">Settings</h2>
-    <p>Change your account details and preferences.</p>
-  </div>
-);
-
-const Support = () => (
-  <div className="p-10 bg-white rounded-2xl shadow-lg">
-    <h2 className="text-2xl font-bold mb-2 text-violet-700">Support</h2>
-    <p>Get support. We are here to help!</p>
-  </div>
-);
+import Settings from "@/components/dashboard/user/Settings";
+import Support from "@/components/dashboard/user/Support";
 
 const SECTION_MAP: { [key: string]: React.ReactNode } = {
   dashboard: <BabalawoDashboardOverview />,
   consultations: <BabalawoConsultationsPanel />,
-  earnings: <Earnings />,
+  earnings: <BabalawoEarnings />,
   profile: <BabalawoProfileSettings />,
   settings: <Settings />,
   support: <Support />,

@@ -31,13 +31,16 @@ const fetchConsultations = async (babalawoId: string) => {
     ...(upcoming?.map(s => s.user_id) ?? []),
     ...(past?.map(s => s.user_id) ?? [])
   ].filter(Boolean);
+  console.log('[useBabalawoConsultations] userIds:', userIds);
   const uniqueUserIds = Array.from(new Set(userIds));
+  console.log('[useBabalawoConsultations] uniqueUserIds:', uniqueUserIds);
   let users: Record<string, any> = {};
   if (uniqueUserIds.length > 0) {
     const { data: userData } = await supabase
       .from("profiles")
       .select("id, full_name, avatar_url")
       .in("id", uniqueUserIds);
+    console.log('[useBabalawoConsultations] userData:', userData);
     if (userData) {
       for (const u of userData) users[u.id] = u;
     }

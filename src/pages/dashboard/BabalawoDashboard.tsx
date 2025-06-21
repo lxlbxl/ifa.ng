@@ -1,9 +1,7 @@
-
-import React from "react";
+import React, { useState, useEffect } from "react";
 import BabalawoDashboardSidebar from "@/components/dashboard/babalawo/BabalawoDashboardSidebar";
 import BabalawoDashboardOverview from "@/components/dashboard/babalawo/BabalawoDashboardOverview";
 import AuthenticatedHeader from "@/components/AuthenticatedHeader";
-// Removed Footer import!
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 
@@ -11,6 +9,7 @@ import BabalawoConsultationsPanel from "@/components/dashboard/babalawo/Babalawo
 import BabalawoProfileSettings from "@/components/dashboard/babalawo/BabalawoProfileSettings";
 
 import BabalawoEarnings from "@/components/dashboard/babalawo/BabalawoEarnings";
+import WithdrawalRequestModal from "@/components/dashboard/babalawo/WithdrawalRequestModal";
 
 import Settings from "@/components/dashboard/user/Settings";
 import Support from "@/components/dashboard/user/Support";
@@ -26,8 +25,17 @@ const SECTION_MAP: { [key: string]: React.ReactNode } = {
 
 const BabalawoDashboard = () => {
   // Force type to string, not string | number, for setActiveSection
-  const [activeSection, setActiveSection] = React.useState<string>("dashboard");
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [activeSection, setActiveSection] = useState<string>("dashboard");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
+
+  useEffect(() => {
+    const openWithdrawalModalHandler = () => setWithdrawalModalOpen(true);
+    window.addEventListener("openWithdrawalModal", openWithdrawalModalHandler);
+    return () => {
+      window.removeEventListener("openWithdrawalModal", openWithdrawalModalHandler);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-[#f3eafd] to-[#e8ecfa] flex flex-col">
@@ -70,6 +78,16 @@ const BabalawoDashboard = () => {
         </main>
       </div>
       {/* Footer removed */}
+      {/* Withdrawal Request Modal */}
+      {withdrawalModalOpen && (
+        <WithdrawalRequestModal
+          open={withdrawalModalOpen}
+          onOpenChange={setWithdrawalModalOpen}
+          onSuccess={() => {
+            // Optionally refetch data or show toast
+          }}
+        />
+      )}
     </div>
   );
 };

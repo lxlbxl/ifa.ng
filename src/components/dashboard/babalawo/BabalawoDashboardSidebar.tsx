@@ -42,7 +42,7 @@ const BabalawoDashboardSidebar: React.FC<{
         <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center mb-3">
           <span className="font-extrabold text-2xl text-white">I</span>
         </div>
-        <span className="font-extrabold text-lg tracking-wider uppercase">IFA Connect</span>
+        <span className="font-extrabold text-lg tracking-wider uppercase">IFA.ng</span>
         <span className="text-xs mt-1 opacity-60">Babalawo</span>
       </div>
       <nav className="flex-1 flex flex-col gap-1 mt-2 px-3">

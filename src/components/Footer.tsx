@@ -12,7 +12,7 @@ const Footer = () => {
               <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center">
                 <span className="text-white font-bold text-xl">I</span>
               </div>
-              <span className="text-2xl font-bold text-white">IFA Connect</span>
+              <span className="text-2xl font-bold text-white">IFA.ng</span>
             </div>
             <p className="text-gray-200 mb-6 max-w-md leading-relaxed">
               Connecting souls with authentic spiritual guidance through verified Babalawos. 
@@ -61,14 +61,14 @@ const Footer = () => {
             <div className="flex items-center space-x-6 mb-4 md:mb-0">
               <div className="flex items-center text-gray-300">
                 <Mail className="w-4 h-4 mr-2" />
-                support@ifaconnect.com
+                support@ifa.ng
               </div>
               <div className="text-gray-300">
                 Available 24/7 for support
               </div>
             </div>
             <div className="text-gray-400 text-sm">
-              © 2024 IFA Connect. All rights reserved.
+              © 2024 IFA.ng. All rights reserved.
             </div>
           </div>
         </div>

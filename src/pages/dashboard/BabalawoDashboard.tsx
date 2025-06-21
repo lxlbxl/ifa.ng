@@ -72,7 +72,7 @@ const BabalawoDashboard = () => {
             />
           </SheetContent>
         </Sheet>
-        <span className="font-extrabold text-lg text-violet-700 tracking-wider">IFA Connect</span>
+        <span className="font-extrabold text-lg text-violet-700 tracking-wider">IFA.ng</span>
       </div>
       <div className="flex flex-1 min-h-0 w-full">
         <div className="hidden md:block">
@@ -91,4 +91,3 @@ const BabalawoDashboard = () => {
   );
 };
 export default BabalawoDashboard;
-

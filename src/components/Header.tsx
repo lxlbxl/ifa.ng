@@ -34,7 +34,7 @@ const Header = () => {
               <span className="text-white font-bold text-lg">I</span>
             </div>
             <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              IFA Connect
+              IFA.ng
             </span>
           </div>
           {/* Desktop Navigation */}
@@ -54,7 +54,7 @@ const Header = () => {
               Login
             </Button>
             <Button
-              className="bg-gradient-primary hover:opacity-90 text-white"
+              className="border-primary text-primary hover:bg-primary hover:text-white"
               onClick={() => handleAuthNavigate("signup")}
             >
               Sign Up

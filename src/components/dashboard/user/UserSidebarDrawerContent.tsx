@@ -25,7 +25,7 @@ const UserSidebarDrawerContent: React.FC<UserSidebarDrawerContentProps> = ({
         <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
           <span className="text-white font-bold text-lg">I</span>
         </div>
-        <span className="text-xl font-bold text-gray-800">IFA Connect</span>
+        <span className="text-xl font-bold text-gray-800">IFA.ng</span>
       </div>
       <nav className="flex-1 p-4 space-y-2">
         {menuItems.map((item) => (
@@ -56,4 +56,3 @@ const UserSidebarDrawerContent: React.FC<UserSidebarDrawerContentProps> = ({
   );
 };
 export default UserSidebarDrawerContent;
-

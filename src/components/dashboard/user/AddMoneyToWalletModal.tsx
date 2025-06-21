@@ -97,7 +97,7 @@ const AddMoneyToWalletModal: React.FC<AddMoneyToWalletModalProps> = ({
           },
           customizations: {
             title: "Add Money to Wallet",
-            description: "Top up your IFA Connect wallet",
+            description: "Top up your IFA.ng wallet",
             logo: "/favicon.ico"
           }
         });

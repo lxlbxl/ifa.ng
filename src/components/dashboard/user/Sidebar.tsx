@@ -26,7 +26,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange }) => 
             <Wallet className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
           <div>
-            <h2 className="text-lg sm:text-xl font-bold text-gray-800">IFA Connect</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-800">IFA.ng</h2>
             <p className="text-xs sm:text-sm text-gray-500">User Dashboard</p>
           </div>
         </div>

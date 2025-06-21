@@ -135,7 +135,7 @@ const initiateFlutterwavePayment = async (
       console.log("🔒 Flutterwave payment modal closed");
     },
     customizations: {
-      title: "IFA Connect",
+      title: "IFA.ng",
       description: `Consultation with ${babalawo.full_name || babalawo.name || "Babalawo"}`,
       logo: "/favicon.ico"
     }

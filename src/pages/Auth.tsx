@@ -28,7 +28,7 @@ const Auth = () => {
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-pink-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-gray-900">Welcome to IFA Connect</CardTitle>
+          <CardTitle className="text-2xl font-bold text-gray-900">Welcome to IFA.ng</CardTitle>
           <CardDescription>
             Connect with verified spiritual guides for authentic guidance
           </CardDescription>

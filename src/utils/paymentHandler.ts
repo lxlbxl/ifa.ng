@@ -136,7 +136,7 @@ export const handlePaymentAndBooking = async (
         console.log("🔒 Payment modal closed by user");
       },
       customizations: {
-        title: "IFA Connect",
+        title: "IFA.ng",
         description: `Consultation with ${babalawo.full_name || babalawo.name || "Babalawo"}`,
         logo: "/favicon.ico"
       }

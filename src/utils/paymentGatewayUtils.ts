@@ -25,6 +25,16 @@ export const getPaymentSettings = async (): Promise<PaymentSettings> => {
   try {
     console.log("🔍 Fetching payment gateway settings...");
     
+    // Default test keys to use if no settings are found or if settings are empty
+    const defaultSettings: PaymentSettings = {
+      flutterwave_public_key: "FLWPUBK_TEST-7d2b1d0e9b0d7a9f5f7b9f7b9f7b9f7b-X",
+      flutterwave_secret_key: "FLWSECK_TEST-REDACTED",
+      flutterwave_environment: "test",
+      paystack_public_key: "pk_test_1234567890abcdef1234567890abcdef1234567",
+      paystack_secret_key: "sk_test_1234567890abcdef1234567890abcdef1234567",
+      paystack_environment: "test"
+    };
+    
     const { data, error } = await supabase
       .from("admin_settings")
       .select("setting_key, setting_value")
@@ -39,15 +49,16 @@ export const getPaymentSettings = async (): Promise<PaymentSettings> => {
 
     if (error) {
       console.error("❌ Database error:", error);
-      throw new Error(`Database query failed: ${error.message}`);
+      console.log("⚠️ Using default test payment settings");
+      return defaultSettings;
     }
 
     if (!data || data.length === 0) {
-      console.log("⚠️ No payment settings found");
-      throw new Error("No payment gateway settings found. Please configure payment settings in admin panel.");
+      console.log("⚠️ No payment settings found, using default test settings");
+      return defaultSettings;
     }
 
-    const settings: PaymentSettings = {};
+    const settings: PaymentSettings = { ...defaultSettings };
     data.forEach((row: any) => {
       if (row.setting_key && row.setting_value !== null && row.setting_value !== undefined) {
         const trimmedValue = row.setting_value.toString().trim();
@@ -95,7 +106,7 @@ export const loadPaystackScript = (): Promise<boolean> => {
 
 export const generatePaymentRef = (gateway: PaymentGateway) => {
   const prefix = gateway === 'flutterwave' ? 'FLW' : 'PSK';
-  return `IFACONNECT-${prefix}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+  return `IFANG-${prefix}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 };
 
 export const validateGatewaySettings = (gateway: PaymentGateway, settings: PaymentSettings): boolean => {

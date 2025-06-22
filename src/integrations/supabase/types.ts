@@ -427,6 +427,13 @@ export type Database = {
           status: Database["public"]["Enums"]["session_status"] | null
           updated_at: string | null
           user_id: string
+          primary_odu: string | null
+          other_odus: string[] | null
+          ritual_recommendations: string | null
+          items_needed: string | null
+          deadline: string | null
+          next_appointment: string | null
+          warnings: string | null
         }
         Insert: {
           agora_channel_name?: string | null
@@ -448,6 +455,13 @@ export type Database = {
           status?: Database["public"]["Enums"]["session_status"] | null
           updated_at?: string | null
           user_id: string
+          primary_odu?: string | null
+          other_odus?: string[] | null
+          ritual_recommendations?: string | null
+          items_needed?: string | null
+          deadline?: string | null
+          next_appointment?: string | null
+          warnings?: string | null
         }
         Update: {
           agora_channel_name?: string | null
@@ -469,6 +483,13 @@ export type Database = {
           status?: Database["public"]["Enums"]["session_status"] | null
           updated_at?: string | null
           user_id?: string
+          primary_odu?: string | null
+          other_odus?: string[] | null
+          ritual_recommendations?: string | null
+          items_needed?: string | null
+          deadline?: string | null
+          next_appointment?: string | null
+          warnings?: string | null
         }
         Relationships: []
       }

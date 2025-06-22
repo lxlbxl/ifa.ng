@@ -21,6 +21,7 @@ interface Notification {
 const Notifications = () => {
   // Mock notifications data
   const [notifications, setNotifications] = useState<Notification[]>([
+    // Removed hardcoded babalawo notification to avoid invalid profile link
     {
       id: '1',
       type: 'session',
@@ -48,16 +49,6 @@ const Notifications = () => {
       read: false,
       actionUrl: '/dashboard/spiritual-journey',
       actionLabel: 'Explore'
-    },
-    {
-      id: '4',
-      type: 'babalawo',
-      title: 'New Verified Babalawo',
-      message: 'Babalawo Temitope, specializing in Love & Relationships, is now available for consultations.',
-      timestamp: '2025-06-17T16:45:00',
-      read: true,
-      actionUrl: '/babalawo/profile/123',
-      actionLabel: 'View Profile'
     },
     {
       id: '5',

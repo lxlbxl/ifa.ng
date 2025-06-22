@@ -68,23 +68,32 @@ const FindBabalawo = () => {
 
       console.log('[FindBabalawo] Loaded babalawos:', babalawosData);
 
-      const mapped = babalawosData.map((b: any) => {
-        const profile = profilesData?.find(p => p.id === b.id);
-        return {
-          id: b.id,
-          full_name: profile?.full_name ?? "Babalawo",
-          avatar_url: profile?.avatar_url,
-          title: "Ifa Priest & Spiritual Guide",
-          specialties: Array.isArray(b.specialties) ? b.specialties : [],
-          rating: b.rating ? Number(b.rating) : 5,
-          reviews: b.total_sessions ?? 0,
-          verified: b.verification_status === 'approved',
-          nextAvailable: 'Flexible',
-          hourly_rate: b.hourly_rate ? Number(b.hourly_rate) : 15000,
-          price: b.hourly_rate ? `₦${Number(b.hourly_rate).toLocaleString()}/hr` : '₦15,000/hr',
-          timezone: b.timezone || 'UTC',
-        };
-      });
+      console.log('[FindBabalawo] profilesData:', profilesData);
+      console.log('[FindBabalawo] babalawosData:', babalawosData);
+      console.log('[FindBabalawo] profilesData:', profilesData);
+      const mapped = babalawosData
+        .map((b: any) => {
+          const profile = profilesData?.find(p => p.id === b.id);
+          if (!profile) {
+            console.warn(`[FindBabalawo] No profile found for babalawo id: ${b.id}`);
+            return null; // Exclude babalawos without a profile
+          }
+          return {
+            id: b.id,
+            full_name: profile.full_name,
+            avatar_url: profile.avatar_url,
+            title: "Ifa Priest & Spiritual Guide",
+            specialties: Array.isArray(b.specialties) ? b.specialties : [],
+            rating: b.rating ? Number(b.rating) : 5,
+            reviews: b.total_sessions ?? 0,
+            verified: b.verification_status === 'approved',
+            nextAvailable: 'Flexible',
+            hourly_rate: b.hourly_rate ? Number(b.hourly_rate) : 15000,
+            price: b.hourly_rate ? `₦${Number(b.hourly_rate).toLocaleString()}/hr` : '₦15,000/hr',
+            timezone: b.timezone || 'UTC',
+          };
+        })
+        .filter(Boolean); // Remove nulls
 
       setBabalawos(mapped);
       setLoading(false);

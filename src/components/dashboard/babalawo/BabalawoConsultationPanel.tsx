@@ -87,6 +87,7 @@ const HistoryRow = ({
 
 export default function BabalawoConsultationPanel() {
   const { data, isLoading } = useBabalawoConsultations();
+  console.log('[BabalawoConsultationPanel] data from hook:', data);
   const [noteModalSession, setNoteModalSession] = useState<string | null>(null);
   const [outcomeModalSession, setOutcomeModalSession] = useState<any>(null);
   const [outcomeData, setOutcomeData] = useState({
@@ -99,51 +100,61 @@ export default function BabalawoConsultationPanel() {
     warnings: ""
   });
 
+  React.useEffect(() => {
+    if (outcomeModalSession) {
+      console.log('[BabalawoConsultationPanel] outcomeModalSession changed:', outcomeModalSession);
+    }
+  }, [outcomeModalSession]);
+
+  React.useEffect(() => {
+    console.log('[BabalawoConsultationPanel] outcomeData changed:', outcomeData);
+  }, [outcomeData]);
+
   // Temporary note modal (not persisted)
   const handleNote = (sessionId: string) => setNoteModalSession(sessionId);
 
-  const handleEditOutcome = (session: any) => {
-    setOutcomeModalSession(session);
-    setOutcomeData({
-      primary_odu: session.primary_odu || "",
-      other_odus: (session.other_odus || []).join(", "),
-      ritual_recommendations: session.ritual_recommendations || "",
-      items_needed: session.items_needed ? JSON.stringify(session.items_needed, null, 2) : "",
-      deadline: session.deadline || "",
-      next_appointment: session.next_appointment || "",
-      warnings: session.warnings || ""
-    });
-  };
+      const handleEditOutcome = (session: any) => {
+        setOutcomeModalSession(session);
+        setOutcomeData({
+          primary_odu: session.primary_odu || "",
+          other_odus: (session.other_odus || []).join(", "),
+          ritual_recommendations: session.ritual_recommendations || "",
+          items_needed: session.items_needed || "",
+          deadline: session.deadline || "",
+          next_appointment: session.next_appointment || "",
+          warnings: session.warnings || ""
+        });
+      };
 
-  const handleOutcomeChange = (field: string, value: string) => {
-    setOutcomeData(prev => ({ ...prev, [field]: value }));
-  };
+      const handleOutcomeChange = (field: string, value: string) => {
+        setOutcomeData(prev => ({ ...prev, [field]: value }));
+      };
 
-  const saveOutcome = async () => {
-    if (!outcomeModalSession) return;
-    try {
-      const { error } = await supabase
-        .from("sessions")
-        .update({
-          primary_odu: outcomeData.primary_odu ?? null,
-          other_odus: outcomeData.other_odus.split(",").map((s) => s.trim()).filter(Boolean) ?? null,
-          ritual_recommendations: outcomeData.ritual_recommendations ?? null,
-          items_needed: outcomeData.items_needed ? JSON.parse(outcomeData.items_needed) : null,
-          deadline: outcomeData.deadline || null,
-          next_appointment: outcomeData.next_appointment || null,
-          warnings: outcomeData.warnings || null
-        })
-        .eq("id", outcomeModalSession.id);
-      if (error) {
-        alert("Error saving consultation outcome: " + error.message);
-      } else {
-        alert("Consultation outcome saved successfully.");
-        setOutcomeModalSession(null);
-      }
-    } catch (err) {
-      alert("Error saving consultation outcome: " + err);
-    }
-  };
+      const saveOutcome = async () => {
+        if (!outcomeModalSession) return;
+        try {
+          const { error } = await supabase
+            .from("sessions")
+            .update({
+              primary_odu: outcomeData.primary_odu ?? null,
+              other_odus: outcomeData.other_odus.split(",").map((s) => s.trim()).filter(Boolean) ?? null,
+              ritual_recommendations: outcomeData.ritual_recommendations ?? null,
+              items_needed: outcomeData.items_needed || null,
+              deadline: outcomeData.deadline || null,
+              next_appointment: outcomeData.next_appointment || null,
+              warnings: outcomeData.warnings || null
+            })
+            .eq("id", outcomeModalSession.id);
+          if (error) {
+            alert("Error saving consultation outcome: " + error.message);
+          } else {
+            alert("Consultation outcome saved successfully.");
+            setOutcomeModalSession(null);
+          }
+        } catch (err) {
+          alert("Error saving consultation outcome: " + err);
+        }
+      };
 
   return (
     <div className="space-y-8">

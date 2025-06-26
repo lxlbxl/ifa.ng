@@ -34,7 +34,7 @@ const SessionRow = ({
       <div className="text-xs inline-block px-2 py-0.5 rounded bg-muted">{session.status}</div>
     </div>
     <div className="flex gap-1">
-      <Button size="sm" variant="ghost" onClick={() => window.open(`/sessions/${session.id}/video`, "_blank")}>
+      <Button size="sm" variant="ghost" onClick={() => window.open(`/session/${session.id}`, "_blank")}>
         <Video className="w-4 h-4" /> Join
       </Button>
       <Button size="sm" variant="outline" onClick={() => alert("Reschedule flow coming soon!")} className="hidden md:inline-flex">

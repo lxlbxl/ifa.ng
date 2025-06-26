@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useBabalawoById } from '@/hooks/useBabalawos';
+import { useBabalawos } from '@/hooks/useBabalawos';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +23,8 @@ const BabalawoProfile = () => {
   const { babalawoId } = useParams<{ babalawoId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data: babalawo, isLoading, error } = useBabalawoById(babalawoId!);
+  const { babalawos, loading: isLoading, error } = useBabalawos();
+  const babalawo = babalawos.find(b => b.id === babalawoId) ?? null;
   const [showBookingModal, setShowBookingModal] = useState(false);
 
   if (isLoading) {
@@ -58,10 +58,8 @@ const BabalawoProfile = () => {
     );
   }
 
-  // Access the profile data correctly - it's an array from the join
-  const profile = Array.isArray(babalawo.profiles) ? babalawo.profiles[0] : babalawo.profiles;
-  const displayName = profile?.full_name || "Babalawo";
-  const avatarUrl = profile?.avatar_url;
+  const displayName = babalawo.full_name || "Babalawo";
+  const avatarUrl = babalawo.avatar_url;
 
   const handleBookSession = () => {
     if (!user) {

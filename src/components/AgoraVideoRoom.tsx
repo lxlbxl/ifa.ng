@@ -5,12 +5,17 @@ import { Mic, MicOff, Video, VideoOff, PhoneOff } from "lucide-react";
 
 interface AgoraVideoRoomProps {
   sessionId: string;
+  token: string;
+  appId: string;
   onLeave: () => void;
 }
 
-const AgoraVideoRoom: React.FC<AgoraVideoRoomProps> = ({ sessionId, onLeave }) => {
+const AgoraVideoRoom: React.FC<AgoraVideoRoomProps> = ({ sessionId, token, appId, onLeave }) => {
   const [localVideoTrack, setLocalVideoTrack] = useState<ICameraVideoTrack | null>(null);
   const [localAudioTrack, setLocalAudioTrack] = useState<IMicrophoneAudioTrack | null>(null);
+
+  // Fix swapped state setters for video and audio tracks
+  // We'll use separate variables for video and audio tracks with correct types
   const [remoteUsers, setRemoteUsers] = useState<IAgoraRTCRemoteUser[]>([]);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
@@ -52,26 +57,18 @@ const AgoraVideoRoom: React.FC<AgoraVideoRoomProps> = ({ sessionId, onLeave }) =
           setRemoteUsers(prevUsers => prevUsers.filter(u => u.uid !== user.uid));
         });
 
-        // Get token from your backend
-        const response = await fetch('/api/agora-token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId })
-        });
-        const { token } = await response.json();
-
         // Join channel
         await client.join(
-          process.env.REACT_APP_AGORA_APP_ID || "",
+          appId,
           sessionId,
           token,
           null
         );
 
         // Create and publish local tracks
-        const [videoTrack, audioTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
-        setLocalVideoTrack(videoTrack);
+        const [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
         setLocalAudioTrack(audioTrack);
+        setLocalVideoTrack(videoTrack);
 
         // Play local video
         if (localVideoRef.current) {
@@ -79,7 +76,7 @@ const AgoraVideoRoom: React.FC<AgoraVideoRoomProps> = ({ sessionId, onLeave }) =
         }
 
         // Publish tracks
-        await client.publish([videoTrack, audioTrack]);
+        await client.publish([audioTrack, videoTrack]);
         setIsJoined(true);
 
       } catch (error) {
@@ -94,7 +91,7 @@ const AgoraVideoRoom: React.FC<AgoraVideoRoomProps> = ({ sessionId, onLeave }) =
         clientRef.current.leave();
       }
     };
-  }, [sessionId]);
+  }, [sessionId, token, appId]);
 
   const toggleVideo = async () => {
     if (localVideoTrack) {

@@ -54,11 +54,11 @@ const Header = () => {
               Login
             </Button>
             <Button
-              className="border-primary text-primary hover:bg-primary hover:text-white"
-              onClick={() => handleAuthNavigate("signup")}
+            className="border-primary text-primary bg-white hover:bg-primary hover:text-white focus:ring-2 focus:ring-primary focus:outline-none"
+            onClick={() => handleAuthNavigate("signup")}
             >
-              Sign Up
-            </Button>
+            Sign Up
+          </Button>
           </div>
           {/* Mobile Menu Button */}
           <button
@@ -100,7 +100,7 @@ const Header = () => {
                 Login
               </Button>
               <Button
-                className="bg-gradient-primary hover:opacity-90 text-white"
+                className="border-primary text-primary bg-white hover:bg-primary hover:text-white focus:ring-2 focus:ring-primary focus:outline-none"
                 onClick={() => {
                   setIsMenuOpen(false);
                   handleAuthNavigate("signup");

@@ -27,7 +27,7 @@ export const useBabalawos = () => {
       setLoading(true);
       setError(null);
       try {
-        // Fetch babalawos with profile data joined
+        // Fetch babalawos
         const { data: babalawosData, error: babalawosError } = await supabase
           .from('babalawos')
           .select(`
@@ -41,11 +41,7 @@ export const useBabalawos = () => {
             total_sessions,
             languages,
             timezone,
-            is_active,
-            profiles (
-              full_name,
-              avatar_url
-            )
+            is_active
           `)
           .eq('verification_status', 'approved')
           .eq('is_active', true);
@@ -54,24 +50,27 @@ export const useBabalawos = () => {
           throw babalawosError;
         }
 
-        // Transform data to flatten profiles into full_name and avatar_url fields
-        const transformedData: BabalawoProfile[] = (babalawosData ?? []).map(b => ({
-          id: b.id,
-          specialties: b.specialties,
-          experience_years: b.experience_years,
-          hourly_rate: b.hourly_rate,
-          bio: b.bio,
-          verification_status: b.verification_status,
-          rating: b.rating,
-          total_sessions: b.total_sessions,
-          languages: b.languages,
-          timezone: b.timezone,
-          is_active: b.is_active,
-          full_name: b.profiles?.[0]?.full_name ?? null,
-          avatar_url: b.profiles?.[0]?.avatar_url ?? null,
+        // Fetch profiles separately
+        const babalawoIds = babalawosData?.map(b => b.id) ?? [];
+
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', babalawoIds);
+
+        if (profilesError) {
+          throw profilesError;
+        }
+
+        const profilesMap = new Map(profilesData?.map(p => [p.id, p]) ?? []);
+
+        const mergedData = (babalawosData ?? []).map(b => ({
+          ...b,
+          full_name: profilesMap.get(b.id)?.full_name ?? null,
+          avatar_url: profilesMap.get(b.id)?.avatar_url ?? null,
         }));
 
-        setBabalawos(transformedData);
+        setBabalawos(mergedData);
       } catch (err: any) {
         setError(err.message || 'An unexpected error occurred.');
       } finally {

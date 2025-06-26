@@ -263,7 +263,7 @@ const UpcomingSessions = () => {
                 <Button 
                   className="w-full sm:w-auto"
                   disabled={!canJoinSession(session) || session.status !== 'confirmed'}
-                  onClick={() => window.open(`/sessions/${session.id}/video`, "_blank")}
+                  onClick={() => window.open(`/session/${session.id}`, "_blank")}
                 >
                   <Video className="mr-2 h-4 w-4" />
                   {canJoinSession(session) && session.status === 'confirmed' 

@@ -29,7 +29,7 @@ const Notifications = () => {
       message: 'Your session with Babalawo Adeyemi is scheduled for tomorrow at 2:00 PM.',
       timestamp: '2025-06-20T14:30:00',
       read: false,
-      actionUrl: '/sessions/123',
+      actionUrl: '/session/123',
       actionLabel: 'Join Session'
     },
     {

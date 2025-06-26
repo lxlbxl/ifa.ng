@@ -15,14 +15,20 @@ const fetchUserSessions = async (userId: string | undefined) => {
             status,
             amount,
             notes,
-            babalawo_id
+            babalawo_id,
+            primary_odu,
+            other_odus,
+            ritual_recommendations,
+            items_needed,
+            deadline,
+            next_appointment
         `)
         .eq('user_id', userId)
         .order('session_date', { ascending: true });
 
     if (error) {
         console.error('Error fetching user sessions:', error);
-        throw new Error(error.message);
+        return [];
     }
 
     if (!sessions) {
@@ -32,7 +38,8 @@ const fetchUserSessions = async (userId: string | undefined) => {
     // Now fetch babalawo details for each session
     const sessionsWithBabalawos = await Promise.all(
         sessions.map(async (session) => {
-             const { data: babalawoProfile, error: babalawoProfileError } = await supabase
+            if (!session || typeof session !== 'object') return null;
+            const { data: babalawoProfile, error: babalawoProfileError } = await supabase
                 .from('profiles')
                 .select('full_name, avatar_url')
                 .eq('id', session.babalawo_id)
@@ -54,11 +61,11 @@ const fetchUserSessions = async (userId: string | undefined) => {
                 profile: babalawoProfile // Nest profile to match component expectation
             };
 
-            return { ...session, babalawo };
+            return { ...session, babalawo } as NonNullable<typeof session> & { babalawo: typeof babalawo };
         })
     );
 
-    return sessionsWithBabalawos;
+    return sessionsWithBabalawos.filter(Boolean) as Array<NonNullable<typeof sessions[0]> & { babalawo: any }>;
 };
 
 export const useUserSessions = () => {

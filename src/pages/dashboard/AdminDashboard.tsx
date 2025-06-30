@@ -12,11 +12,12 @@ import UserManagement from "@/components/dashboard/admin/UserManagement";
 import BabalawoManagement from "@/components/dashboard/admin/BabalawoManagement";
 import PaymentsFinancePanel from "@/components/dashboard/admin/PaymentsFinancePanel";
 import AdminSettingsPanel from "@/components/dashboard/admin/AdminSettingsPanel";
+import AdminWithdrawalManagement from "@/components/dashboard/admin/AdminWithdrawalManagement"; // Import the new component
 import { Menu } from "lucide-react";
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState<
-    'overview' | 'users' | 'babalawos' | 'finance' | 'transactions' | 'wallet-management' | 'settings'
+    'overview' | 'users' | 'babalawos' | 'finance' | 'transactions' | 'wallet-management' | 'settings' | 'withdrawal-management' // Add new section type
   >('overview');
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -34,6 +35,8 @@ const AdminDashboard = () => {
         return <AdminTransactionHistory />;
       case 'wallet-management':
         return <AdminWalletManagement />;
+      case 'withdrawal-management': // Add new case for withdrawal management
+        return <AdminWithdrawalManagement />;
       case 'settings':
         return <AdminSettingsPanel />;
       default:

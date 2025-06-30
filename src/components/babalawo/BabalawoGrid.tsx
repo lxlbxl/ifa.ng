@@ -1,24 +1,7 @@
 
 import React from 'react';
 import BabalawoCard from './BabalawoCard';
-
-interface BabalawoProfile {
-  id: string;
-  specialties: string[] | null;
-  experience_years: number | null;
-  hourly_rate: number | null;
-  bio: string | null;
-  verification_status: string | null;
-  rating: number | null;
-  total_sessions: number | null;
-  languages: string[] | null;
-  timezone: string | null;
-  is_active: boolean | null;
-  profiles: {
-    full_name: string | null;
-    avatar_url: string | null;
-  } | null;
-}
+import { BabalawoProfile } from '@/types/babalawo';
 
 interface BabalawoGridProps {
   babalawos: BabalawoProfile[];

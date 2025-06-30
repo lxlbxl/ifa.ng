@@ -1,78 +1,129 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { SessionWithBabalawo } from '@/types/babalawo';
+import { errorService } from '@/services/errorService';
 
-const fetchUserSessions = async (userId: string | undefined) => {
+const fetchUserSessions = async (userId: string | undefined): Promise<SessionWithBabalawo[]> => {
     if (!userId) return [];
 
-    const { data: sessions, error } = await supabase
-        .from('sessions')
-        .select(`
-            id,
-            session_date,
-            start_time,
-            end_time,
-            status,
-            amount,
-            notes,
-            babalawo_id,
-            primary_odu,
-            other_odus,
-            ritual_recommendations,
-            items_needed,
-            deadline,
-            next_appointment
-        `)
-        .eq('user_id', userId)
-        .order('session_date', { ascending: true });
+    try {
+        console.log('[useUserSessions] Fetching sessions for user:', userId);
+        
+        // Fetch sessions first
+        const { data: sessions, error } = await supabase
+            .from('sessions')
+            .select(`
+                id,
+                session_date,
+                start_time,
+                end_time,
+                status,
+                amount,
+                notes,
+                babalawo_id,
+                primary_odu,
+                other_odus,
+                ritual_recommendations,
+                items_needed,
+                deadline,
+                next_appointment
+            `)
+            .eq('user_id', userId)
+            .order('session_date', { ascending: false });
 
-    if (error) {
-        console.error('Error fetching user sessions:', error);
-        return [];
-    }
+        if (error) {
+            throw error;
+        }
 
-    if (!sessions) {
-        return [];
-    }
+        console.log('[useUserSessions] Raw sessions data:', sessions);
 
-    // Now fetch babalawo details for each session
-    const sessionsWithBabalawos = await Promise.all(
-        sessions.map(async (session) => {
-            if (!session || typeof session !== 'object') return null;
-            const { data: babalawoProfile, error: babalawoProfileError } = await supabase
-                .from('profiles')
-                .select('full_name, avatar_url')
-                .eq('id', session.babalawo_id)
-                .single();
+        if (!sessions || sessions.length === 0) {
+            return [];
+        }
 
-            const { data: babalawoData, error: babalawoDataError } = await supabase
-                .from('babalawos')
-                .select('id, specialties')
-                .eq('id', session.babalawo_id)
-                .single();
+        // Get unique babalawo IDs from sessions
+        const babalawoIds = [...new Set(sessions.map(s => s.babalawo_id))];
+        
+        // Fetch babalawo details using the new RPC function
+        const { data: babalawoDetails, error: rpcError } = await supabase.rpc('get_babalawo_details_by_ids', { p_ids: babalawoIds });
 
-            if (babalawoProfileError || babalawoDataError) {
-                console.error('Error fetching babalawo:', babalawoProfileError || babalawoDataError);
-                return { ...session, babalawo: null };
+        if (rpcError) {
+            console.warn('[useUserSessions] Error fetching babalawo details via RPC:', rpcError);
+            // Continue with empty maps if RPC fails
+        }
+
+        // Create maps for quick lookup
+        const profilesMap = new Map();
+        const babalawosMap = new Map();
+        (babalawoDetails || []).forEach(detail => {
+            profilesMap.set(detail.id, { full_name: detail.full_name, avatar_url: detail.avatar_url });
+            babalawosMap.set(detail.id, { specialties: detail.specialties });
+        });
+
+        // Transform data to match our standardized interface
+        const transformedSessions: SessionWithBabalawo[] = sessions.map(session => {
+            const profile = profilesMap.get(session.babalawo_id);
+            const babalawoData = babalawosMap.get(session.babalawo_id);
+            
+            let babalawoName = 'Babalawo (Name Missing)';
+            if (profile?.full_name && profile.full_name.trim() !== '') {
+                babalawoName = profile.full_name.trim();
             }
             
-            const babalawo = {
-                ...babalawoData,
-                profile: babalawoProfile // Nest profile to match component expectation
+            console.log(`[useUserSessions] Processing session ${session.id}: babalawo="${babalawoName}"`);
+            
+            return {
+                id: session.id,
+                session_date: session.session_date,
+                start_time: session.start_time,
+                end_time: session.end_time,
+                status: session.status,
+                amount: session.amount || 0,
+                notes: session.notes,
+                babalawo_id: session.babalawo_id,
+                babalawo_name: babalawoName, // Standardized field with consistent naming
+                babalawo_avatar: profile?.avatar_url || null,
+                babalawo_specialties: babalawoData?.specialties || [],
+                primary_odu: session.primary_odu,
+                other_odus: session.other_odus || [],
+                ritual_recommendations: session.ritual_recommendations,
+                items_needed: session.items_needed,
+                deadline: session.deadline,
+                next_appointment: session.next_appointment,
+                warnings: null, // Not in database yet
+                consultation_notes: null, // Not in database yet
             };
+        });
 
-            return { ...session, babalawo } as NonNullable<typeof session> & { babalawo: typeof babalawo };
-        })
-    );
-
-    return sessionsWithBabalawos.filter(Boolean) as Array<NonNullable<typeof sessions[0]> & { babalawo: any }>;
+        console.log('[useUserSessions] Transformed sessions:', transformedSessions);
+        return transformedSessions;
+        
+    } catch (err: any) {
+        console.error('[useUserSessions] Error fetching sessions:', err);
+        const appError = errorService.handleError(err, 'FETCH_USER_SESSIONS');
+        errorService.showErrorToast(appError);
+        return [];
+    }
 };
 
 export const useUserSessions = () => {
     const { user } = useAuth();
+    
     return useQuery({
         queryKey: ['userSessions', user?.id],
         queryFn: () => fetchUserSessions(user?.id),
         enabled: !!user,
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+        retry: (failureCount, error) => {
+            // Retry up to 3 times for retryable errors
+            if (failureCount < 3) {
+                const appError = errorService.handleError(error, 'RETRY_USER_SESSIONS');
+                return appError.retryable || false;
+            }
+            return false;
+        },
+        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     });
 };

@@ -113,18 +113,18 @@ export default function BabalawoConsultationPanel() {
   // Temporary note modal (not persisted)
   const handleNote = (sessionId: string) => setNoteModalSession(sessionId);
 
-      const handleEditOutcome = (session: any) => {
-        setOutcomeModalSession(session);
-        setOutcomeData({
-          primary_odu: session.primary_odu || "",
-          other_odus: (session.other_odus || []).join(", "),
-          ritual_recommendations: session.ritual_recommendations || "",
-          items_needed: session.items_needed || "",
-          deadline: session.deadline || "",
-          next_appointment: session.next_appointment || "",
-          warnings: session.warnings || ""
-        });
-      };
+  const handleEditOutcome = (session: any) => {
+    setOutcomeModalSession(session);
+    setOutcomeData({
+      primary_odu: session.primary_odu || "",
+      other_odus: (session.other_odus || []).join(", "),
+      ritual_recommendations: session.ritual_recommendations || "",
+      items_needed: JSON.stringify(session.items_needed, null, 2) || "",
+      deadline: session.deadline || "",
+      next_appointment: session.next_appointment || "",
+      warnings: session.warnings || ""
+    });
+  };
 
       const handleOutcomeChange = (field: string, value: string) => {
         setOutcomeData(prev => ({ ...prev, [field]: value }));

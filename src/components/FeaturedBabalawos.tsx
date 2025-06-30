@@ -4,10 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import BookSessionModal from "./dashboard/user/BookSessionModal";
 import BabalawoGrid from "./babalawo/BabalawoGrid";
-import { useBabalawos } from '@/hooks/useBabalawos';
+import { useFeaturedBabalawos } from '@/hooks/useBabalawoSearch';
 
 const FeaturedBabalawos: React.FC = () => {
-  const { babalawos, loading, error } = useBabalawos();
+  const { featuredBabalawos: babalawos, loading, error } = useFeaturedBabalawos(6);
   const [bookingBabalawo, setBookingBabalawo] = useState<any>(null);
   const navigate = useNavigate();
   const { user } = useAuth();

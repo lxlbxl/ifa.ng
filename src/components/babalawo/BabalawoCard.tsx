@@ -2,24 +2,7 @@
 import React from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { CheckCircle, MapPin } from 'lucide-react';
-
-interface BabalawoProfile {
-  id: string;
-  specialties: string[] | null;
-  experience_years: number | null;
-  hourly_rate: number | null;
-  bio: string | null;
-  verification_status: string | null;
-  rating: number | null;
-  total_sessions: number | null;
-  languages: string[] | null;
-  timezone: string | null;
-  is_active: boolean | null;
-  profiles: {
-    full_name: string | null;
-    avatar_url: string | null;
-  } | null;
-}
+import { BabalawoProfile } from '@/types/babalawo';
 
 interface BabalawoCardProps {
   babalawo: BabalawoProfile;
@@ -32,8 +15,8 @@ const BabalawoCard: React.FC<BabalawoCardProps> = ({
   onBookSession,
   onViewProfile
 }) => {
-  const displayName = babalawo.profiles?.full_name || "Babalawo";
-  const avatarUrl = babalawo.profiles?.avatar_url;
+  const displayName = babalawo.full_name; // Now guaranteed to be a string
+  const avatarUrl = babalawo.avatar_url;
   const isVerified = babalawo.verification_status === 'approved';
   
   console.log('[BabalawoCard] Rendering babalawo:', babalawo.id, 'with name:', displayName);

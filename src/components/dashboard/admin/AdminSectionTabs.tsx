@@ -1,11 +1,10 @@
-
 import React from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutGrid, Users, UserCheck, Wallet, Settings, CreditCard, History } from "lucide-react";
+import { LayoutGrid, Users, UserCheck, Wallet, Settings, CreditCard, History, Banknote } from "lucide-react"; // Import Banknote icon
 
 interface AdminSectionTabsProps {
   activeSection: string;
-  onSectionChange: (section: 'overview' | 'users' | 'babalawos' | 'finance' | 'transactions' | 'wallet-management' | 'settings') => void;
+  onSectionChange: (section: 'overview' | 'users' | 'babalawos' | 'finance' | 'transactions' | 'wallet-management' | 'settings' | 'withdrawal-management') => void; // Add new section type
 }
 
 const tabItems = [
@@ -15,12 +14,13 @@ const tabItems = [
   { value: "finance", label: "Finance", icon: Wallet },
   { value: "transactions", label: "Transactions", icon: History },
   { value: "wallet-management", label: "Wallet Mgmt", icon: CreditCard },
+  { value: "withdrawal-management", label: "Withdrawals", icon: Banknote }, // Add new tab item
   { value: "settings", label: "Settings", icon: Settings },
 ];
 
 const AdminSectionTabs: React.FC<AdminSectionTabsProps> = ({ activeSection, onSectionChange }) => {
   const handleTabChange = (value: string) => {
-    onSectionChange(value as 'overview' | 'users' | 'babalawos' | 'finance' | 'transactions' | 'wallet-management' | 'settings');
+    onSectionChange(value as 'overview' | 'users' | 'babalawos' | 'finance' | 'transactions' | 'wallet-management' | 'settings' | 'withdrawal-management');
   };
 
   return (

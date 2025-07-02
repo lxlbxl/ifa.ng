@@ -182,13 +182,13 @@ const SessionHistory = () => {
                         <User className="h-6 w-6 text-primary" />
                       </div>
                       <div>
-                      {(() => { console.log('[SessionHistory] session.babalawo.profile:', session.babalawo?.profile); return null; })()}
-                      <h3 className="font-semibold text-gray-800">
-                        {session.babalawo?.profile?.full_name ?? 'Babalawo (Name Missing)'}
-                      </h3>
-                        <p className="text-sm text-gray-500 mb-2">
-                          {session.babalawo?.specialties?.join(', ') || 'General consultation'}
-                        </p>
+                       {(() => { console.log('[SessionHistory] session.babalawo.profile:', session.babalawo_name); return null; })()}
+                       <h3 className="font-semibold text-gray-800">
+                         {session.babalawo_name || 'Babalawo (Name Missing)'}
+                       </h3>
+                         <p className="text-sm text-gray-500 mb-2">
+                           {session.babalawo_specialties?.join(', ') || 'General consultation'}
+                         </p>
                         <div className="flex items-center text-sm text-gray-600 space-x-4">
                           <div className="flex items-center">
                             <Calendar className="h-4 w-4 mr-1" />

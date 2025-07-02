@@ -73,7 +73,7 @@ const SessionJoinPage = () => {
     return <div className="text-center mt-8">Loading Agora session...</div>;
   }
 
-  return <AgoraVideoRoom sessionId={sessionId} token={token} appId={appId} onLeave={handleLeave} />;
+  return <AgoraVideoRoom sessionId={sessionId} onLeave={handleLeave} />;
 };
 
 export default SessionJoinPage;

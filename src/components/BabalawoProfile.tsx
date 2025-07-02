@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useBabalawos } from '@/hooks/useBabalawos';
+import { useBabalawoById } from '@/hooks/useBabalawoById';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,8 +23,7 @@ const BabalawoProfile = () => {
   const { babalawoId } = useParams<{ babalawoId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { babalawos, loading: isLoading, error } = useBabalawos();
-  const babalawo = babalawos.find(b => b.id === babalawoId) ?? null;
+  const { babalawo, loading: isLoading, error } = useBabalawoById(babalawoId);
   const [showBookingModal, setShowBookingModal] = useState(false);
 
   if (isLoading) {

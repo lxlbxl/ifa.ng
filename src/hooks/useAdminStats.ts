@@ -109,7 +109,7 @@ export const useAdminStats = () => {
     const { data: failedPayments } = await supabase
       .from('payments')
       .select('id')
-      .eq('payment_status', 'failed');
+      .eq('status', 'failed');
 
     const failedPaymentsCount = failedPayments?.length ?? 0;
 

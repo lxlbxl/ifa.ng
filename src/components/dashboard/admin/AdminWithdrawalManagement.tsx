@@ -19,20 +19,9 @@ interface WithdrawalRequest {
   amount: number;
   status: string;
   created_at: string;
-  approved_at: string | null;
-  processed_at: string | null;
-  rejection_reason: string | null;
-  processor_reference: string | null;
-  user_id: string;
-  bank_details_id: string;
-  profiles: {
-    full_name: string | null;
-  } | null;
-  babalawo_bank_details: {
-    bank_name: string;
-    account_name: string;
-    account_number: string;
-  } | null;
+  updated_at: string | null;
+  reason: string | null;
+  babalawo_id: string;
 }
 
 const fetchWithdrawalRequests = async (filters: any): Promise<WithdrawalRequest[]> => {
@@ -41,14 +30,9 @@ const fetchWithdrawalRequests = async (filters: any): Promise<WithdrawalRequest[
     amount,
     status,
     created_at,
-    approved_at,
-    processed_at,
-    rejection_reason,
-    processor_reference,
-    user_id,
-    bank_details_id,
-    profiles(full_name),
-    babalawo_bank_details(bank_name, account_name, account_number)
+    updated_at,
+    reason,
+    babalawo_id
   `).order('created_at', { ascending: false });
 
   if (filters.status && filters.status !== 'all') {
@@ -64,18 +48,15 @@ const fetchWithdrawalRequests = async (filters: any): Promise<WithdrawalRequest[
   if (error) {
     throw errorService.handleError(error, 'FETCH_WITHDRAWAL_REQUESTS');
   }
-  return data as WithdrawalRequest[];
+  return (data || []) as WithdrawalRequest[];
 };
 
-const updateWithdrawalStatus = async ({ id, status, processor_reference, rejection_reason }: { id: string; status: string; processor_reference?: string; rejection_reason?: string }) => {
+const updateWithdrawalStatus = async ({ id, status, rejection_reason }: { id: string; status: string; rejection_reason?: string }) => {
   const { data, error } = await supabase
     .from('withdrawal_requests')
     .update({ 
       status,
-      approved_at: status === 'approved' ? new Date().toISOString() : null,
-      processed_at: status === 'completed' ? new Date().toISOString() : null,
-      processor_reference: processor_reference || null,
-      rejection_reason: rejection_reason || null,
+      reason: rejection_reason || null,
     })
     .eq('id', id)
     .select()
@@ -136,10 +117,8 @@ const AdminWithdrawalManagement: React.FC = () => {
   };
 
   const confirmProcess = () => {
-    if (currentRequestId && processRef) {
-      mutation.mutate({ id: currentRequestId, status: 'completed', processor_reference: processRef });
-    } else {
-      toast.error('Please provide a processor reference.');
+    if (currentRequestId) {
+      mutation.mutate({ id: currentRequestId, status: 'completed' });
     }
   };
 
@@ -165,7 +144,7 @@ const AdminWithdrawalManagement: React.FC = () => {
     // This would ideally call a new RPC function for batch processing
     // For now, we'll simulate by processing each one individually
     selectedRequests.forEach(id => {
-      mutation.mutate({ id, status: 'completed', processor_reference: 'BATCH_PROCESSED' });
+      mutation.mutate({ id, status: 'completed' });
     });
     setSelectedRequests([]);
   };
@@ -232,7 +211,7 @@ const AdminWithdrawalManagement: React.FC = () => {
               </TableHead>
               <TableHead>Babalawo</TableHead>
               <TableHead>Amount</TableHead>
-              <TableHead>Bank Details</TableHead>
+              <TableHead>Reason</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Requested On</TableHead>
               <TableHead>Actions</TableHead>
@@ -256,15 +235,10 @@ const AdminWithdrawalManagement: React.FC = () => {
                       disabled={request.status !== 'pending' && request.status !== 'approved'}
                     />
                   </TableCell>
-                  <TableCell>{request.profiles?.full_name || 'N/A'}</TableCell>
+                  <TableCell>{request.babalawo_id}</TableCell>
                   <TableCell>₦{request.amount.toLocaleString()}</TableCell>
                   <TableCell>
-                    {request.babalawo_bank_details ? (
-                      <>
-                        {request.babalawo_bank_details.bank_name} ({request.babalawo_bank_details.account_name})<br />
-                        {request.babalawo_bank_details.account_number}
-                      </>
-                    ) : 'N/A'}
+                    {request.reason || 'N/A'}
                   </TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(request.status)}>

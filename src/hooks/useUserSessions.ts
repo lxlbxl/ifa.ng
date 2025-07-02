@@ -88,7 +88,7 @@ const fetchUserSessions = async (userId: string | undefined): Promise<SessionWit
                 primary_odu: session.primary_odu,
                 other_odus: session.other_odus || [],
                 ritual_recommendations: session.ritual_recommendations,
-                items_needed: session.items_needed,
+                items_needed: Array.isArray(session.items_needed) ? session.items_needed.map(String) : session.items_needed ? [String(session.items_needed)] : null,
                 deadline: session.deadline,
                 next_appointment: session.next_appointment,
                 warnings: null, // Not in database yet

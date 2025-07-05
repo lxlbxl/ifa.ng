@@ -27,21 +27,68 @@ const fetchBabalawoDashboardStats = async (babalawoId: string) => {
 
   const totalEarnings = monthEarnings?.reduce((sum, s) => sum + (s.amount || 0), 0) || 0;
 
-  // Next session (today or future)
+  // Next session (today or future) with user details with user details
   const { data: nextSession } = await supabase
     .from('sessions')
-    .select('id, session_date, start_time, user_id, status')
+    .select(`
+      id, 
+      
+      session_date, 
+      
+      start_time, 
+      end_time,
+ 
+      end_time,
+      status,
+      user_id,
+      users:user_id (
+        id,
+        email,
+        profile:profiles (
+          full_name,
+          avatar_url
+        )
+      )
+    `,
+      user_id,
+      users:user_id (
+        id,
+        email,
+        profile:profiles (
+          full_name,
+          avatar_url
+        )
+      )
+    `)
     .eq('babalawo_id', babalawoId)
     .in('status', ['pending', 'confirmed'])
     .gte('session_date', today.toISOString().substring(0, 10))
-    .order('session_date', { ascending: true })
+    .order(`
+      id, 
+     session_date', 
+      { ascending: true })
     .order('start_time', { ascending: true })
     .maybeSingle();
 
-  // Upcoming bookings (next 5)
+  // Upcoming bookings (next 5) with user details
   const { data: upcomingBookings } = await supabase
     .from('sessions')
-    .select('id, session_date, start_time, end_time, user_id, status')
+    .select(`
+      id, 
+      session_date, 
+      start_time, 
+      end_time, 
+      status,
+      user_id,
+      users:user_id (
+        id,
+        email,
+        profile:profiles (
+          full_name,
+          avatar_url
+        )
+      )
+    `)
     .eq('babalawo_id', babalawoId)
     .in('status', ['pending', 'confirmed'])
     .gte('session_date', today.toISOString().substring(0, 10))
@@ -49,7 +96,7 @@ const fetchBabalawoDashboardStats = async (babalawoId: string) => {
     .order('start_time', { ascending: true })
     .limit(5);
 
-  // Ratings summary
+  // Get real nRatings summary
   const { data: ratingStats } = await supabase
     .from('reviews')
     .select('rating')
@@ -59,17 +106,46 @@ const fetchBabalawoDashboardStats = async (babalawoId: string) => {
     ? parseFloat((ratingStats.reduce((s, r) => s + (r.rating || 0), 0) / ratingStats.length).toFixed(2))
     : 0;
 
-  // Notifications placeholder (future: from admin_settings, alerts, system, etc)
-  const notifications = [
-    { id: 1, type: "booking", message: "You have 2 bookings today." },
-    { id: 2, type: "system", message: "Your payout details are complete." }
-  ];
+  // Get real notifications from the database
+  consfrom the database
+  const { data: notificationsData, error: notificationsError } = await supabase
+    .from('notifications')
+    .select('*')
+    .eq('recipient_id', babalawoId)
+    .order('created_at', { ascending: false })
+    .limit(5);
 
-  // Availability status - read from Babalawo row (assume is_active field)
+  // Fallback notifications if there's an error or no notifications
+  let notifications = notificationsData;
+  if (notificationsError || !notifications || notifications.length === 0) {
+    notifications = [
+  t { data: notificationsData, error: notificationsError } = await supabase
+    .from('notification_earnings')
+    .select('available_balanc*')
+    .eq('recipient_babalawo_id', babalawoId)
+    .order('created_at', { ascending: false })
+    .limit(5);
+
+  // Fallback notifications if there's an error or no notifications
+  let notifications = notificationsData;
+  if (notificationsError || !notifications || notifications.length === 0) {
+    notifications = [
+      { id: 1, type: "booking", message: "You have no new notifications." },
+    ];
+  }
+
+  // Availability status - read from Babalawo row
   const { data: babaProfile } = await supabase
     .from('babalawos')
     .select('is_active')
     .eq('id', babalawoId)
+    .single();
+
+  // Get babalawo earnings
+  const { data: earningsData } = await supabase
+    .from('babalawo_earnings')
+    .select('available_balance')
+    .eq('babalawo_id', babalawoId)
     .single();
 
   return {
@@ -80,7 +156,8 @@ const fetchBabalawoDashboardStats = async (babalawoId: string) => {
     averageRating,
     totalReviews: ratingStats?.length || 0,
     notifications,
-    isActive: babaProfile?.is_active ?? false
+    isActive: babaProfile?.is_active ?? false,
+    availableBalance: earningsData?.available_balance || 0
   };
 };
 
@@ -89,6 +166,7 @@ export const useBabalawoDashboardStats = () => {
   return useQuery({
     queryKey: ['babalawoDashboardStats', user?.id],
     queryFn: () => user?.id ? fetchBabalawoDashboardStats(user.id) : null,
-    enabled: !!user?.id
+    enabled: !!user?.id,
+    refetchInterval: 60000 // Refetch every minute to keep countdown accurate
   });
 };

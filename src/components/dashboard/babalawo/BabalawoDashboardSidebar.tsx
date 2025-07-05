@@ -7,15 +7,29 @@ import {
   User2,
   Settings,
   LifeBuoy,
-  LogOut
+  LogOut,,
+  Star,
+  Bell,
+  Clock
+  Star,
+  Bell,
+  Clock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const menu = [
   { icon: LayoutDashboard, label: "Dashboard", section: "dashboard" },
   { icon: Calendar, label: "My Consultations", section: "consultations" },
   { icon: DollarSign, label: "Earnings", section: "earnings" },
+  { icon: Star, label: "Reviews", section: "reviews" },
+  { icon: Bell, label: "Notifications", section: "notifications" },
+  { icon: Clock, label: "Reminders", section: "reminders" },
+  { icon: Star, label: "Reviews", section: "reviews" },
+  { icon: Bell, label: "Notifications", section: "notifications" },
+  { icon: Clock, label: "Reminders", section: "reminders" },
   { icon: User2, label: "Profile", section: "profile" },
   { icon: Settings, label: "Settings", section: "settings" },
 ];
@@ -23,8 +37,19 @@ const menu = [
 const BabalawoDashboardSidebar: React.FC<{
   activeSection?: string;
   onSectionChange?: (val: string) => void;
-}> = ({ activeSection = "dashboard", onSectionChange }) => {
-  const { signOut } = useAuth();
+  user?: any;
+}> = ({ activeSection = "dashboard", onSectionChange, user }) => {
+  const { signOut, user: authUser, user: authUser } = useAuth();
+  
+  const userData = user || authUser;
+  const userProfile = userData?.profile || {};
+  const userName = userProfile?.full_name || userData?.email || "Babalawo";
+  const userAvatar = userProfile?.avatar_url;
+  
+  const userData = user || authUser;
+  const userProfile = userData?.profile || {};
+  const userName = userProfile?.full_name || userData?.email || "Babalawo";
+  const userAvatar = userProfile?.avatar_url;
 
   const handleSignOut = async () => {
     try {
@@ -36,38 +61,90 @@ const BabalawoDashboardSidebar: React.FC<{
   };
 
   return (
-    <aside className="h-full md:min-h-[calc(100vh-0px)] w-64 bg-gradient-to-br from-[#7b61ff] to-[#7f53ac] text-white shadow-xl flex flex-col">
+    <aside className="h-full md:min-h-[calc(100vh-0px)] w-64 bg-white shadow-lg border-r border-gray-200 border-r border-gray-200 flex flex-col">
       {/* Logo & Avatar */}
-      <div className="flex flex-col items-center py-8 px-4">
-        <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center mb-3">
-          <span className="font-extrabold text-2xl text-white">I</span>
+      <div className="p-6 border-b border-gray-200">
+        <div className="flex items-center">
+             <p className="w-10 h-10 bg-gradient-to-br from-violet-600 to-indigo-600 rounded-full flex items-center justify-center">
+            trabold text-lg text-white">I</span>
+            </div>
+          <div>
+            <h2 className="text-sm text-gray-500">Babalawo Dashboard</p>
+          </div>
         </div>
-        <span className="font-extrabold text-lg tracking-wider uppercase">IFA.ng</span>
-        <span className="text-xs mt-1 opacity-60">Babalawo</span>
+        
+        <div className="mt-6 flex items-center gap-3">
+          <Avatar className="h-10 w-10 border border-gray-200">
+            <AvatarImage src={userAvatar} />
+            <AvatarFallback>{userName.charAt(0)}</AvatarFallback>
+          </Avatar>
+          <div>
+            <p    className="font-medium text-gray-900 text-sm">{userName}</p>
+            <p className="text-xs text-gray-500">Verified Babalawo</p>
+          </div>
+        </div>
       </div>
-      <nav className="flex-1 flex flex-col gap-1 mt-2 px-3 overflow-y-auto">
-        {menu.map((item) => (
-          <button
-            key={item.section}
-            className={cn(
-              "flex items-center w-full rounded-lg px-4 py-2 font-medium gap-3 transition-all",
-              activeSection === item.section
-                ? "bg-white/20 shadow-md text-white"
-                : "hover:bg-white/10 text-white/80"
-            )}
-            onClick={() => onSectionChange?.(item.section)}
-            aria-current={activeSection === item.section ? "page" : undefined}
-          >
-            <item.icon className="w-5 h-5" />
-            {item.label}
-          </button>
-        ))}
+      
+      <nav className="flex-1 p-4 overflow-y-auto">
+ violet-50 text-violet-700 font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+               <ul className="space-y-2">
+              {menu.map((item) => (
+            <li key={item.section}>
+                          <button
+ xl font-bold text-gray-800">IFA.ng</h2>
+            <p className="text-sm text-gray-500">Babalawo Dashboard</p>
+        </li>
+          ))}
+        </ul>
       </nav>
-      <div className="pt-4 pb-2 px-3 border-t border-white/10">
+      
+        </div>
+        
+        <div className="mt-6 flex items-center gap-3">
+          <Avatar className="h-10 w-10 border border-gray-200">
+            w-full <AvatarImage src={userAvatar} />
+            <AvatarFallback>{userName.charAt(0)}</AvatarFallback>
+          </Avatargap-3 px-4 py-3 rounded-lg transition-colors text-left text-base",
+            activeSection === "support" 
+              ? "bg-violet-50 text-violet-700 font-medium" 
+              : "text-gray-700 hover:bg-gray-100>
+          <div>
+            <p className="w-full font-medium text-gray-900 text-sm">{userName}</p>
+            <p className="text-xs text-gray-500">Verified Babalawo</p>
+          </div>
+        </div>
+      </div>
+      
+      <nav className="flex-1 p-4 overflow-y-auto">
+        <ul className="space-y-2">
+          {menu.map((item) => (
+            <li key={item.section}>
+              <button
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left text-base",
+                  activeSection === item.section
+                    ? "bg-violet-50 text-violet-700 font-medium"
+                    : "text-gray-700 hover:bg-gray-100"
+                )}
+                onClick={() => onSectionChange?.(item.section)}
+                aria-current={activeSection === item.section ? "page" : undefined}
+              >
+                <item.icon className="w-5 h-5" />
+                {item.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      
+      <div className="p-4 border-t border-gray-200">
         <button
           className={cn(
-            "flex items-center w-full rounded-lg px-4 py-2 font-medium gap-3 transition-all hover:bg-white/10 text-white/80",
-            activeSection === "support" && "bg-white/20 shadow-md text-white"
+            "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left text-base",
+            activeSection === "support" 
+              ? "bg-violet-50 text-violet-700 font-medium" 
+              : "text-gray-700 hover:bg-gray-100"
           )}
           onClick={() => onSectionChange?.("support")}
         >
@@ -75,7 +152,7 @@ const BabalawoDashboardSidebar: React.FC<{
           Support
         </button>
         <button
-          className="flex items-center w-full rounded-lg px-4 py-2 font-medium gap-3 transition-all hover:bg-red-500/20 text-white/80 hover:text-white mt-2"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left text-base text-red-600 hover:bg-red-50 mt-2"
           onClick={handleSignOut}
         >
           <LogOut className="w-5 h-5" />

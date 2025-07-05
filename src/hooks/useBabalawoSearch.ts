@@ -144,6 +144,15 @@ export const useBabalawoSearch = () => {
         )
       );
     }
+    
+    // Apply availability filter
+    if (filters.availability) {
+      if (filters.availability === 'available') {
+        filtered = filtered.filter(babalawo => babalawo.is_active === true);
+      } else if (filters.availability === 'offline') {
+        filtered = filtered.filter(babalawo => babalawo.is_active === false);
+      }
+    }
 
     // Apply sorting
     filtered.sort((a, b) => {

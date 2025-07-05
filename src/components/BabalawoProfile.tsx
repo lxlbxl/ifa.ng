@@ -14,9 +14,11 @@ import {
   Award,
   ArrowLeft,
   Clock,
-  Users
+  Users,
+  Zap
 } from 'lucide-react';
 import BookSessionModal from './dashboard/user/BookSessionModal';
+import InstantConsultationModal from './dashboard/user/InstantConsultationModal';
 import { useAuth } from '@/hooks/useAuth';
 
 const BabalawoProfile = () => {
@@ -25,6 +27,7 @@ const BabalawoProfile = () => {
   const { user } = useAuth();
   const { babalawo, loading: isLoading, error } = useBabalawoById(babalawoId);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [showInstantModal, setShowInstantModal] = useState(false);
 
   if (isLoading) {
     return (
@@ -67,6 +70,15 @@ const BabalawoProfile = () => {
     }
     
     setShowBookingModal(true);
+  };
+  
+  const handleInstantConsultation = () => {
+    if (!user) {
+      navigate('/auth?tab=signin');
+      return;
+    }
+    
+    setShowInstantModal(true);
   };
 
   const babalawoForModal = {
@@ -225,10 +237,37 @@ const BabalawoProfile = () => {
                   </div>
                 </div>
                 
+                {/* Online Status Badge */}
+                {babalawo.is_active && (
+                  <div className="bg-green-50 p-3 rounded-md mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <div className="h-3 w-3 bg-green-500 rounded-full"></div>
+                        <div className="h-3 w-3 bg-green-500 rounded-full absolute top-0 animate-ping opacity-75"></div>
+                      </div>
+                      <span className="text-green-700 font-medium">Online Now</span>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Instant Consultation Button - Only show when babalawo is online */}
+                {babalawo.is_active && (
+                  <Button 
+                    onClick={handleInstantConsultation}
+                    className="w-full bg-green-600 hover:bg-green-700 mb-2"
+                    size="lg"
+                  >
+                    <Zap className="h-4 w-4 mr-2" />
+                    Start Instant Consultation
+                  </Button>
+                )}
+                
+                {/* Regular Booking Button */}
                 <Button 
                   onClick={handleBookSession}
                   className="w-full"
                   size="lg"
+                  variant={babalawo.is_active ? "outline" : "default"}
                 >
                   Book Session Now
                 </Button>
@@ -279,6 +318,13 @@ const BabalawoProfile = () => {
       <BookSessionModal
         open={showBookingModal}
         onOpenChange={setShowBookingModal}
+        babalawo={babalawoForModal}
+      />
+      
+      {/* Instant Consultation Modal */}
+      <InstantConsultationModal
+        open={showInstantModal}
+        onOpenChange={setShowInstantModal}
         babalawo={babalawoForModal}
       />
     </div>

@@ -11,7 +11,6 @@ import TransactionHistory from '@/components/dashboard/user/TransactionHistory';
 import FeaturedBabalawos from '@/components/FeaturedBabalawos';
 import WalletWidget from '@/components/dashboard/user/WalletWidget';
 import SpiritualJourney from '@/components/dashboard/user/SpiritualJourney';
-import Notifications from '@/components/dashboard/user/Notifications';
 import Loyalty from '@/components/dashboard/user/Loyalty';
 import Support from '@/components/dashboard/user/Support';
 
@@ -58,7 +57,6 @@ const SECTION_MAP: { [key: string]: React.ReactNode } = {
   'spiritual-journey': <SpiritualJourney />,
   'find-babalawo': <FindBabalawo />,
   'transaction-history': <TransactionHistory />,
-  'notifications': <Notifications />,
   'loyalty': <Loyalty />,
   'settings': <Settings />,
   'support': <Support />,

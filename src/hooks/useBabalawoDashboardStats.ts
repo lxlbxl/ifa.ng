@@ -1,7 +1,7 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+
 
 const fetchBabalawoDashboardStats = async (babalawoId: string) => {
   const today = new Date();
@@ -27,68 +27,21 @@ const fetchBabalawoDashboardStats = async (babalawoId: string) => {
 
   const totalEarnings = monthEarnings?.reduce((sum, s) => sum + (s.amount || 0), 0) || 0;
 
-  // Next session (today or future) with user details with user details
+  // Next session (today or future) without nested user details
   const { data: nextSession } = await supabase
     .from('sessions')
-    .select(`
-      id, 
-      
-      session_date, 
-      
-      start_time, 
-      end_time,
- 
-      end_time,
-      status,
-      user_id,
-      users:user_id (
-        id,
-        email,
-        profile:profiles (
-          full_name,
-          avatar_url
-        )
-      )
-    `,
-      user_id,
-      users:user_id (
-        id,
-        email,
-        profile:profiles (
-          full_name,
-          avatar_url
-        )
-      )
-    `)
+    .select('id, session_date, start_time, end_time, status, user_id')
     .eq('babalawo_id', babalawoId)
     .in('status', ['pending', 'confirmed'])
     .gte('session_date', today.toISOString().substring(0, 10))
-    .order(`
-      id, 
-     session_date', 
-      { ascending: true })
+    .order('session_date', { ascending: true })
     .order('start_time', { ascending: true })
     .maybeSingle();
 
-  // Upcoming bookings (next 5) with user details
+  // Upcoming bookings (next 5) without nested user details
   const { data: upcomingBookings } = await supabase
     .from('sessions')
-    .select(`
-      id, 
-      session_date, 
-      start_time, 
-      end_time, 
-      status,
-      user_id,
-      users:user_id (
-        id,
-        email,
-        profile:profiles (
-          full_name,
-          avatar_url
-        )
-      )
-    `)
+    .select('id, session_date, start_time, end_time, status, user_id')
     .eq('babalawo_id', babalawoId)
     .in('status', ['pending', 'confirmed'])
     .gte('session_date', today.toISOString().substring(0, 10))
@@ -96,7 +49,7 @@ const fetchBabalawoDashboardStats = async (babalawoId: string) => {
     .order('start_time', { ascending: true })
     .limit(5);
 
-  // Get real nRatings summary
+  // Get real ratings summary
   const { data: ratingStats } = await supabase
     .from('reviews')
     .select('rating')
@@ -107,7 +60,6 @@ const fetchBabalawoDashboardStats = async (babalawoId: string) => {
     : 0;
 
   // Get real notifications from the database
-  consfrom the database
   const { data: notificationsData, error: notificationsError } = await supabase
     .from('notifications')
     .select('*')
@@ -119,18 +71,7 @@ const fetchBabalawoDashboardStats = async (babalawoId: string) => {
   let notifications = notificationsData;
   if (notificationsError || !notifications || notifications.length === 0) {
     notifications = [
-  t { data: notificationsData, error: notificationsError } = await supabase
-    .from('notification_earnings')
-    .select('available_balanc*')
-    .eq('recipient_babalawo_id', babalawoId)
-    .order('created_at', { ascending: false })
-    .limit(5);
-
-  // Fallback notifications if there's an error or no notifications
-  let notifications = notificationsData;
-  if (notificationsError || !notifications || notifications.length === 0) {
-    notifications = [
-      { id: 1, type: "booking", message: "You have no new notifications." },
+      { id: '1', type: "booking", message: "You have no new notifications.", action_label: "", action_url: "", created_at: "", read: false, timestamp: "", title: "", user_id: "" },
     ];
   }
 
@@ -139,13 +80,6 @@ const fetchBabalawoDashboardStats = async (babalawoId: string) => {
     .from('babalawos')
     .select('is_active')
     .eq('id', babalawoId)
-    .single();
-
-  // Get babalawo earnings
-  const { data: earningsData } = await supabase
-    .from('babalawo_earnings')
-    .select('available_balance')
-    .eq('babalawo_id', babalawoId)
     .single();
 
   return {
@@ -157,7 +91,6 @@ const fetchBabalawoDashboardStats = async (babalawoId: string) => {
     totalReviews: ratingStats?.length || 0,
     notifications,
     isActive: babaProfile?.is_active ?? false,
-    availableBalance: earningsData?.available_balance || 0
   };
 };
 

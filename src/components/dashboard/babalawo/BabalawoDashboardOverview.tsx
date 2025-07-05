@@ -1,13 +1,7 @@
-
-import React, { useState, useEffect }, { useState, useEffect } from "react";
-import { Calendar, Star, DollarSign, Bell, Clock, Video, User, CheckCircle, AlertCircle, Clock, Video, User, CheckCircle, AlertCircle } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Calendar, Star, DollarSign, Bell, Clock, Video, User, CheckCircle, AlertCircle } from "lucide-react";
 import { useBabalawoDashboardStats } from "@/hooks/useBabalawoDashboardStats";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { format, isAfter, subMinutes, differenceInMinutes, differenceInHours, differenceInDays } from 'date-fns';
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { format, isAfter, subMinutes, differenceInMinutes, differenceInHours, differenceInDays } from 'date-fns';
@@ -18,75 +12,51 @@ const StatCard = ({
   label,
   value,
   icon: Icon,
-  accent,
-}: {
-  label: string;
-  value: React.ReactNode;
-  icon: any;
-  accent: string;
-}) => (
-  <div className={`flex-1 min-w-0 bg-white rounded-2xl shadow-lg px-7 py-6 flex items-center gap-5 relative overflow-hidden`} style={{background: accent}}>
-    <div className="bg-white/90 rounded-xl p-2 shadow-sm">
-      <Icon className="w-7 h-7 text-violet-600" />
-    </div>
-    <div>
-      <div className="text-sm text-white/80 mb-0.5 font-medium">{label}</div>
-      <div className="text-3xl font-bold text-white">{value}</div>
-    </div>
-  </div>
-);
-
-const SummaryCard = ({
-  balance,
-  notifications,
-}: {
-  balance: number;
-  notifications: { id: number | string; message: string; type?: string; type?: string }[] | undefined;
-}) => (
-  <div className="bg-gradient-to-br from-white to-[#d1ccfa] rounded-2xl shadow-lg px-7 py-7 flex flex-col relative min-h-[340px]">
-    <div className="flex items-center gap-2">
-      <DollarSign className="w-5 h-5 text-violet-700" />
-      <span className="text-sm font-light text-gray-600">Availablelable Balance</span>
-    </div>
-    <div className="text-4xl font-extrabold text-violet-700 my-2 max-h-[200px] overflow-y-auto">
-      ₦{balance.toLocaleString()}
-    </div>
-    <Button className="w-full mt-2 mb-6" variant="default" onClick={() => window.dispatchEvent(new CustomEvent('openWithdrawalModal'))}>
-      Withdraw
-    </Button>
-    <div className="mt-4">
-      <div className="font-semibold text-base mb-2 text-gray-900 flex items-center gap-2">
-        <Bell className="w-4 h-4 text-blue-400" /> Notifications
+  description,
+  trend,
+  color = "blue"
+}) => {
+  const colorClasses = {
+    blue: "bg-blue-50 text-blue-700",
+    green: "bg-green-50 text-green-700",
+    yellow: "bg-yellow-50 text-yellow-700",
+    purple: "bg-purple-50 text-purple-700",
+  };
+  
+  return (
+    <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className="flex justify-between items-start">
+        <div>
+          <p className="text-gray-500 text-sm">{label}</p>
+          <h3 className="text-2xl font-bold mt-1">{value}</h3>
+          {description && <p className="text-gray-500 text-sm mt-1">{description}</p>}
+        </div>
+        <div className={`p-3 rounded-full ${colorClasses[color]}`}>
+          <Icon className="h-6 w-6" />
+        </div>
       </div>
-      <ul className="text-sm text-gray-700 list-disc ml-5 max-h-[200px] overflow-y-auto">
-        {(notifications && notifications.length > 0) ? (
-          notifications.map((note) => (
-            <li key={note.id} className="my-1">
-              {note.message}
-              {note.type === 'reminder' && (
-                <Badge className="ml-2 bg-orange-100 text-orange-800 text-xs">Reminder</Badge>
-              )}
-              {note.type === 'booking' && (
-                <Badge className="ml-2 bg-green-100 text-green-800 text-xs">Booking</Badge>
-              )}
-            </li>
-          ))
-        ) : (
-          <li>No notifications</li>
-        )}
-      </ul>
+      
+      {trend && (
+        <div className="mt-4 flex items-center">
+          <span className={trend.positive ? "text-green-600" : "text-red-600"}>
+            {trend.positive ? "↑" : "↓"} {trend.value}
+          </span>
+          <span className="text-gray-500 text-sm ml-1">vs last month</span>
+        </div>
+      )}
     </div>
-  </div>
-);
+  );
+};
 
-const SessionCard = ({ session, isNext = false }: { session: any; isNext?: boolean }) => {
-  const [countdown, setCountdown] = useState<string>('');
-  const [canJoin, setCanJoin] = useState<boolean>(false);
+const UpcomingSession = ({ session }) => {
+  const [countdown, setCountdown] = useState("");
+  const [canJoin, setCanJoin] = useState(false);
   
   useEffect(() => {
     const updateCountdown = () => {
-      const sessionDateTime = new Date(`${session.session_date}T${session.start_time}`);
       const now = new Date();
+      const sessionDateTime = new Date(session.scheduled_at);
+      
       const diffMinutes = differenceInMinutes(sessionDateTime, now);
       const diffHours = differenceInHours(sessionDateTime, now);
       const diffDays = differenceInDays(sessionDateTime, now);
@@ -99,8 +69,7 @@ const SessionCard = ({ session, isNext = false }: { session: any; isNext?: boole
         countdownText = `${diffHours}h ${diffMinutes % 60}m`;
       } else if (diffMinutes > 0) {
         countdownText = `${diffMinutes}m`;
-      }            className={isActive ? "bg-green-600 hover:bg-green-700" : ""}
- else {
+      } else {
         countdownText = 'Now';
       }
       
@@ -116,90 +85,42 @@ const SessionCard = ({ session, isNext = false }: { session: any; isNext?: boole
     
     return () => clearInterval(interval);
   }, [session]);
-
-  const handleToggleStatus = async () => {
-    try {
-      const { error } = await supabase
-        .from('sessions')
-        .update({ status: session.status === 'pending' ? 'confirmed' : 'pending' })
-        .eq('id', session.id);
-      
-      if (error) throw error;
-      
-      toast({ 
-        title: "Status updated", 
-        description: `Session is now ${session.status === 'pending' ? 'confirmed' : 'pending'}` 
-      });
-    } catch (err) {
-      console.error('Error updating session status:', err);
-      toast({ 
-        title: "Error updating status", 
-        variant: "destructive" 
-      });
-    }
-  };
-
-  const userName = session.users?.profile?.full_name || 'User';
-  const userAvatar = session.users?.profile?.avatar_url;
-  const formattedDate = format(new Date(session.session_date), 'EEE, MMM d, yyyy');
-  const formattedTime = format(new Date(`2000-01-01T${session.start_time}`), 'h:mm a');
   
   return (
-    <div className={`bg-white rounded-xl shadow-md p-4 ${isNext ? 'border-l-4 border-violet-500' : ''}`}>
-      <div className="flex items-center gap-3 mb-3">
-        <Avatar className="h-10 w-10 border border-gray-200">
-          <AvatarImage src={userAvatar} />
-          <AvatarFallback>{userName.charAt(0)}</AvatarFallback>
+    <div className="bg-white rounded-xl shadow-sm p-6">
+      <div className="flex items-center gap-4">
+        <Avatar className="h-12 w-12 border border-gray-200">
+          <AvatarImage src={session.client?.avatar_url} />
+          <AvatarFallback>{session.client?.name?.charAt(0) || 'C'}</AvatarFallback>
         </Avatar>
-        <div>
-          <h3 className="font-medium text-gray-900">{userName}</h3>
-          <Badge className={session.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
-            {session.status === 'confirmed' ? 'Confirmed' : 'Pending'}
-          </Badge>
+        
+        <div className="flex-1">
+          <h3 className="font-semibold">{session.client?.name || 'Client'}</h3>
+          <p className="text-sm text-gray-500">{session.consultation_type}</p>
         </div>
-      </div>
-      
-      <div className="grid grid-cols-2 gap-2 text-sm mb-3">
-        <div>
-          <span className="text-gray-500 flex items-center gap-1">
-            <Calendar className="h-3 w-3" /> Date
-          </span>
-          <span className="font-medium">{formattedDate}</span>
-        </div>
-        <div>
-          <span className="text-gray-500 flex items-center gap-1">
-            <Clock className="h-3 w-3" /> Time
-          </span>
-          <span className="font-medium">{formattedTime}</span>
-        </div>
-        {isNext && (
-          <div className="col-span-2">
-            <span className="text-gray-500 flex items-center gap-1">
-              <Clock className="h-3 w-3" /> Countdown
-            </span>
-            <span className="font-medium text-violet-600">{countdown}</span>
+        
+        <div className="text-right">
+          <div className="flex items-center gap-1">
+            <Clock className="h-4 w-4 text-gray-500" />
+            <span className="text-sm font-medium">{countdown}</span>
           </div>
-        )}
+          <p className="text-xs text-gray-500 mt-1">
+            {format(new Date(session.scheduled_at), 'MMM d, h:mm a')}
+          </p>
+        </div>
       </div>
       
-      <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100">
-        {session.status === 'pending' ? (
-          <Button size="sm" variant="outline" onClick={handleToggleStatus}>
-            <CheckCircle className="h-4 w-4 mr-1" /> Confirm
-          </Button>
-        ) : (
-          <Button size="sm" variant="outline" onClick={handleToggleStatus}>
-            <AlertCircle className="h-4 w-4 mr-1" /> Mark Pending
-          </Button>
-        )}
+      <div className="mt-4 flex justify-between items-center">
+        <Badge variant={session.status === 'confirmed' ? 'outline' : 'secondary'}>
+          {session.status === 'confirmed' ? 'Confirmed' : 'Pending'}
+        </Badge>
         
         <Button 
           size="sm" 
-          disabled={!canJoin || session.status !== 'confirmed'}
-          onClick={() => window.open(`/session/${session.id}`, "_blank")}
+          disabled={!canJoin}
+          onClick={() => window.location.href = `/consultation/${session.id}`}
         >
-          <Video className="h-4 w-4 mr-1" /> 
-          {canJoin && session.status === 'confirmed' ? 'Join Session' : 'Available 10 min before'}
+          {canJoin ? 'Join Now' : 'View Details'}
         </Button>
       </div>
     </div>
@@ -207,153 +128,315 @@ const SessionCard = ({ session, isNext = false }: { session: any; isNext?: boole
 };
 
 const BabalawoDashboardOverview = () => {
-  const { data: stats, isLoading } = useBabalawoDashboardStats();
-  const [isActive, setIsActive] = useState(stats?.isActive ?? false);
+  const { stats, isLoading, error } = useBabalawoDashboardStats();
+  const [upcomingSessions, setUpcomingSessions] = useState([]);
+  const [recentReviews, setRecentReviews] = useState([]);
+  const [isActive, setIsActive] = useState(false);
+  const [loadingStatus, setLoadingStatus] = useState(true);
   
   useEffect(() => {
-    setIsActive(stats?.isActive ?? false);
-  }, [stats?.isActive]);
-
-  const handleToggle = async () => {
+    const fetchBabalawoStatus = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          const { data: babalawoData, error } = await supabase
+            .from('babalawos')
+            .select('is_active')
+            .eq('user_id', user.id)
+            .single();
+          
+          if (error) throw error;
+          
+          setIsActive(babalawoData?.is_active || false);
+        }
+      } catch (error) {
+        console.error('Error fetching babalawo status:', error);
+      } finally {
+        setLoadingStatus(false);
+      }
+    };
+    
+    const fetchUpcomingSessions = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          const { data: babalawoData } = await supabase
+            .from('babalawos')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+          
+          if (babalawoData) {
+            const now = new Date().toISOString();
+            
+            const { data, error } = await supabase
+              .from('consultations')
+              .select(`
+                id, 
+                status, 
+                scheduled_at, 
+                consultation_type,
+                client:client_id (
+                  name:full_name, 
+                  avatar_url
+                )
+              `)
+              .eq('babalawo_id', babalawoData.id)
+              .gte('scheduled_at', now)
+              .in('status', ['confirmed', 'pending'])
+              .order('scheduled_at', { ascending: true })
+              .limit(3);
+            
+            if (error) throw error;
+            
+            setUpcomingSessions(data || []);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching upcoming sessions:', error);
+      }
+    };
+    
+    const fetchRecentReviews = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          const { data: babalawoData } = await supabase
+            .from('babalawos')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+          
+          if (babalawoData) {
+            const { data, error } = await supabase
+              .from('reviews')
+              .select(`
+                id, 
+                rating, 
+                comment,
+                created_at,
+                client:client_id (
+                  name:full_name, 
+                  avatar_url
+                )
+              `)
+              .eq('babalawo_id', babalawoData.id)
+              .order('created_at', { ascending: false })
+              .limit(3);
+            
+            if (error) throw error;
+            
+            setRecentReviews(data || []);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching recent reviews:', error);
+      }
+    };
+    
+    fetchBabalawoStatus();
+    fetchUpcomingSessions();
+    fetchRecentReviews();
+  }, []);
+  
+  const toggleActiveStatus = async () => {
     try {
-      const newStatus = !isActive;
-      setIsActive(newStatus);
+      setLoadingStatus(true);
       
-      const { error } = await supabase
-        .from('babalawos')
-        .update({ is_active: newStatus })
-        .eq('id', stats?.babalawoId);
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (error) throw error;
-      
-      toast({ 
-        title: `Status updated`, 
-        description: `You are now ${newStatus ? 'online' : 'offline'}` 
+      if (user) {
+        const { error } = await supabase
+          .from('babalawos')
+          .update({ is_active: !isActive })
+          .eq('user_id', user.id);
+        
+        if (error) throw error;
+        
+        setIsActive(!isActive);
+        
+        toast({
+          title: isActive ? 'You are now offline' : 'You are now online',
+          description: isActive 
+            ? 'You will not receive new booking requests' 
+            : 'You are now visible to clients and can receive bookings',
+        });
+      }
+    } catch (error) {
+      console.error('Error updating status:', error);
+      toast({
+        title: 'Error updating status',
+        description: 'Please try again later',
+        variant: 'destructive',
       });
-    } catch (err) {
-      console.error('Error updating status:', err);
-      setIsActive(!newStatus); // Revert on error
-      toast({ 
-        title: "Error updating status", 
-        variant: "destructive" 
-      });
+    } finally {
+      setLoadingStatus(false);
     }
   };
-
-  // Stat card gradients
-  const statGradients = [
-    "linear-gradient(110deg, #7b61ff 30%, #7f53ac 100%)",
-    "linear-gradient(110deg, #34b7a7 10%, #7ad7f1 100%)",
-    "linear-gradient(110deg, #fbb034 0%, #ffdd00 100%)"
-  ];
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-violet-500"></div>
-      </div>
-    );
-  }
-
+  
   return (
     <div className="flex flex-col lg:flex-row gap-8 w-full">
       {/* Main Content: Left */}
       <div className="flex-1 min-w-0 flex flex-col gap-8">
         {/* Stat Card Row */}
-        <div className="flex flex-col md:flex-row gap-6 w-full">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
-            label="Today's Consultations"
-            value={stats?.todaysSessions?.length ?? 0}
-            icon={Calendar}
-            accent={statGradients[0]}
+            label="Total Earnings"
+            value={`$${stats?.totalEarnings || 0}`}
+            icon={DollarSign}
+            color="green"
+            trend={{ positive: true, value: "12%" }}
           />
           <StatCard
-            label="This Month's Earnings"
-            value={`₦${stats?.totalEarnings?.toLocaleString() ?? 0}`}
-            icon={DollarSign}
-            accent={statGradients[1]}
+            label="Consultations"
+            value={stats?.totalConsultations || 0}
+            icon={Calendar}
+            color="blue"
+            trend={{ positive: true, value: "8%" }}
           />
           <StatCard
             label="Average Rating"
-            value={
-              <span>
-                {stats?.averageRating ?? 0}{" "}
-                <Star className="inline ml-1 mb-1 h-5 w-5 text-yellow-300" /> ({stats?.totalReviews})
-              </span>
-            }
+            value={stats?.averageRating || "0.0"}
             icon={Star}
-            accent={statGradients[2]}
+            color="yellow"
+            description={`From ${stats?.totalReviews || 0} reviews`}
+          />
+          <StatCard
+            label="Completion Rate"
+            value={`${stats?.completionRate || 0}%`}
+            icon={CheckCircle}
+            color="purple"
+            description={`${stats?.completedConsultations || 0} completed`}
           />
         </div>
         
-        
-        {/* Toggle Availability */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant={isActive ? "default" : "destructive"}
-            onClick={handleToggle}
-            className={isActive ? "bg-green-600 hover:bg-green-700" : ""}
-          >
-            {isActive ? "Online" : "Offline"}
-          </Button>
-          <span className="text-muted-foreground">
-            {isActive 
-              ? "You are visible to users and can receive bookings justify-center py-8 text-gray-500">
-        : "You are invisible to users and cannot receive new bookings"}
-          </span>
+        {/* Status Toggle */}
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <h2 className="text-xl font-semibold mb-4">Your Status</h2>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <Button 
+              onClick={toggleActiveStatus}
+              disabled={loadingStatus}
+              variant={isActive ? "default" : "outline"}
+              className={isActive ? "bg-green-600 hover:bg-green-700" : ""}
+            >
+              {isActive ? "Online" : "Offline"}
+            </Button>
+            <span className="text-muted-foreground">
+              {isActive 
+                ? "You are visible to users and can receive bookings" 
+                : "You are invisible to users and cannot receive new bookings"}
+            </span>
+          </div>
         </div>
         
- ) : (
-        {/* Main Panel Row */}
-        <div className="grid md:grid-cols-2 gap-8"> mb-4">Next Session</div>
-            {stats?.nextSession ? (
-              <SessionCard session={stats.nextSession} isNext={true} />
-          {/* Next Session */}
-          <div className="bg-white rounded-2xl shadow-lg px-6 py-6">
-            <div className="font-semibold text-xl mb-4 text-violet-700 mb-4">Next Session</div>
-            {stats?.nextSession={session} />
-                ))
-              ) : (
-                <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-                  <Calendar className="h-12 w-12 text-gray-300 mb-2" />
-                  <span>No upcoming bookings</span>
-                </div>
-              )} ? (
-              <SessionCard session={stats.nextSession} isNext={true} />
-            ) : (
-              <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-                <Calendar className="h-12 w-12 text-gray-300 mb-2" />
-                <span>No upcoming sessions scheduled</span>
-              </div>
-            </div>
+        {/* Upcoming Sessions */}
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Upcoming Sessions</h2>
+            <Button variant="outline" size="sm" asChild>
+              <a href="/dashboard/consultations">View All</a>
+            </Button>
           </div>
-      
           
-          {/* Upcoming Bookings */}
-          <div className="bg-white rounded-2xl shadow-lg px-6 py-6">
-            <div className="font-semibold text-xl mb-4 text-violet-700">Upcoming Bookings</div>
-            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
-              {stats?.upcomingBookings?.length > 0 ? (
-                stats.upcomingBookings.map((session: any) => (
-                  <SessionCard key={session.id} session={session} />
-                ))
-              ) : (
-                <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-                  <Calendar className="h-12 w-12 text-gray-300 mb-2" />
-                  <span>No upcoming bookings</span>
-                </div>
-              )}
+          {upcomingSessions.length > 0 ? (
+            <div className="space-y-4">
+              {upcomingSessions.map((session) => (
+                <UpcomingSession key={session.id} session={session} />
+              ))}
             </div>
-          </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+              <p>No upcoming sessions</p>
+              <p className="text-sm mt-1">Your schedule is clear for now</p>
+            </div>
+          )}
         </div>
       </div>
       
-      {/* Summary Panel: Right */}
-      <div className="w-full lg:w-96 shrink-0">
-        <SummaryCard
-          balance={stats?.availableBalance ?? 0}
-          notifications={stats?.notifications}
-        />
+      {/* Sidebar: Right */}
+      <div className="lg:w-1/3 flex flex-col gap-8">
+        {/* Recent Reviews */}
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Recent Reviews</h2>
+            <Button variant="outline" size="sm" asChild>
+              <a href="/dashboard/reviews">View All</a>
+            </Button>
+          </div>
+          
+          {recentReviews.length > 0 ? (
+            <div className="space-y-4">
+              {recentReviews.map((review) => (
+                <div key={review.id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={review.client?.avatar_url} />
+                      <AvatarFallback>{review.client?.name?.charAt(0) || 'C'}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium text-sm">{review.client?.name || 'Client'}</p>
+                      <div className="flex items-center">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-3.5 w-3.5 ${
+                              i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                        <span className="text-xs text-gray-500 ml-2">
+                          {format(new Date(review.created_at), 'MMM d, yyyy')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {review.comment && (
+                    <p className="text-sm text-gray-600 mt-2">{review.comment}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <Star className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+              <p>No reviews yet</p>
+              <p className="text-sm mt-1">Reviews will appear here once clients leave feedback</p>
+            </div>
+          )}
+        </div>
+        
+        {/* Quick Tips */}
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <h2 className="text-xl font-semibold mb-4">Tips to Increase Bookings</h2>
+          <ul className="space-y-3">
+            <li className="flex items-start gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-gray-600">Complete your profile with detailed information about your expertise and services</p>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-gray-600">Respond quickly to consultation requests and messages</p>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-gray-600">Ask satisfied clients to leave reviews after consultations</p>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-gray-600">Offer a variety of consultation types and durations</p>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-gray-600">Keep your availability calendar up to date</p>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
   );

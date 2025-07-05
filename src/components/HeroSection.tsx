@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Star, Shield, Video } from "lucide-react";
@@ -10,28 +9,28 @@ const testimonials = [
     text: "The guidance I received was profound and life-changing. Baba Ifasegun helped me understand my path clearly. I've had three sessions and each one brought new insights.",
     rating: 5,
     location: "Lagos, Nigeria",
-    image: "/public/testimonials/testimonial-1.jpg"
+    image: "/testimonials/testimonial-1.jpg"
   },
   {
     name: "Michael Thompson",
     text: "Professional, authentic, and deeply insightful. I finally found the spiritual guidance I was seeking after trying many other options. The video quality was excellent.",
     rating: 4.5,
     location: "New York, USA",
-    image: "/public/testimonials/testimonial-2.jpg"
+    image: "/testimonials/testimonial-2.jpg"
   },
   {
     name: "Fatima Al-Rashid",
     text: "The consultation was exactly what I needed. The Babalawo was patient and provided clear direction. While I was skeptical at first, I'm now a regular client.",
     rating: 4,
     location: "Dubai, UAE",
-    image: "/public/testimonials/testimonial-3.jpg"
+    image: "/testimonials/testimonial-3.jpg"
   },
   {
     name: "Carlos Mendoza",
     text: "I appreciate how the platform connected me with a Babalawo who understood my cultural background. The spiritual insights have helped me navigate a difficult transition in my life.",
     rating: 5,
     location: "Mexico City, Mexico",
-    image: "/public/testimonials/testimonial-4.jpg"
+    image: "/testimonials/testimonial-4.jpg"
   }
 ];
 
@@ -137,8 +136,8 @@ const HeroSection = () => {
                 
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex items-center justify-center gap-3">
-                    {testimonials[currentTestimonial].image && (
-                      <div className="w-10 h-10 rounded-full overflow-hidden">
+                    <div className="w-10 h-10 rounded-full overflow-hidden">
+                      {testimonials[currentTestimonial].image ? (
                         <img 
                           src={testimonials[currentTestimonial].image} 
                           alt={testimonials[currentTestimonial].name}
@@ -147,12 +146,23 @@ const HeroSection = () => {
                           height={40}
                           loading="lazy"
                           onError={(e) => {
-                            // Fallback if image fails to load
-                            e.currentTarget.style.display = 'none';
+                            // Replace with fallback avatar on error
+                            const target = e.currentTarget;
+                            const parent = target.parentElement;
+                            if (parent) {
+                              parent.innerHTML = `<div class="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center text-white font-semibold">
+                                ${testimonials[currentTestimonial].name.charAt(0)}
+                              </div>`;
+                            }
                           }}
                         />
-                      </div>
-                    )}
+                      ) : (
+                        // Fallback avatar if no image provided
+                        <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center text-white font-semibold">
+                          {testimonials[currentTestimonial].name.charAt(0)}
+                        </div>
+                      )}
+                    </div>
                     <div>
                       <p className="font-semibold text-gray-900">
                         {testimonials[currentTestimonial].name}

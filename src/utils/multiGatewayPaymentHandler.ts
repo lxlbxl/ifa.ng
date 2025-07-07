@@ -188,7 +188,7 @@ const createSession = async (
     const { data: sessionData, error: sessionErr } = await supabase
       .from("sessions")
       .insert({
-        user_id: user?.id,
+        user_id: user.id,
         babalawo_id: babalawo.id,
         session_date: format(date, "yyyy-MM-dd"),
         start_time: selectedTime,
@@ -212,7 +212,7 @@ const createSession = async (
 
     // Save payment record
     const { error: paymentErr } = await supabase.from("payments").insert({
-      user_id: user?.id,
+      user_id: user.id,
       babalawo_id: babalawo.id,
       session_id: sessionData.id,
       amount: amount,

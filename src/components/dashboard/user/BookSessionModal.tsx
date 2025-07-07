@@ -45,6 +45,16 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
       toast({ title: "Please select both date and time", variant: "destructive" });
       return;
     }
+    
+    if (!user?.id) {
+      toast({ 
+        title: "Authentication Error", 
+        description: "Please sign in to continue.",
+        variant: "destructive" 
+      });
+      return;
+    }
+    
     setIsLoading(true);
 
     // Extract amount from babalawo data more reliably

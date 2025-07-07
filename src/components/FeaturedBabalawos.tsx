@@ -4,45 +4,41 @@ import { useAuth } from "@/hooks/useAuth";
 import BookSessionModal from "./dashboard/user/BookSessionModal";
 import BabalawoGrid from "./babalawo/BabalawoGrid";
 import { useFeaturedBabalawos } from '@/hooks/useBabalawoSearch';
-import { Babalawo } from '@/types/babalawo';
+import { BabalawoProfile } from '@/types/babalawo';
 import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle, RefreshCw, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const FeaturedBabalawos: React.FC = () => {
-  const { featuredBabalawos: babalawos, loading, error, retry } = useFeaturedBabalawos(6);
-  const [bookingBabalawo, setBookingBabalawo] = useState<Babalawo | null>(null);
+  const { featuredBabalawos: babalawos, loading, error } = useFeaturedBabalawos(6);
+  const [bookingBabalawo, setBookingBabalawo] = useState<BabalawoProfile | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const handleBookSession = (babalawo: Babalawo) => {
+  const handleBookSession = (babalawo: BabalawoProfile) => {
     if (!user) {
       navigate('/auth?tab=signin');
       return;
     }
     
     // Convert to the format expected by BookSessionModal
-    const babalawForModal: Babalawo = {
+    const babalawoForModal: BabalawoProfile = {
       id: babalawo.id,
       full_name: babalawo.full_name || "Babalawo",
       avatar_url: babalawo.avatar_url,
-      title: "Ifa Priest & Spiritual Guide",
       specialties: Array.isArray(babalawo.specialties) ? babalawo.specialties : [],
-      rating: babalawo.rating ? Number(babalawo.rating) : 5,
-      reviews: babalawo.total_sessions ?? 0,
-      nextAvailable: 'Flexible',
-      hourly_rate: babalawo.hourly_rate ? Number(babalawo.hourly_rate) : 15000,
-      price: babalawo.hourly_rate ? `₦${Number(babalawo.hourly_rate).toLocaleString()}/hr` : '₦15,000/hr',
       experience_years: babalawo.experience_years,
+      hourly_rate: babalawo.hourly_rate ? Number(babalawo.hourly_rate) : 15000,
       bio: babalawo.bio,
       verification_status: babalawo.verification_status,
-      total_sessions: babalawo.total_sessions,
+      rating: babalawo.rating ? Number(babalawo.rating) : 5,
+      total_sessions: babalawo.total_sessions ?? 0,
       languages: babalawo.languages,
       timezone: babalawo.timezone,
       is_active: babalawo.is_active,
     };
     
-    setBookingBabalawo(babalawForModal);
+    setBookingBabalawo(babalawoForModal);
   };
 
   const handleViewProfile = (babalawoId: string) => {
@@ -89,7 +85,7 @@ const FeaturedBabalawos: React.FC = () => {
             <h3 className="text-xl font-semibold text-gray-800 mb-2">Unable to Load Babalawos</h3>
             <p className="text-gray-600 mb-6">{error}</p>
             <Button 
-              onClick={retry} 
+              onClick={() => window.location.reload()} 
               className="mx-auto flex items-center gap-2"
             >
               <RefreshCw className="h-4 w-4" />

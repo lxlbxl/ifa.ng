@@ -638,6 +638,7 @@ export type Database = {
           payment_status: Database["public"]["Enums"]["payment_status"] | null
           primary_odu: string | null
           ritual_recommendations: string | null
+          room_url: string | null
           session_date: string
           session_ended_at: string | null
           session_started_at: string | null
@@ -645,6 +646,7 @@ export type Database = {
           status: Database["public"]["Enums"]["session_status_enum"] | null
           updated_at: string | null
           user_id: string
+          user_timezone: string
           warning: string | null
         }
         Insert: {
@@ -667,6 +669,7 @@ export type Database = {
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           primary_odu?: string | null
           ritual_recommendations?: string | null
+          room_url?: string | null
           session_date: string
           session_ended_at?: string | null
           session_started_at?: string | null
@@ -674,6 +677,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["session_status_enum"] | null
           updated_at?: string | null
           user_id: string
+          user_timezone?: string
           warning?: string | null
         }
         Update: {
@@ -696,6 +700,7 @@ export type Database = {
           payment_status?: Database["public"]["Enums"]["payment_status"] | null
           primary_odu?: string | null
           ritual_recommendations?: string | null
+          room_url?: string | null
           session_date?: string
           session_ended_at?: string | null
           session_started_at?: string | null
@@ -703,6 +708,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["session_status_enum"] | null
           updated_at?: string | null
           user_id?: string
+          user_timezone?: string
           warning?: string | null
         }
         Relationships: []
@@ -885,10 +891,6 @@ export type Database = {
       }
     }
     Functions: {
-      get_babalawo_earnings_stats: {
-        Args: { p_babalawo_id: string }
-        Returns: Json
-      }
       get_babalawo_details_by_ids: {
         Args: { p_ids: string[] }
         Returns: {
@@ -897,6 +899,10 @@ export type Database = {
           avatar_url: string
           specialties: string[]
         }[]
+      }
+      get_babalawo_earnings_stats: {
+        Args: { p_babalawo_id: string }
+        Returns: Json
       }
       get_public_babalawos: {
         Args: Record<PropertyKey, never>

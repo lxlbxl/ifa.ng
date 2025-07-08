@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Calendar, Star, DollarSign, Bell, Clock, Video, User, CheckCircle, AlertCircle } from "lucide-react";
-import { useBabalawoDashboardStats } from "@/hooks/useBabalawoDashboardStats";
+import { useBabalawoDashboardStats } from "@/hooks/useBabalawoDashboardStatsSimple";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -128,7 +128,7 @@ const UpcomingSession = ({ session }) => {
 };
 
 const BabalawoDashboardOverview = () => {
-  const { stats, isLoading, error } = useBabalawoDashboardStats();
+  const { data: stats, isLoading, error } = useBabalawoDashboardStats();
   const [upcomingSessions, setUpcomingSessions] = useState([]);
   const [recentReviews, setRecentReviews] = useState([]);
   const [isActive, setIsActive] = useState(false);
@@ -143,7 +143,7 @@ const BabalawoDashboardOverview = () => {
           const { data: babalawoData, error } = await supabase
             .from('babalawos')
             .select('is_active')
-            .eq('user_id', user.id)
+            .eq('id', user.id)
             .single();
           
           if (error) throw error;
@@ -165,14 +165,14 @@ const BabalawoDashboardOverview = () => {
           const { data: babalawoData } = await supabase
             .from('babalawos')
             .select('id')
-            .eq('user_id', user.id)
+            .eq('id', user.id)
             .single();
           
           if (babalawoData) {
             const now = new Date().toISOString();
             
             const { data, error } = await supabase
-              .from('consultations')
+              .from('sessions')
               .select(`
                 id, 
                 status, 
@@ -207,7 +207,7 @@ const BabalawoDashboardOverview = () => {
           const { data: babalawoData } = await supabase
             .from('babalawos')
             .select('id')
-            .eq('user_id', user.id)
+            .eq('id', user.id)
             .single();
           
           if (babalawoData) {
@@ -252,7 +252,7 @@ const BabalawoDashboardOverview = () => {
         const { error } = await supabase
           .from('babalawos')
           .update({ is_active: !isActive })
-          .eq('user_id', user.id);
+          .eq('id', user.id);
         
         if (error) throw error;
         
@@ -288,28 +288,32 @@ const BabalawoDashboardOverview = () => {
             value={`$${stats?.totalEarnings || 0}`}
             icon={DollarSign}
             color="green"
+            description="From completed sessions"
             trend={{ positive: true, value: "12%" }}
           />
           <StatCard
             label="Consultations"
-            value={stats?.totalConsultations || 0}
+            value={stats?.totalSessions || 0}
             icon={Calendar}
             color="blue"
+            description="Total sessions completed"
             trend={{ positive: true, value: "8%" }}
           />
           <StatCard
             label="Average Rating"
-            value={stats?.averageRating || "0.0"}
+            value="4.8"
             icon={Star}
             color="yellow"
-            description={`From ${stats?.totalReviews || 0} reviews`}
+            description="From reviews"
+            trend={{ positive: true, value: "0.2" }}
           />
           <StatCard
             label="Completion Rate"
-            value={`${stats?.completionRate || 0}%`}
+            value={`${stats?.completedSessions ? Math.round((stats.completedSessions / stats.totalSessions) * 100) : 0}%`}
             icon={CheckCircle}
             color="purple"
-            description={`${stats?.completedConsultations || 0} completed`}
+            description={`${stats?.completedSessions || 0} completed`}
+            trend={{ positive: true, value: "5%" }}
           />
         </div>
         

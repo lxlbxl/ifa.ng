@@ -119,11 +119,9 @@ const SECTION_MAP: { [key: string]: React.ReactNode } = {
 };
 
 const BabalawoDashboardHeader = ({ activeSection, onSectionChange }: { activeSection: string, onSectionChange: (section: string) => void }) => {
-  const { user } = useAuth();
-  const userProfile = user?.profile || {};
+  const { user, userProfile } = useAuth();
   const userName = userProfile?.full_name || user?.email || "Babalawo";
   const userAvatar = userProfile?.avatar_url;
-  
   return (
     <header className="bg-white border-b border-gray-200 py-3 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
       <div className="flex items-center lg:hidden">

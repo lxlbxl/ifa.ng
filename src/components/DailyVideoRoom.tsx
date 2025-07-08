@@ -14,7 +14,7 @@ interface DailyVideoRoomProps {
 
 const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({ sessionId, onLeave }) => {
   const { user, userProfile } = useAuth();
-  const { data: session, mutate: refreshSession } = useSessionById(sessionId);
+  const { data: session, refetch: refreshSession } = useSessionById(sessionId);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [roomUrl, setRoomUrl] = useState<string | null>(null);

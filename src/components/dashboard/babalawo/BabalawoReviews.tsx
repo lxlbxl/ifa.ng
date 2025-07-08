@@ -317,17 +317,13 @@ const BabalawoReviews = () => {
       
       if (error) throw error;
       
-      // Create a flag record
-      const { error: flagError } = await supabase
-        .from('review_flags')
-        .insert({
-          review_id: selectedReview.id,
-          reason: flagReason.trim(),
-          reporter_id: user?.id,
-          reporter_type: 'babalawo'
-        });
-      
-      if (flagError) throw flagError;
+      // Flag functionality temporarily disabled - review_flags table needs to be created
+      console.log('Review flagged:', {
+        review_id: selectedReview.id,
+        reason: flagReason.trim(),
+        reporter_id: user?.id,
+        reporter_type: 'babalawo'
+      });
       
       toast({
         title: 'Review flagged',

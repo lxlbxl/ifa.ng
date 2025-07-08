@@ -46,7 +46,7 @@ const WithdrawalRequestModal: React.FC<WithdrawalRequestModalProps> = ({
       const { data: babalawoData, error: babalawoError } = await supabase
         .from('babalawos')
         .select('id')
-        .eq('user_id', user?.id)
+        .eq('id', user?.id)
         .single();
       
       if (babalawoError) throw babalawoError;
@@ -58,15 +58,15 @@ const WithdrawalRequestModal: React.FC<WithdrawalRequestModalProps> = ({
       setBabalawoId(babalawoData.id);
       
       // Get the babalawo's available balance
-      const { data: earningsData, error: earningsError } = await supabase
-        .from('babalawo_earnings')
+      const { data: walletData, error: walletError } = await supabase
+        .from('babalawo_wallets')
         .select('available_balance')
         .eq('babalawo_id', babalawoData.id)
         .single();
 
-      if (earningsError && earningsError.code !== 'PGRST116') throw earningsError;
+      if (walletError && walletError.code !== 'PGRST116') throw walletError;
       
-      setAvailableBalance(earningsData?.available_balance || 0);
+      setAvailableBalance(walletData?.available_balance || 0);
       
       // Get bank details
       const { data: bankData, error: bankError } = await supabase
@@ -132,12 +132,11 @@ const WithdrawalRequestModal: React.FC<WithdrawalRequestModalProps> = ({
 
       if (insertError) throw insertError;
       
-      // Update available balance
+      // Update babalawo wallet balance
       const { error: updateError } = await supabase
-        .from('babalawo_earnings')
+        .from('babalawo_wallets')
         .update({ 
-          available_balance: availableBalance - numAmount,
-          pending_withdrawals: supabase.rpc('coalesce_zero', { val: 'pending_withdrawals' }) + numAmount
+          available_balance: availableBalance - numAmount
         })
         .eq('babalawo_id', babalawoId);
         

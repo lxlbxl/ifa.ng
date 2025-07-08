@@ -885,6 +885,10 @@ export type Database = {
       }
     }
     Functions: {
+      get_babalawo_earnings_stats: {
+        Args: { p_babalawo_id: string }
+        Returns: Json
+      }
       get_babalawo_details_by_ids: {
         Args: { p_ids: string[] }
         Returns: {

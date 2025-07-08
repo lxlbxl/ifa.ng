@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { 
@@ -22,14 +21,15 @@ interface PaymentData {
   amount: number;
   paymentMethod: PaymentMethod;
   walletBalance?: number;
+  isInstant?: boolean; // Added this line
 }
 
 export const handlePaymentAndBooking = async (
   paymentData: PaymentData,
-  onSuccess: () => void,
+  onSuccess: (sessionId: string) => void, // Modified signature
   onError: (message: string) => void
 ) => {
-  const { user, userProfile, babalawo, date, selectedTime, amount, paymentMethod, walletBalance } = paymentData;
+  const { user, userProfile, babalawo, date, selectedTime, amount, paymentMethod, walletBalance, isInstant } = paymentData; // Updated this line
 
   try {
     console.log("🚀 Starting payment process with method:", paymentMethod);
@@ -47,10 +47,10 @@ export const handlePaymentAndBooking = async (
 
 const handleWalletPayment = async (
   paymentData: PaymentData,
-  onSuccess: () => void,
+  onSuccess: (sessionId: string) => void, // Modified signature
   onError: (message: string) => void
 ) => {
-  const { user, babalawo, date, selectedTime, amount, walletBalance = 0 } = paymentData;
+  const { user, userProfile, babalawo, date, selectedTime, amount, walletBalance = 0 } = paymentData;
 
   if (hasInsufficientBalance(walletBalance, amount)) {
     onError("Insufficient wallet balance. Please add money to your wallet or use a different payment method.");
@@ -67,7 +67,7 @@ const handleWalletPayment = async (
     }
 
     // Create session
-    await createSession(paymentData, "wallet", "", onSuccess, onError);
+    await createSession({ ...paymentData, userProfile }, "wallet", "", onSuccess, onError);
   } catch (error) {
     console.error("❌ Wallet payment error:", error);
     onError("Failed to process wallet payment. Please try again.");
@@ -76,7 +76,7 @@ const handleWalletPayment = async (
 
 const handleGatewayPayment = async (
   paymentData: PaymentData,
-  onSuccess: () => void,
+  onSuccess: (sessionId: string) => void, // Modified signature
   onError: (message: string) => void
 ) => {
   const { paymentMethod } = paymentData;
@@ -108,7 +108,7 @@ const handleGatewayPayment = async (
 const initiateFlutterwavePayment = async (
   paymentData: PaymentData,
   settings: any,
-  onSuccess: () => void,
+  onSuccess: (sessionId: string) => void, // Modified signature
   onError: (message: string) => void
 ) => {
   const { user, userProfile, babalawo, amount } = paymentData;
@@ -145,7 +145,7 @@ const initiateFlutterwavePayment = async (
 const initiatePaystackPayment = async (
   paymentData: PaymentData,
   settings: any,
-  onSuccess: () => void,
+  onSuccess: (sessionId: string) => void, // Modified signature
   onError: (message: string) => void
 ) => {
   const { user, userProfile, babalawo, amount } = paymentData;
@@ -176,14 +176,17 @@ const createSession = async (
   paymentData: PaymentData,
   paymentMethod: string,
   paymentRef: string,
-  onSuccess: () => void,
+  onSuccess: (sessionId: string) => void, // Modified signature
   onError: (message: string) => void
 ) => {
-  const { user, babalawo, date, selectedTime, amount } = paymentData;
+  const { user, userProfile, babalawo, date, selectedTime, amount, isInstant } = paymentData;
 
   try {
     console.log("✅ Payment successful, creating session...");
     
+    // Determine session status based on isInstant flag
+    const sessionStatus = isInstant ? "in_progress" : "confirmed";
+
     // Save session
     const { data: sessionData, error: sessionErr } = await supabase
       .from("sessions")
@@ -193,11 +196,13 @@ const createSession = async (
         session_date: format(date, "yyyy-MM-dd"),
         start_time: selectedTime,
         end_time: selectedTime,
-        status: "confirmed",
+        status: sessionStatus,
         amount: amount,
         payment_status: "paid",
         payment_reference: paymentRef,
-        notes: ""
+        notes: isInstant ? "Instant consultation" : "",
+        is_instant: isInstant || false,
+        user_timezone: userProfile?.timezone || 'UTC',
       })
       .select()
       .single();
@@ -227,7 +232,7 @@ const createSession = async (
       console.error("❌ Payment record error:", paymentErr);
     }
     
-    onSuccess();
+    onSuccess(sessionData.id); // Pass sessionId to onSuccess
     
   } catch (error) {
     console.error("❌ Error creating session:", error);

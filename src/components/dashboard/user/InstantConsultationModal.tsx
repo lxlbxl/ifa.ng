@@ -76,49 +76,20 @@ const InstantConsultationModal: React.FC<InstantConsultationModalProps> = ({
         selectedTime: currentTime,
         amount,
         paymentMethod,
-        walletBalance
+        walletBalance,
+        isInstant: true // Pass the isInstant flag
       },
-      async () => {
-        try {
-          // Create instant session with special flag
-          const { data: sessionData, error: sessionErr } = await supabase
-            .from("sessions")
-            .insert({
-              user_id: user.id,
-              babalawo_id: babalawo.id,
-              session_date: now.toISOString().split('T')[0],
-              start_time: currentTime,
-              end_time: currentTime,
-              status: "in_progress",
-              amount: amount,
-              payment_status: "paid",
-              is_instant: true,
-              notes: "Instant consultation"
-            })
-            .select()
-            .single();
+      async (sessionId) => { // Receive sessionId from handlePaymentAndBooking
+        setIsLoading(false);
+        onOpenChange(false);
+        
+        toast({ 
+          title: "Payment Successful!", 
+          description: "Joining instant consultation session..."
+        });
 
-          if (sessionErr) throw sessionErr;
-
-          setIsLoading(false);
-          onOpenChange(false);
-          
-          toast({ 
-            title: "Payment Successful!", 
-            description: "Joining instant consultation session..."
-          });
-
-          // Navigate to the session room
-          navigate(`/session/${sessionData.id}`);
-        } catch (error) {
-          console.error("Error creating instant session:", error);
-          toast({ 
-            title: "Session Error", 
-            description: "Payment successful but couldn't start session. Please contact support.",
-            variant: "destructive" 
-          });
-          setIsLoading(false);
-        }
+        // Navigate to the session room
+        navigate(`/session/${sessionId}`); // Use the received sessionId
       },
       (errorMessage) => {
         toast({ 

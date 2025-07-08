@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { X, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { sessionOutcomeSchema } from '@/lib/validationSchemas';
+import { z } from 'zod';
 
 interface SessionOutcomeModalProps {
   isOpen: boolean;
@@ -48,18 +50,38 @@ const SessionOutcomeModal: React.FC<SessionOutcomeModalProps> = ({
     setIsLoading(true);
 
     try {
+      const result = sessionOutcomeSchema.safeParse(formData);
+      if (!result.success) {
+        const errors = result.error.flatten().fieldErrors;
+        const errorMessages = Object.values(errors).flat().join('\n');
+        toast({
+          title: "Validation Error",
+          description: errorMessages,
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Process the items_needed field to ensure it's properly formatted as JSONB
+      let processedItemsNeeded = null;
+      if (formData.items_needed) {
+        try {
+          processedItemsNeeded = JSON.parse(formData.items_needed);
+        } catch (e) {
+          processedItemsNeeded = formData.items_needed
+            .split(/[\n,]/)
+            .map(item => item.trim())
+            .filter(item => item.length > 0);
+        }
+      }
+
       // Update session with consultation outcome
       const { error: sessionError } = await supabase
         .from("sessions")
         .update({
-          primary_odu: formData.primary_odu || null,
-          other_odus: formData.other_odus.length > 0 ? formData.other_odus : null,
-          ritual_recommendations: formData.ritual_recommendations || null,
-          items_needed: formData.items_needed || null,
-          deadline: formData.deadline || null,
-          next_appointment: formData.next_appointment || null,
-          warnings: formData.warnings || null,
-          notes: formData.notes || null,
+          ...result.data,
+          items_needed: processedItemsNeeded,
           status: "completed",
           session_ended_at: new Date().toISOString()
         })

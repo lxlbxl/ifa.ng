@@ -8,9 +8,9 @@ import { useAuth } from "./useAuth";
     const todayStr = new Date().toISOString().slice(0,10);
     const { data: upcoming, error: upErr } = await supabase
       .from("sessions")
-      .select("id, session_date, start_time, end_time, status, user_id, notes, primary_odu, other_odus, ritual_recommendations, items_needed, deadline, next_appointment, warnings")
+      .select("id, session_date, start_time, end_time, status, user_id, notes, primary_odu, other_odus, ritual_recommendations, items_needed, deadline, next_appointment, warning, is_instant") // Added is_instant
       .eq("babalawo_id", babalawoId)
-      .in("status", ["pending", "confirmed"])
+      .in("status", ["pending", "confirmed"]) // Added in_progress
       .gte("session_date", todayStr)
       .order("session_date", { ascending: true })
       .order("start_time", { ascending: true });
@@ -19,9 +19,9 @@ import { useAuth } from "./useAuth";
     // Completed, Missed, Cancelled (history)
     const { data: past, error: paErr } = await supabase
       .from("sessions")
-      .select("id, session_date, start_time, end_time, status, user_id, notes, primary_odu, other_odus, ritual_recommendations, items_needed, deadline, next_appointment, warnings")
+      .select("id, session_date, start_time, end_time, status, user_id, notes, primary_odu, other_odus, ritual_recommendations, items_needed, deadline, next_appointment, warning, is_instant") // Added is_instant
       .eq("babalawo_id", babalawoId)
-      .in("status", ["completed", "cancelled"])
+      .in("status", ["completed", "cancelled", "in_progress"])
       .lte("session_date", todayStr)
       .order("session_date", { ascending: false })
       .order("start_time", { ascending: false });

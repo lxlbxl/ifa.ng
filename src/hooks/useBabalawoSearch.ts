@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { BabalawoProfile, BabalawoSearchFilters } from '@/types/babalawo';
 import { supabase } from '@/integrations/supabase/client';
 import { errorService } from '@/services/errorService';
+import { BabalawoListResponse } from '@/types/api';
 
 export const useBabalawoSearch = () => {
   const [babalawos, setBabalawos] = useState<BabalawoProfile[]>([]);
@@ -202,7 +203,7 @@ export const useBabalawoSearch = () => {
     setFilters({});
   };
 
-  const getAvailableSpecialties = () => {
+  const getAvailableSpecialties = useCallback(() => {
     if (!babalawos) return [];
     
     const specialties = new Set<string>();
@@ -213,7 +214,7 @@ export const useBabalawoSearch = () => {
     });
     
     return Array.from(specialties).sort();
-  };
+  }, [babalawos]);
 
   const getAvailableLanguages = () => {
     if (!babalawos) return [];

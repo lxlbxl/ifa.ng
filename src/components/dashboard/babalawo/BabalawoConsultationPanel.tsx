@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 const SessionRow = ({
   session,
@@ -19,36 +20,56 @@ const SessionRow = ({
   session: any;
   user: any;
   onNote: (sessionId: string) => void;
-}) => (
-  <div className="flex items-center gap-3 border-b py-2">
-    <Avatar className="h-8 w-8">
-      {user?.avatar_url ? (
-        <AvatarImage src={user.avatar_url} />
-      ) : (
-        <AvatarFallback>{user?.full_name?.charAt(0) ?? "U"}</AvatarFallback>
-      )}
-    </Avatar>
-    <div className="flex-1">
-      <div className="font-medium">{user?.full_name ?? "User"}</div>
-      <div className="text-xs text-gray-500">{session.session_date} • {session.start_time}</div>
-      <div className="text-xs inline-block px-2 py-0.5 rounded bg-muted">{session.status}</div>
+}) => {
+  const navigate = useNavigate(); // Initialize useNavigate
+  const now = new Date();
+  const sessionDateTime = new Date(`${session.session_date}T${session.start_time}`);
+  const isJoinable = session.status === 'in_progress' || (session.status === 'confirmed' && sessionDateTime <= new Date(now.getTime() + 15 * 60 * 1000)) || session.is_instant; // Joinable 15 mins before start or if in_progress
+
+  const handleJoinSession = (sessionId: string) => {
+    navigate(`/session/${sessionId}`);
+  };
+
+  return (
+    <div className="flex items-center gap-3 border-b py-2">
+      <Avatar className="h-8 w-8">
+        {user?.avatar_url ? (
+          <AvatarImage src={user.avatar_url} />
+        ) : (
+          <AvatarFallback>{user?.full_name?.charAt(0) ?? "U"}</AvatarFallback>
+        )}
+      </Avatar>
+      <div className="flex-1">
+        <div className="font-medium">{user?.full_name ?? "User"}</div>
+        <div className="text-xs text-gray-500">{session.session_date} • {session.start_time}</div>
+        <div className={`text-xs inline-block px-2 py-0.5 rounded ${
+          session.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+          session.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+          session.status === 'in_progress' ? 'bg-blue-100 text-blue-800' : // Added in_progress style
+          'bg-muted'
+        }`}>
+          {session.status}
+        </div>
+      </div>
+      <div className="flex gap-1">
+        {isJoinable && ( // Conditionally render Join Session button
+          <Button size="sm" variant="ghost" onClick={() => handleJoinSession(session.id)}>
+            <Video className="w-4 h-4" /> Join
+          </Button>
+        )}
+        <Button size="sm" variant="outline" onClick={() => alert("Reschedule flow coming soon!")} className="hidden md:inline-flex">
+          <ArrowRightCircle className="w-4 h-4" /> Reschedule
+        </Button>
+        <Button size="sm" variant="destructive" onClick={() => alert("Cancel session flow coming soon!")} className="hidden md:inline-flex">
+          <XCircle className="w-4 h-4" /> Cancel
+        </Button>
+        <Button size="sm" variant="secondary" onClick={() => onNote(session.id)}>
+          <FileText className="w-4 h-4" /> Note
+        </Button>
+      </div>
     </div>
-    <div className="flex gap-1">
-      <Button size="sm" variant="ghost" onClick={() => window.open(`/session/${session.id}`, "_blank")}>
-        <Video className="w-4 h-4" /> Join
-      </Button>
-      <Button size="sm" variant="outline" onClick={() => alert("Reschedule flow coming soon!")} className="hidden md:inline-flex">
-        <ArrowRightCircle className="w-4 h-4" /> Reschedule
-      </Button>
-      <Button size="sm" variant="destructive" onClick={() => alert("Cancel session flow coming soon!")} className="hidden md:inline-flex">
-        <XCircle className="w-4 h-4" /> Cancel
-      </Button>
-      <Button size="sm" variant="secondary" onClick={() => onNote(session.id)}>
-        <FileText className="w-4 h-4" /> Note
-      </Button>
-    </div>
-  </div>
-);
+  );
+};
 
 const HistoryRow = ({
   session,
@@ -72,15 +93,19 @@ const HistoryRow = ({
     <div className="flex-1">
       <div className="font-medium">{user?.full_name ?? "User"}</div>
       <div className="text-xs text-gray-500">{session.session_date} • {session.start_time}</div>
-      <div className="text-xs inline-block px-2 py-0.5 rounded bg-muted">{session.status}</div>
+      <div className={`text-xs inline-block px-2 py-0.5 rounded ${
+        session.status === 'in_progress' ? 'bg-blue-100 text-blue-800' : 'bg-muted'
+      }`}>{session.status}</div>
     </div>
     <div className="flex gap-1">
       <Button size="sm" variant="secondary" onClick={() => onNote(session.id)}>
         <FileText className="w-4 h-4" /> Note
       </Button>
-      <Button size="sm" variant="outline" onClick={() => onEditOutcome(session)}>
-        Edit Outcome
-      </Button>
+      {session.status === 'completed' &&
+        <Button size="sm" variant="outline" onClick={() => onEditOutcome(session)}>
+          Edit Outcome
+        </Button>
+      }
     </div>
   </div>
 );
@@ -132,27 +157,54 @@ export default function BabalawoConsultationPanel() {
 
       const saveOutcome = async () => {
         if (!outcomeModalSession) return;
+        const { toast } = useToast();
         try {
+          let itemsNeededJson = null;
+          try {
+            if (outcomeData.items_needed) {
+              itemsNeededJson = JSON.parse(outcomeData.items_needed);
+            }
+          } catch (e) {
+            toast({
+              title: "Invalid JSON",
+              description: "Items Needed must be valid JSON.",
+              variant: "destructive",
+            });
+            return;
+          }
+
           const { error } = await supabase
             .from("sessions")
             .update({
-              primary_odu: outcomeData.primary_odu ?? null,
-              other_odus: outcomeData.other_odus.split(",").map((s) => s.trim()).filter(Boolean) ?? null,
-              ritual_recommendations: outcomeData.ritual_recommendations ?? null,
-              items_needed: outcomeData.items_needed || null,
+              primary_odu: outcomeData.primary_odu || null,
+              other_odus: outcomeData.other_odus.split(",").map((s) => s.trim()).filter(Boolean),
+              ritual_recommendations: outcomeData.ritual_recommendations || null,
+              items_needed: itemsNeededJson,
               deadline: outcomeData.deadline || null,
               next_appointment: outcomeData.next_appointment || null,
-              warnings: outcomeData.warnings || null
+              warning: outcomeData.warnings || null,
             })
             .eq("id", outcomeModalSession.id);
+
           if (error) {
-            alert("Error saving consultation outcome: " + error.message);
+            toast({
+              title: "Error",
+              description: "Failed to save outcome: " + error.message,
+              variant: "destructive",
+            });
           } else {
-            alert("Consultation outcome saved successfully.");
+            toast({
+              title: "Success",
+              description: "Consultation outcome saved successfully.",
+            });
             setOutcomeModalSession(null);
           }
-        } catch (err) {
-          alert("Error saving consultation outcome: " + err);
+        } catch (err: any) {
+          toast({
+            title: "Error",
+            description: "An unexpected error occurred: " + err.message,
+            variant: "destructive",
+          });
         }
       };
 
@@ -286,6 +338,15 @@ export default function BabalawoConsultationPanel() {
                   value={outcomeData.next_appointment}
                   onChange={(e) => handleOutcomeChange("next_appointment", e.target.value)}
                   placeholder="Enter Next Appointment Date"
+                />
+              </div>
+              <div>
+                <label className="block font-medium mb-1">Warnings</label>
+                <Textarea
+                  value={outcomeData.warnings}
+                  onChange={(e) => handleOutcomeChange("warnings", e.target.value)}
+                  placeholder="Enter any warnings for the client"
+                  rows={2}
                 />
               </div>
             </div>

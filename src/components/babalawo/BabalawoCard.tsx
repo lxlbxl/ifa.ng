@@ -93,12 +93,14 @@ const BabalawoCard: React.FC<BabalawoCardProps> = ({
         <button 
           className="w-full bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors text-sm sm:text-base"
           onClick={() => onBookSession(babalawo)}
+          aria-label={`Book a session with ${displayName}`}
         >
           Book Session
         </button>
         <button 
           className="w-full border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base"
           onClick={() => onViewProfile(babalawo.id)}
+          aria-label={`View profile of ${displayName}`}
         >
           View Profile
         </button>

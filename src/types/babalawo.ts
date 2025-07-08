@@ -34,6 +34,7 @@ export interface SessionWithBabalawo {
   next_appointment: string | null;
   warnings: string | null;
   consultation_notes: string | null;
+  is_instant?: boolean; // Added this line
 }
 
 export interface BabalawoSearchFilters {

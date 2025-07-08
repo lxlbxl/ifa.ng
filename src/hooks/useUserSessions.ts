@@ -27,7 +27,8 @@ const fetchUserSessions = async (userId: string | undefined): Promise<SessionWit
                 ritual_recommendations,
                 items_needed,
                 deadline,
-                next_appointment
+                next_appointment,
+                is_instant
             `)
             .eq('user_id', userId)
             .order('session_date', { ascending: false });
@@ -93,6 +94,7 @@ const fetchUserSessions = async (userId: string | undefined): Promise<SessionWit
                 next_appointment: session.next_appointment,
                 warnings: null, // Not in database yet
                 consultation_notes: null, // Not in database yet
+                is_instant: session.is_instant, // Add this line
             };
         });
 

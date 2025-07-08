@@ -1,73 +1,122 @@
-# Welcome to your Lovable project
+# Ifa Connect
 
-## Project info
+A platform connecting users with Babalawos for spiritual consultations and divination sessions.
 
-**URL**: https://lovable.dev/projects/a49ced64-4baa-4961-b424-2fdc551b35be
+## Features
 
-## How can I edit this code?
+- User authentication and profile management
+- Babalawo profiles and specialties
+- Session booking and scheduling
+- Live video consultations with Agora integration
+- Session outcome documentation
+- Dashboard interfaces for users, babalawos, and admins
+- Secure payment processing
 
-There are several ways of editing your application.
+## Security Improvements
 
-**Use Lovable**
+This repository includes several recent security and performance improvements:
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a49ced64-4baa-4961-b424-2fdc551b35be) and start prompting.
+- Environment-based configuration (no hardcoded credentials)
+- Enhanced error handling and validation
+- Database schema improvements and migration safeguards
+- Performance optimizations and code splitting
+- Error boundaries for component failure isolation
 
-Changes made via Lovable will be committed automatically to this repo.
+## Getting Started
 
-**Use your preferred IDE**
+### Prerequisites
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- Node.js (v18+)
+- npm or bun
+- Supabase account and project
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Installation
 
-Follow these steps:
+1. Clone the repository:
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+git clone https://github.com/lxlbxl/ifa-connect.git
+cd ifa-connect
 ```
 
-**Edit a file directly in GitHub**
+2. Install dependencies:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+npm install
+# or with bun
+bun install
+```
 
-**Use GitHub Codespaces**
+3. Set up environment variables:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```bash
+cp .env.example .env
+```
 
-## What technologies are used for this project?
+Then edit the `.env` file with your Supabase credentials and other configuration:
 
-This project is built with:
+```
+# Supabase Configuration
+VITE_SUPABASE_URL=your-supabase-url
+VITE_SUPABASE_ANON_KEY=your-anon-key
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# Feature Flags
+VITE_FEATURE_INSTANT_SESSIONS=true
+VITE_FEATURE_NOTIFICATIONS=true
 
-## How can I deploy this project?
+# Environment
+VITE_APP_ENV=development
+```
 
-Simply open [Lovable](https://lovable.dev/projects/a49ced64-4baa-4961-b424-2fdc551b35be) and click on Share -> Publish.
+4. Start the development server:
 
-## Can I connect a custom domain to my Lovable project?
+```bash
+npm run dev
+# or with bun
+bun run dev
+```
 
-Yes, you can!
+### Database Migrations
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+When running migrations:
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+1. Make sure your Supabase CLI is configured
+2. Run migrations in order:
+
+```bash
+supabase migration up
+```
+
+The migrations are designed to be idempotent and include safety checks to prevent data corruption.
+
+## Project Structure
+
+- `/src` - Application source code
+  - `/components` - Reusable UI components
+  - `/hooks` - Custom React hooks
+  - `/integrations` - External service integrations (Supabase, etc.)
+  - `/pages` - Route components
+  - `/utils` - Utility functions
+- `/supabase` - Supabase configuration and migrations
+  - `/migrations` - Database schema migrations
+  - `/functions` - Edge functions
+
+## Development Guidelines
+
+- Use TypeScript for type safety
+- Follow the component structure patterns
+- Use Zod for form validation
+- Add proper error handling for all async operations
+- Use environment variables for configuration
+
+## Security Best Practices
+
+- Never commit sensitive credentials to the repository
+- Always validate user input with Zod schemas
+- Use parameterized queries for database operations
+- Implement proper error handling to avoid leaking sensitive information
+- Use HTTPS for all API calls
+
+## License
+
+[MIT](LICENSE)

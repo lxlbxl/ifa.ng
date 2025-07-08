@@ -11,7 +11,28 @@ export const useSessionById = (sessionId: string) => {
         .from('sessions')
         .select(
           `
-            *,
+            id,
+            user_id,
+            babalawo_id,
+            session_date,
+            start_time,
+            end_time,
+            status,
+            amount,
+            payment_status,
+            payment_reference,
+            notes,
+            is_instant,
+            user_timezone,
+            agora_channel_name,
+            room_url,
+            primary_odu,
+            other_odus,
+            ritual_recommendations,
+            items_needed,
+            deadline,
+            next_appointment,
+            warning,
             user:profiles!sessions_user_id_fkey(id, full_name, avatar_url),
             babalawo:profiles!sessions_babalawo_id_fkey(id, full_name, avatar_url)
           `

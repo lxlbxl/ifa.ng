@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import AdminWalletManagement from "./AdminWalletManagement";
-import AdminAgoraSettings from "./AdminAgoraSettings";
+import AdminVideoSettings from "./AdminVideoSettings";
 
 const AdminSettingsPanel = () => {
   const [settings, setSettings] = useState<any>({});
@@ -95,13 +95,13 @@ const AdminSettingsPanel = () => {
     <div className="space-y-6">
       <Tabs defaultValue="agora" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="agora">Agora Video</TabsTrigger>
+          <TabsTrigger value="agora">Video Settings</TabsTrigger>
           <TabsTrigger value="payments">Payment Gateways</TabsTrigger>
           <TabsTrigger value="wallet">Wallet Management</TabsTrigger>
         </TabsList>
         
         <TabsContent value="agora">
-          <AdminAgoraSettings />
+          <AdminVideoSettings />
         </TabsContent>
         
         <TabsContent value="payments">

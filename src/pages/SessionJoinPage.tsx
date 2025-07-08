@@ -1,79 +1,26 @@
-import React, { useEffect, useState } from "react";
-import { useParams, Navigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { useSessionById } from "@/hooks/useSessionById";
+import React from "react";
+import { useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-import AgoraVideoRoom from "@/components/AgoraVideoRoom";
+import SessionVideoRoom from "@/components/SessionVideoRoom";
 
 const SessionJoinPage = () => {
-  const { user } = useAuth();
   const { sessionId } = useParams();
-  const { data: session, isLoading, error } = useSessionById(sessionId || "");
-  const [token, setToken] = useState<string | null>(null);
-  const [appId, setAppId] = useState<string | null>(null);
-  const [loadingToken, setLoadingToken] = useState(false);
-  const [tokenError, setTokenError] = useState<string | null>(null);
 
-  // Validate user access
-  if (!isLoading && session && user) {
-    if (user.id !== session.user_id && user.id !== session.babalawo_id) {
-      return <Navigate to="/" replace />;
-    }
-  }
-
-  useEffect(() => {
-    const fetchToken = async () => {
-      if (!sessionId || !user) return;
-      setLoadingToken(true);
-      try {
-        const response = await fetch("/api/generateAgoraToken", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sessionId, userId: user.id }),
-        });
-        const data = await response.json();
-        if (response.ok) {
-          setToken(data.token);
-          setAppId(data.appId);
-          setTokenError(null);
-        } else {
-          setTokenError(data.error || "Failed to get Agora token");
-        }
-      } catch (err) {
-        setTokenError("Failed to get Agora token");
-      } finally {
-        setLoadingToken(false);
-      }
-    };
-
-    fetchToken();
-  }, [sessionId, user]);
-
-  if (isLoading || loadingToken) {
+  if (!sessionId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <div className="text-center text-red-600">
+          <p>Session ID is missing. Cannot join the session.</p>
+        </div>
       </div>
     );
   }
 
-  if (error || !session || !sessionId) {
-    return <div className="text-center mt-8 text-red-600">Session not found or you do not have access.</div>;
-  }
-
-  if (tokenError) {
-    return <div className="text-center mt-8 text-red-600">Error: {tokenError}</div>;
-  }
-
-  const handleLeave = () => {
-    window.location.href = "/dashboard";
-  };
-
-  if (!token || !appId) {
-    return <div className="text-center mt-8">Loading Agora session...</div>;
-  }
-
-  return <AgoraVideoRoom sessionId={sessionId} onLeave={handleLeave} />;
+  return (
+    <div className="min-h-screen">
+      <SessionVideoRoom />
+    </div>
+  );
 };
 
 export default SessionJoinPage;

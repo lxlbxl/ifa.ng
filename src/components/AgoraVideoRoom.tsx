@@ -33,15 +33,26 @@ const AgoraVideoRoom: React.FC<AgoraVideoRoomProps> = ({ sessionId, onLeave }) =
   // Check if current user is the babalawo for this session
   const isBabalawo = userProfile?.role === 'babalawo' && user?.id === session?.babalawo_id;
 
+  // Add debugging logs
+  console.log("[AgoraVideoRoom] sessionId:", sessionId);
+  console.log("[AgoraVideoRoom] session:", session);
+  console.log("[AgoraVideoRoom] user:", user);
+  console.log("[AgoraVideoRoom] isLoading:", isLoading);
+  console.log("[AgoraVideoRoom] error:", error);
+  console.log("[AgoraVideoRoom] tokenData:", tokenData);
+
   useEffect(() => {
     const initializeAgora = async () => {
       try {
         setIsLoading(true);
         setError(null);
 
+        console.log("[AgoraVideoRoom] Initializing Agora");
+        
         // Generate Agora token
         console.log("🎥 Fetching Agora token for session:", sessionId);
         const tokenResponse = await generateAgoraToken(sessionId, user?.id);
+        console.log("[AgoraVideoRoom] Token response:", tokenResponse);
         setTokenData(tokenResponse);
 
         // Initialize Agora client

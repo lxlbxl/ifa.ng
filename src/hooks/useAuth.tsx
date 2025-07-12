@@ -63,7 +63,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .from('profiles')
           .select('*')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
           
         if (!result.error) {
           profile = result.data;
@@ -71,6 +71,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
         
         error = result.error;
+        
+        // If profile doesn't exist, create one
+        if (result.error.code === 'PGRST116' || result.error.message?.includes('No rows')) {
+          console.log('[Auth] Profile not found, creating new profile for user:', user.id);
+          try {
+            const { data: newProfile, error: createError } = await supabase
+              .from('profiles')
+              .insert({
+                id: user.id,
+                email: user.email || '',
+                full_name: user.user_metadata?.full_name || '',
+                role: (user.user_metadata?.role as any) || 'user',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              })
+              .select()
+              .single();
+              
+            if (!createError && newProfile) {
+              profile = newProfile;
+              break;
+            } else {
+              console.error('[Auth] Error creating profile:', createError);
+            }
+          } catch (createErr) {
+            console.error('[Auth] Exception creating profile:', createErr);
+          }
+        }
+        
         attempts++;
         
         // Wait before retrying (exponential backoff)

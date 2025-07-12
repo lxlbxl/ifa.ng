@@ -169,61 +169,67 @@ export type Database = {
       }
       babalawos: {
         Row: {
+          availability: Json | null
           bio: string | null
-          commission_babalawo_percent: number | null
-          commission_platform_percent: number | null
-          created_at: string | null
-          experience_years: number | null
+          city: string | null
+          country: string | null
+          created_at: string
           hourly_rate: number | null
-          id: string
+          id: number
           is_active: boolean | null
+          is_verified: boolean
           languages: string[] | null
+          profile_picture_url: string | null
           rating: number | null
+          region: string | null
           specialties: string[] | null
           timezone: string | null
           total_sessions: number | null
-          updated_at: string | null
-          verification_status:
-            | Database["public"]["Enums"]["verification_status"]
-            | null
+          updated_at: string
+          user_id: string
+          years_of_experience: number | null
         }
         Insert: {
+          availability?: Json | null
           bio?: string | null
-          commission_babalawo_percent?: number | null
-          commission_platform_percent?: number | null
-          created_at?: string | null
-          experience_years?: number | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
           hourly_rate?: number | null
-          id: string
+          id?: never
           is_active?: boolean | null
+          is_verified?: boolean
           languages?: string[] | null
+          profile_picture_url?: string | null
           rating?: number | null
+          region?: string | null
           specialties?: string[] | null
           timezone?: string | null
           total_sessions?: number | null
-          updated_at?: string | null
-          verification_status?:
-            | Database["public"]["Enums"]["verification_status"]
-            | null
+          updated_at?: string
+          user_id: string
+          years_of_experience?: number | null
         }
         Update: {
+          availability?: Json | null
           bio?: string | null
-          commission_babalawo_percent?: number | null
-          commission_platform_percent?: number | null
-          created_at?: string | null
-          experience_years?: number | null
+          city?: string | null
+          country?: string | null
+          created_at?: string
           hourly_rate?: number | null
-          id?: string
+          id?: never
           is_active?: boolean | null
+          is_verified?: boolean
           languages?: string[] | null
+          profile_picture_url?: string | null
           rating?: number | null
+          region?: string | null
           specialties?: string[] | null
           timezone?: string | null
           total_sessions?: number | null
-          updated_at?: string | null
-          verification_status?:
-            | Database["public"]["Enums"]["verification_status"]
-            | null
+          updated_at?: string
+          user_id?: string
+          years_of_experience?: number | null
         }
         Relationships: []
       }
@@ -265,152 +271,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
-      }
-      payments: {
-        Row: {
-          admin_commission: number
-          amount: number
-          babalawo_amount: number | null
-          babalawo_id: string
-          babalawo_share: number
-          commission_amount: number | null
-          created_at: string
-          currency: string
-          flutterwave_reference: string | null
-          flutterwave_transaction_id: string | null
-          id: string
-          payment_method: string | null
-          paystack_reference: string | null
-          paystack_transaction_id: string | null
-          selected_payment_method: string | null
-          session_id: string | null
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          admin_commission?: number
-          amount: number
-          babalawo_amount?: number | null
-          babalawo_id: string
-          babalawo_share?: number
-          commission_amount?: number | null
-          created_at?: string
-          currency?: string
-          flutterwave_reference?: string | null
-          flutterwave_transaction_id?: string | null
-          id?: string
-          payment_method?: string | null
-          paystack_reference?: string | null
-          paystack_transaction_id?: string | null
-          selected_payment_method?: string | null
-          session_id?: string | null
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          admin_commission?: number
-          amount?: number
-          babalawo_amount?: number | null
-          babalawo_id?: string
-          babalawo_share?: number
-          commission_amount?: number | null
-          created_at?: string
-          currency?: string
-          flutterwave_reference?: string | null
-          flutterwave_transaction_id?: string | null
-          id?: string
-          payment_method?: string | null
-          paystack_reference?: string | null
-          paystack_transaction_id?: string | null
-          selected_payment_method?: string | null
-          session_id?: string | null
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payments_babalawo_id_fkey"
-            columns: ["babalawo_id"]
-            isOneToOne: false
-            referencedRelation: "babalawo_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payments_babalawo_id_fkey"
-            columns: ["babalawo_id"]
-            isOneToOne: false
-            referencedRelation: "babalawos"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payments_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payments_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      payouts: {
-        Row: {
-          amount: number
-          babalawo_id: string
-          bank_details: Json | null
-          created_at: string
-          id: string
-          payment_method: string | null
-          processed_at: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          amount: number
-          babalawo_id: string
-          bank_details?: Json | null
-          created_at?: string
-          id?: string
-          payment_method?: string | null
-          processed_at?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          amount?: number
-          babalawo_id?: string
-          bank_details?: Json | null
-          created_at?: string
-          id?: string
-          payment_method?: string | null
-          processed_at?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "payouts_babalawo_id_fkey"
-            columns: ["babalawo_id"]
-            isOneToOne: false
-            referencedRelation: "babalawo_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "payouts_babalawo_id_fkey"
-            columns: ["babalawo_id"]
-            isOneToOne: false
-            referencedRelation: "babalawos"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       profiles: {
         Row: {
@@ -481,13 +341,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "refunds_payment_id_fkey"
-            columns: ["payment_id"]
-            isOneToOne: false
-            referencedRelation: "payments"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "refunds_processed_by_fkey"
             columns: ["processed_by"]
             isOneToOne: false
@@ -534,42 +387,30 @@ export type Database = {
       }
       reviews: {
         Row: {
-          approved: boolean | null
-          babalawo_id: string
           comment: string | null
-          created_at: string | null
-          flagged: boolean | null
-          id: string
+          created_at: string
+          id: number
+          is_approved: boolean
           rating: number
-          response: string | null
-          session_id: string
-          updated_at: string | null
+          session_id: number
           user_id: string
         }
         Insert: {
-          approved?: boolean | null
-          babalawo_id: string
           comment?: string | null
-          created_at?: string | null
-          flagged?: boolean | null
-          id?: string
+          created_at?: string
+          id?: never
+          is_approved?: boolean
           rating: number
-          response?: string | null
-          session_id: string
-          updated_at?: string | null
+          session_id: number
           user_id: string
         }
         Update: {
-          approved?: boolean | null
-          babalawo_id?: string
           comment?: string | null
-          created_at?: string | null
-          flagged?: boolean | null
-          id?: string
+          created_at?: string
+          id?: never
+          is_approved?: boolean
           rating?: number
-          response?: string | null
-          session_id?: string
-          updated_at?: string | null
+          session_id?: number
           user_id?: string
         }
         Relationships: [
@@ -578,6 +419,56 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ritual_reminders: {
+        Row: {
+          babalawo_id: number
+          created_at: string | null
+          description: string | null
+          due_date: string
+          id: string
+          reminder_days: number[] | null
+          ritual_type: string
+          status: string
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          babalawo_id: number
+          created_at?: string | null
+          description?: string | null
+          due_date: string
+          id?: string
+          reminder_days?: number[] | null
+          ritual_type: string
+          status?: string
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          babalawo_id?: number
+          created_at?: string | null
+          description?: string | null
+          due_date?: string
+          id?: string
+          reminder_days?: number[] | null
+          ritual_type?: string
+          status?: string
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ritual_reminders_babalawo_id_fkey"
+            columns: ["babalawo_id"]
+            isOneToOne: false
+            referencedRelation: "babalawos"
             referencedColumns: ["id"]
           },
         ]
@@ -607,108 +498,76 @@ export type Database = {
           timestamp?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "session_logs_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "sessions"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       sessions: {
         Row: {
           agora_channel_name: string | null
-          agora_token_babalawo: string | null
-          agora_token_user: string | null
-          amount: number
+          amount: number | null
           babalawo_id: string
-          created_at: string | null
           deadline: string | null
           end_time: string
-          id: string
+          id: number
           is_instant: boolean | null
-          items_needed: Json | null
-          jitsi_room_name: string | null
+          items_needed: string | null
           next_appointment: string | null
           notes: string | null
-          other_odus: string[] | null
+          other_odus: string | null
           payment_reference: string | null
-          payment_status: Database["public"]["Enums"]["payment_status"] | null
+          payment_status: string | null
           primary_odu: string | null
           ritual_recommendations: string | null
           room_url: string | null
           session_date: string
-          session_ended_at: string | null
-          session_started_at: string | null
           start_time: string
-          status: Database["public"]["Enums"]["session_status_enum"] | null
-          updated_at: string | null
+          status: string
           user_id: string
-          user_timezone: string
           warning: string | null
         }
         Insert: {
           agora_channel_name?: string | null
-          agora_token_babalawo?: string | null
-          agora_token_user?: string | null
-          amount: number
+          amount?: number | null
           babalawo_id: string
-          created_at?: string | null
           deadline?: string | null
           end_time: string
-          id?: string
+          id?: never
           is_instant?: boolean | null
-          items_needed?: Json | null
-          jitsi_room_name?: string | null
+          items_needed?: string | null
           next_appointment?: string | null
           notes?: string | null
-          other_odus?: string[] | null
+          other_odus?: string | null
           payment_reference?: string | null
-          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          payment_status?: string | null
           primary_odu?: string | null
           ritual_recommendations?: string | null
           room_url?: string | null
           session_date: string
-          session_ended_at?: string | null
-          session_started_at?: string | null
           start_time: string
-          status?: Database["public"]["Enums"]["session_status_enum"] | null
-          updated_at?: string | null
+          status: string
           user_id: string
-          user_timezone?: string
           warning?: string | null
         }
         Update: {
           agora_channel_name?: string | null
-          agora_token_babalawo?: string | null
-          agora_token_user?: string | null
-          amount?: number
+          amount?: number | null
           babalawo_id?: string
-          created_at?: string | null
           deadline?: string | null
           end_time?: string
-          id?: string
+          id?: never
           is_instant?: boolean | null
-          items_needed?: Json | null
-          jitsi_room_name?: string | null
+          items_needed?: string | null
           next_appointment?: string | null
           notes?: string | null
-          other_odus?: string[] | null
+          other_odus?: string | null
           payment_reference?: string | null
-          payment_status?: Database["public"]["Enums"]["payment_status"] | null
+          payment_status?: string | null
           primary_odu?: string | null
           ritual_recommendations?: string | null
           room_url?: string | null
           session_date?: string
-          session_ended_at?: string | null
-          session_started_at?: string | null
           start_time?: string
-          status?: Database["public"]["Enums"]["session_status_enum"] | null
-          updated_at?: string | null
+          status?: string
           user_id?: string
-          user_timezone?: string
           warning?: string | null
         }
         Relationships: []
@@ -794,13 +653,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "wallet_transactions_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "sessions"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "wallet_transactions_wallet_id_fkey"
             columns: ["wallet_id"]
             isOneToOne: false
@@ -865,32 +717,17 @@ export type Database = {
       }
     }
     Views: {
-      babalawo_profiles: {
-        Row: {
-          avatar_url: string | null
-          bio: string | null
-          commission_babalawo_percent: number | null
-          commission_platform_percent: number | null
-          created_at: string | null
-          experience_years: number | null
-          full_name: string | null
-          hourly_rate: number | null
-          id: string | null
-          is_active: boolean | null
-          languages: string[] | null
-          rating: number | null
-          specialties: string[] | null
-          timezone: string | null
-          total_sessions: number | null
-          updated_at: string | null
-          verification_status:
-            | Database["public"]["Enums"]["verification_status"]
-            | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
+      auto_complete_sessions: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      coalesce_zero: {
+        Args: { val: unknown }
+        Returns: unknown
+      }
       get_babalawo_details_by_ids: {
         Args: { p_ids: string[] }
         Returns: {
@@ -914,7 +751,7 @@ export type Database = {
           experience_years: number
           hourly_rate: number
           bio: string
-          verification_status: Database["public"]["Enums"]["verification_status"]
+          verification_status: string
           rating: number
           total_sessions: number
           languages: string[]

@@ -80,12 +80,17 @@ const SessionOutcomeModal: React.FC<SessionOutcomeModalProps> = ({
       const { error: sessionError } = await supabase
         .from("sessions")
         .update({
-          ...result.data,
+          primary_odu: formData.primary_odu,
+          other_odus: JSON.stringify(formData.other_odus),
+          ritual_recommendations: formData.ritual_recommendations,
           items_needed: processedItemsNeeded,
-          status: "completed",
-          session_ended_at: new Date().toISOString()
+          deadline: formData.deadline,
+          next_appointment: formData.next_appointment,
+          warning: formData.warnings,
+          notes: formData.notes,
+          status: "completed"
         })
-        .eq("id", sessionId);
+        .eq("id", parseInt(sessionId));
 
       if (sessionError) {
         throw sessionError;

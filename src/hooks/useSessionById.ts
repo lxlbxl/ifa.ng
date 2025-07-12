@@ -33,7 +33,7 @@ export const useSessionById = (sessionId: string) => {
           next_appointment,
           warning
         `)
-        .eq('id', sessionId)
+        .eq('id', parseInt(sessionId))
         .maybeSingle();
       if (error) throw error;
       return data;

@@ -59,7 +59,7 @@ const DailyVideoRoom: React.FC<DailyVideoRoomProps> = ({ sessionId, onLeave }) =
           await supabase
             .from("sessions")
             .update({ room_url: response.roomUrl })
-            .eq("id", sessionId);
+            .eq("id", parseInt(sessionId));
           
           setRoomUrl(response.roomUrl);
           refreshSession(); // Refresh session data

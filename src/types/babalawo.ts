@@ -15,7 +15,7 @@ export interface BabalawoProfile {
 }
 
 export interface SessionWithBabalawo {
-  id: string;
+  id: number;
   session_date: string;
   start_time: string;
   end_time: string;

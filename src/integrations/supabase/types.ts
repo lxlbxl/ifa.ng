@@ -522,6 +522,7 @@ export type Database = {
           start_time: string
           status: string
           user_id: string
+          user_timezone: string | null
           warning: string | null
         }
         Insert: {
@@ -545,6 +546,7 @@ export type Database = {
           start_time: string
           status: string
           user_id: string
+          user_timezone?: string | null
           warning?: string | null
         }
         Update: {
@@ -568,6 +570,7 @@ export type Database = {
           start_time?: string
           status?: string
           user_id?: string
+          user_timezone?: string | null
           warning?: string | null
         }
         Relationships: []

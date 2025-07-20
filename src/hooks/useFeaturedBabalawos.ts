@@ -1,24 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-
-interface BabalawoProfile {
-  id: string;
-  specialties: string[] | null;
-  experience_years: number | null;
-  hourly_rate: number | null;
-  bio: string | null;
-  verification_status: string | null;
-  rating: number | null;
-  total_sessions: number | null;
-  languages: string[] | null;
-  timezone: string | null;
-  is_active: boolean | null;
-  profiles: {
-    full_name: string | null;
-    avatar_url: string | null;
-  } | null;
-}
+import { BabalawoProfile } from '@/types/babalawo';
+import { errorService } from '@/services/errorService';
 
 export const useFeaturedBabalawos = () => {
   const [babalawos, setBabalawos] = useState<BabalawoProfile[]>([]);
@@ -26,83 +9,61 @@ export const useFeaturedBabalawos = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchBabalawos = async () => {
+    const fetchFeaturedBabalawos = async () => {
       setLoading(true);
       setError(null);
+      
       try {
-        console.log('[useFeaturedBabalawos] Starting fetch...');
+        console.log('[useFeaturedBabalawos] Calling get_public_babalawos RPC...');
         
-        const { data: babalawosData, error: babalawosError } = await supabase
-          .from('babalawos')
-          .select(`
-            id,
-            specialties,
-            experience_years,
-            hourly_rate,
-            bio,
-            verification_status,
-            rating,
-            total_sessions,
-            languages,
-            timezone,
-            is_active
-          `)
-          .eq('verification_status', 'approved')
-          .eq('is_active', true)
-          .limit(6);
+        const { data, error } = await supabase.rpc('get_public_babalawos');
 
-        if (babalawosError) {
-          console.error('[useFeaturedBabalawos] Babalawos error:', babalawosError);
-          throw babalawosError;
+        if (error) {
+          throw error;
         }
-        
-        if (!babalawosData) {
-          console.log('[useFeaturedBabalawos] No babalawos data returned');
+
+        console.log('[useFeaturedBabalawos] Data from RPC:', data);
+
+        if (!data || data.length === 0) {
+          console.log('[useFeaturedBabalawos] No babalawos found from RPC.');
           setBabalawos([]);
-          setLoading(false);
           return;
         }
 
-        console.log('[useFeaturedBabalawos] Raw babalawos data:', babalawosData);
+        // Transform data to match our interface, ensuring correct types and fallbacks
+        const transformedData: BabalawoProfile[] = data
+          .filter((b: any) => b.rating && b.rating >= 4.5) // Only featured ones with high ratings
+          .slice(0, 6) // Limit to 6 featured babalawos
+          .map((b: any) => ({
+            id: b.id,
+            full_name: b.full_name?.trim() || 'Babalawo (Name Missing)',
+            avatar_url: b.avatar_url,
+            specialties: b.specialties || [],
+            experience_years: b.experience_years || 1,
+            hourly_rate: Number(b.hourly_rate) || 15000,
+            bio: b.bio || '',
+            verification_status: b.verification_status || 'pending',
+            rating: Number(b.rating) || 5.0,
+            total_sessions: b.total_sessions || 0,
+            languages: b.languages || ['English'],
+            timezone: b.timezone || 'Africa/Lagos',
+            is_active: b.is_active ?? true,
+          }));
 
-        // Fetch profiles separately to avoid relationship issues
-        const babalawoIds = babalawosData.map(b => b.id);
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, full_name, avatar_url')
-          .in('id', babalawoIds);
-
-        if (profilesError) {
-          console.error('[useFeaturedBabalawos] Profiles error:', profilesError);
-        }
-
-        console.log('[useFeaturedBabalawos] Profiles data:', profilesData);
-
-        // Combine the data
-        const transformedData: BabalawoProfile[] = babalawosData.map(babalawo => {
-          const profile = profilesData?.find(p => p.id === babalawo.id);
-          console.log(`[useFeaturedBabalawos] Processing babalawo ${babalawo.id}, found profile:`, profile);
-          
-          return {
-            ...babalawo,
-            profiles: profile ? {
-              full_name: profile.full_name,
-              avatar_url: profile.avatar_url
-            } : null
-          };
-        });
-        
-        console.log('[useFeaturedBabalawos] Final transformed data:', transformedData);
+        console.log('[useFeaturedBabalawos] Transformed data:', transformedData);
         setBabalawos(transformedData);
+        
       } catch (err: any) {
-        console.error('[useFeaturedBabalawos] Error:', err);
-        setError(err.message || 'An unexpected error occurred.');
+        console.error('[useFeaturedBabalawos] Error fetching featured babalawos via RPC:', err);
+        const appError = errorService.handleError(err, 'FETCH_FEATURED_BABALAWOS_RPC');
+        setError(appError.message);
+        errorService.showErrorToast(appError);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchBabalawos();
+    fetchFeaturedBabalawos();
   }, []);
 
   return { babalawos, loading, error };

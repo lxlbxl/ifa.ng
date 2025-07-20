@@ -102,21 +102,21 @@ const BankDetailsModal: React.FC<BankDetailsModalProps> = ({
       const { data, error } = await supabase
         .from('babalawo_bank_details')
         .select('*')
-        .eq('babalawo_id', babalawoData.id)
+        .eq('babalawo_id', String(babalawoData.id))
         .maybeSingle();
       
       if (error && error.code !== 'PGRST116') throw error;
       
       if (data) {
         setBankDetails({
-          babalawo_id: babalawoData.id,
+          babalawo_id: String(babalawoData.id),
           bank_name: data.bank_name || '',
           account_number: data.account_number || '',
           account_name: data.account_name || '',
         });
       } else {
         setBankDetails({
-          babalawo_id: babalawoData.id,
+          babalawo_id: String(babalawoData.id),
           bank_name: '',
           account_number: '',
           account_name: '',

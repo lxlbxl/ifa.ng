@@ -171,7 +171,7 @@ const SessionHistory = () => {
         <div className="space-y-6">
           {filteredSessions.map((session) => {
             const sessionDetails = mockSessionDetails[session.id] || {};
-            const isExpanded = expandedSession === session.id;
+            const isExpanded = expandedSession === String(session.id);
             
             return (
               <Card key={session.id} className={`overflow-hidden transition-all duration-200 ${isExpanded ? 'shadow-md' : 'shadow-sm'}`}>
@@ -254,7 +254,7 @@ const SessionHistory = () => {
                       variant="ghost" 
                       size="sm" 
                       className="text-xs h-8"
-                      onClick={() => toggleExpand(session.id)}
+                      onClick={() => toggleExpand(String(session.id))}
                     >
                       {isExpanded ? (
                         <>

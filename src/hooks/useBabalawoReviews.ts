@@ -3,10 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
 interface Review {
-  id: string;
-  session_id: string;
+  id: number;
+  session_id: number;
   user_id: string;
-  babalawo_id: string;
   rating: number;
   comment: string | null;
   created_at: string | null;
@@ -17,18 +16,29 @@ interface Review {
 }
 
 const fetchBabalawoReviews = async (babalawoId: string) => {
+  // First get the babalawo record to find which sessions belong to this babalawo
+  const { data: sessions } = await supabase
+    .from('sessions')
+    .select('id')
+    .eq('babalawo_id', babalawoId);
+
+  if (!sessions || sessions.length === 0) {
+    return [];
+  }
+
+  const sessionIds = sessions.map(s => s.id);
+
   const { data: reviewsData, error: reviewsError } = await supabase
     .from('reviews')
     .select(`
       id,
       session_id,
       user_id,
-      babalawo_id,
       rating,
       comment,
       created_at
     `)
-    .eq('babalawo_id', babalawoId)
+    .in('session_id', sessionIds)
     .order('created_at', { ascending: false });
 
   if (reviewsError) {

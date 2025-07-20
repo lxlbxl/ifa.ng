@@ -74,19 +74,19 @@ export const useBabalawos = () => {
         const { data: babalawosData, error: babalawosError } = await supabase
           .from('babalawos')
           .select(`
-            id,
+            user_id,
             specialties,
             experience_years,
             hourly_rate,
             bio,
-            verification_status,
+            is_verified,
             rating,
             total_sessions,
             languages,
             timezone,
             is_active
           `)
-          .eq('verification_status', 'approved')
+          .eq('is_verified', true)
           .eq('is_active', true);
 
         if (babalawosError) {
@@ -99,7 +99,7 @@ export const useBabalawos = () => {
         }
 
         // Fetch profiles for these babalawos
-        const babalawoIds = babalawosData.map(b => b.id);
+        const babalawoIds = babalawosData.map(b => b.user_id);
         const { data: profilesData, error: profilesError } = await supabase
           .from('profiles')
           .select('id, full_name, avatar_url')
@@ -116,7 +116,7 @@ export const useBabalawos = () => {
         });
 
         const transformedData: BabalawoProfile[] = babalawosData.map(b => {
-          const profile = profilesMap.get(b.id);
+          const profile = profilesMap.get(b.user_id);
           let fullName = 'Babalawo (Name Missing)';
           
           if (profile?.full_name && profile.full_name.trim() !== '') {
@@ -124,14 +124,14 @@ export const useBabalawos = () => {
           }
           
           return {
-            id: b.id,
+            id: b.user_id,
             full_name: fullName,
             avatar_url: profile?.avatar_url || null,
             specialties: b.specialties || [],
             experience_years: b.experience_years || 1,
             hourly_rate: b.hourly_rate || 15000,
             bio: b.bio || '',
-            verification_status: b.verification_status || 'pending',
+            verification_status: b.is_verified ? 'approved' : 'pending',
             rating: b.rating || 5.0,
             total_sessions: b.total_sessions || 0,
             languages: b.languages || ['English'],

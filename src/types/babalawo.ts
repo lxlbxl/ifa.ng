@@ -27,7 +27,7 @@ export interface SessionWithBabalawo {
   babalawo_avatar: string | null;
   babalawo_specialties: string[] | null;
   primary_odu: string | null;
-  other_odus: string[] | null;
+  other_odus: string[] | string | null;
   ritual_recommendations: string | null;
   items_needed: string[] | null;
   deadline: string | null;

@@ -29,7 +29,7 @@ const WithdrawalRequestModal: React.FC<WithdrawalRequestModalProps> = ({
   const [fetchingBalance, setFetchingBalance] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bankDetails, setBankDetails] = useState<any>(null);
-  const [babalawoId, setBabalawoId] = useState<string>("");
+  const [babalawoId, setBabalawoId] = useState<number | null>(null);
 
   useEffect(() => {
     if (open && user?.id) {
@@ -46,7 +46,7 @@ const WithdrawalRequestModal: React.FC<WithdrawalRequestModalProps> = ({
       const { data: babalawoData, error: babalawoError } = await supabase
         .from('babalawos')
         .select('id')
-        .eq('id', user?.id)
+        .eq('user_id', user?.id)
         .single();
       
       if (babalawoError) throw babalawoError;
@@ -55,13 +55,13 @@ const WithdrawalRequestModal: React.FC<WithdrawalRequestModalProps> = ({
         throw new Error('Babalawo profile not found');
       }
       
-      setBabalawoId(babalawoData.id);
+      setBabalawoId(Number(babalawoData.id));
       
       // Get the babalawo's available balance
       const { data: walletData, error: walletError } = await supabase
         .from('babalawo_wallets')
         .select('available_balance')
-        .eq('babalawo_id', babalawoData.id)
+        .eq('babalawo_id', String(babalawoData.id))
         .single();
 
       if (walletError && walletError.code !== 'PGRST116') throw walletError;
@@ -72,7 +72,7 @@ const WithdrawalRequestModal: React.FC<WithdrawalRequestModalProps> = ({
       const { data: bankData, error: bankError } = await supabase
         .from("babalawo_bank_details")
         .select("*")
-        .eq("babalawo_id", babalawoData.id)
+        .eq("babalawo_id", String(babalawoData.id))
         .maybeSingle();
 
       if (bankError && bankError.code !== 'PGRST116') throw bankError;
@@ -124,7 +124,7 @@ const WithdrawalRequestModal: React.FC<WithdrawalRequestModalProps> = ({
       const { error: insertError } = await supabase
         .from("withdrawal_requests")
         .insert({
-          babalawo_id: babalawoId,
+          babalawo_id: String(babalawoId),
           amount: numAmount,
           reason: reason || "Regular withdrawal",
           status: "pending",
@@ -138,7 +138,7 @@ const WithdrawalRequestModal: React.FC<WithdrawalRequestModalProps> = ({
         .update({ 
           available_balance: availableBalance - numAmount
         })
-        .eq('babalawo_id', babalawoId);
+        .eq('babalawo_id', String(babalawoId));
         
       if (updateError) throw updateError;
       

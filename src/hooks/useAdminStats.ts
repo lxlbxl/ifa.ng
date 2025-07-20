@@ -2,19 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useAdminStats = () => {
-  // const [stats, setStats] = React.useState(null);
-  // const [loading, setLoading] = React.useState(true);
-  // const [error, setError] = React.useState(null);
-
-  // Fix: Use enum values instead of string literals
-  const statuses = ['pending', 'confirmed', 'completed', 'cancelled'] as const;
-
   const fetchAdminStats = async () => {
     // Total Users
     const { data: users } = await supabase
       .from('profiles')
-      .select('id')
-      // .eq('role', 'user'); // Filter for users
+      .select('id');
 
     const totalUsers = users?.length ?? 0;
 
@@ -26,7 +18,6 @@ export const useAdminStats = () => {
     const totalBabalawos = babalawos?.length ?? 0;
 
     // Consultations
-    // For each consultation status, use type-correct filtering
     const { data: sessions } = await supabase
       .from('sessions')
       .select('id,status');
@@ -35,7 +26,7 @@ export const useAdminStats = () => {
     const completed = sessions?.filter(s => s.status === 'completed').length ?? 0;
     const cancelled = sessions?.filter(s => s.status === 'cancelled').length ?? 0;
 
-    // Daily/Weekly/Monthly Revenue - sum by time
+    // Revenue calculations
     const todayStr = new Date().toISOString().substring(0, 10);
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
@@ -70,33 +61,26 @@ export const useAdminStats = () => {
       .select('amount, status')
       .eq('status', 'completed');
 
-    // Fetch total commission and babalawo earnings from payments table
-    const { data: commissionData } = await supabase
-      .from('payments')
-      .select('commission_amount, babalawo_amount');
-
-    const totalCommission = commissionData?.reduce((sum, p) => sum + (Number(p.commission_amount) || 0), 0) || 0;
-    const totalBabalawoEarnings = commissionData?.reduce((sum, p) => sum + (Number(p.babalawo_amount) || 0), 0) || 0;
-
+    // Calculate revenues
     const todayRevenue = completedSessionsToday?.reduce((sum, s) => sum + (Number(s.amount) || 0), 0) || 0;
     const weekRevenue = completedSessionsThisWeek?.reduce((sum, s) => sum + (Number(s.amount) || 0), 0) || 0;
     const monthRevenue = completedSessionsThisMonth?.reduce((sum, s) => sum + (Number(s.amount) || 0), 0) || 0;
     const allRevenue = allCompletedSessions?.reduce((sum, s) => sum + (Number(s.amount) || 0), 0) || 0;
 
+    // Commission and earnings (calculate from revenue for now)
+    const totalCommission = allRevenue * 0.2; // 20% platform commission
+    const totalBabalawoEarnings = allRevenue * 0.8; // 80% babalawo earnings
+
     // Session Success Rate
     const totalSessions = sessions?.length ?? 0;
     const sessionSuccessRate = totalSessions > 0 ? Math.round((completed / totalSessions) * 100) : 0;
 
-    // Top Babalowos (by rating, fallback to bookings)
-    // We try to get the most rated, sorted descending, then fallback by popular (by sessions)
-    let topBabalawosData: any[] = [];
+    // Top Babalawos
     const { data: topBabalawoRows } = await supabase
       .from('babalawos')
-      .select('id, rating, total_sessions') // Only fetch what we have!
+      .select('user_id, rating, total_sessions')
       .order('rating', { ascending: false })
       .limit(5);
-
-    topBabalawosData = topBabalawoRows || [];
 
     // Recent User Signups
     const { data: recentUsers } = await supabase
@@ -105,13 +89,8 @@ export const useAdminStats = () => {
       .order('created_at', { ascending: false })
       .limit(5);
 
-    // System Alerts - failed payments count
-    const { data: failedPayments } = await supabase
-      .from('payments')
-      .select('id')
-      .eq('status', 'failed');
-
-    const failedPaymentsCount = failedPayments?.length ?? 0;
+    // System Alerts - failed sessions count
+    const failedSessionsCount = sessions?.filter(s => s.status === 'cancelled').length ?? 0;
 
     return {
       totalUsers,
@@ -130,34 +109,17 @@ export const useAdminStats = () => {
       totalCommission,
       totalBabalawoEarnings,
       sessionSuccessRate,
-      topBabalowos: topBabalawosData,
+      topBabalowos: topBabalawoRows ?? [],
       recentUsers: recentUsers ?? [],
       systemAlerts: {
-        failedPayments: failedPaymentsCount,
+        failedPayments: failedSessionsCount,
       },
     };
   };
 
-  // React.useEffect(() => {
-  //   fetchAdminStats()
-  //     .then(data => {
-  //       setStats(data);
-  //       setLoading(false);
-  //     })
-  //     .catch(err => {
-  //       setError(err);
-  //       setLoading(false);
-  //     });
-  // }, []);
-
-  return {
-    // stats,
-    // loading,
-    // error,
-    ...useQuery({
-      queryKey: ['adminStats'],
-      queryFn: fetchAdminStats,
-      staleTime: 60000,
-    }),
-  };
+  return useQuery({
+    queryKey: ['adminStats'],
+    queryFn: fetchAdminStats,
+    staleTime: 60000,
+  });
 };

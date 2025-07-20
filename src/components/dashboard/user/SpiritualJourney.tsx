@@ -28,7 +28,7 @@ const SpiritualJourney: React.FC = () => {
       <CardContent>
         <Accordion type="single" collapsible className="w-full">
           {sessions.map((session) => (
-            <AccordionItem key={session.id} value={session.id}>
+            <AccordionItem key={session.id} value={String(session.id)}>
               <AccordionTrigger>
                 <div className="flex flex-col items-start">
                   <span className="font-semibold">Session with {session.babalawo_name} on {format(new Date(session.session_date), 'PPP')}</span>
@@ -42,8 +42,8 @@ const SpiritualJourney: React.FC = () => {
                   <p><strong>Time:</strong> {session.start_time} - {session.end_time}</p>
                   <p><strong>Notes:</strong> {session.notes || 'N/A'}</p>
                   {session.primary_odu && <p><strong>Primary Odu:</strong> {session.primary_odu}</p>}
-                  {session.other_odus && session.other_odus.length > 0 && (
-                    <p><strong>Other Odus:</strong> {session.other_odus.join(', ')}</p>
+                  {session.other_odus && (
+                    <p><strong>Other Odus:</strong> {Array.isArray(session.other_odus) ? session.other_odus.join(', ') : session.other_odus}</p>
                   )}
                   {session.ritual_recommendations && <p><strong>Ritual Recommendations:</strong> {session.ritual_recommendations}</p>}
                   {session.items_needed && session.items_needed.length > 0 && (

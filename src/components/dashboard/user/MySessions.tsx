@@ -131,7 +131,7 @@ const MySessions = () => {
                   
                   <div className="flex space-x-2">
                     {isJoinable && ( // Conditionally render Join Session button
-                      <Button onClick={() => handleJoinSession(session.id)} className="flex items-center">
+                      <Button onClick={() => handleJoinSession(String(session.id))} className="flex items-center">
                         <Video className="h-4 w-4 mr-2" />
                         Join Session
                       </Button>

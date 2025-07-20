@@ -232,7 +232,7 @@ const createSession = async (
       console.error("❌ Payment record error:", paymentErr);
     }
     
-    onSuccess(sessionData.id); // Pass sessionId to onSuccess
+    onSuccess(String(sessionData.id)); // Pass sessionId to onSuccess
     
   } catch (error) {
     console.error("❌ Error creating session:", error);

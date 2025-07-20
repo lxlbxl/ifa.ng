@@ -172,8 +172,11 @@ export type Database = {
           availability: Json | null
           bio: string | null
           city: string | null
+          commission_babalawo_percent: number | null
+          commission_platform_percent: number | null
           country: string | null
           created_at: string
+          experience_years: number | null
           hourly_rate: number | null
           id: number
           is_active: boolean | null
@@ -187,14 +190,16 @@ export type Database = {
           total_sessions: number | null
           updated_at: string
           user_id: string
-          years_of_experience: number | null
         }
         Insert: {
           availability?: Json | null
           bio?: string | null
           city?: string | null
+          commission_babalawo_percent?: number | null
+          commission_platform_percent?: number | null
           country?: string | null
           created_at?: string
+          experience_years?: number | null
           hourly_rate?: number | null
           id?: never
           is_active?: boolean | null
@@ -208,14 +213,16 @@ export type Database = {
           total_sessions?: number | null
           updated_at?: string
           user_id: string
-          years_of_experience?: number | null
         }
         Update: {
           availability?: Json | null
           bio?: string | null
           city?: string | null
+          commission_babalawo_percent?: number | null
+          commission_platform_percent?: number | null
           country?: string | null
           created_at?: string
+          experience_years?: number | null
           hourly_rate?: number | null
           id?: never
           is_active?: boolean | null
@@ -229,7 +236,6 @@ export type Database = {
           total_sessions?: number | null
           updated_at?: string
           user_id?: string
-          years_of_experience?: number | null
         }
         Relationships: []
       }
@@ -269,6 +275,86 @@ export type Database = {
           title?: string
           type?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          amount: number
+          babalawo_amount: number | null
+          commission_amount: number | null
+          created_at: string | null
+          id: string
+          payment_gateway: string | null
+          payment_reference: string | null
+          session_id: number | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          babalawo_amount?: number | null
+          commission_amount?: number | null
+          created_at?: string | null
+          id?: string
+          payment_gateway?: string | null
+          payment_reference?: string | null
+          session_id?: number | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          babalawo_amount?: number | null
+          commission_amount?: number | null
+          created_at?: string | null
+          id?: string
+          payment_gateway?: string | null
+          payment_reference?: string | null
+          session_id?: number | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payouts: {
+        Row: {
+          amount: number
+          babalawo_id: string
+          created_at: string | null
+          id: string
+          method: string | null
+          reference: string | null
+          status: string | null
+        }
+        Insert: {
+          amount: number
+          babalawo_id: string
+          created_at?: string | null
+          id?: string
+          method?: string | null
+          reference?: string | null
+          status?: string | null
+        }
+        Update: {
+          amount?: number
+          babalawo_id?: string
+          created_at?: string | null
+          id?: string
+          method?: string | null
+          reference?: string | null
+          status?: string | null
         }
         Relationships: []
       }
@@ -387,6 +473,7 @@ export type Database = {
       }
       reviews: {
         Row: {
+          babalawo_id: string | null
           comment: string | null
           created_at: string
           id: number
@@ -396,6 +483,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          babalawo_id?: string | null
           comment?: string | null
           created_at?: string
           id?: never
@@ -405,6 +493,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          babalawo_id?: string | null
           comment?: string | null
           created_at?: string
           id?: never

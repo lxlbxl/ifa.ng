@@ -609,7 +609,7 @@ export type Database = {
           room_url: string | null
           session_date: string
           start_time: string
-          status: string
+          status: Database["public"]["Enums"]["session_status_enum"]
           user_id: string
           user_timezone: string | null
           warning: string | null
@@ -633,7 +633,7 @@ export type Database = {
           room_url?: string | null
           session_date: string
           start_time: string
-          status: string
+          status: Database["public"]["Enums"]["session_status_enum"]
           user_id: string
           user_timezone?: string | null
           warning?: string | null
@@ -657,7 +657,7 @@ export type Database = {
           room_url?: string | null
           session_date?: string
           start_time?: string
-          status?: string
+          status?: Database["public"]["Enums"]["session_status_enum"]
           user_id?: string
           user_timezone?: string | null
           warning?: string | null

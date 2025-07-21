@@ -176,10 +176,12 @@ export type Database = {
           commission_platform_percent: number | null
           country: string | null
           created_at: string
+          current_status: string | null
           experience_years: number | null
           hourly_rate: number | null
           id: number
           is_active: boolean | null
+          is_featured: boolean | null
           is_verified: boolean
           languages: string[] | null
           profile_picture_url: string | null
@@ -199,10 +201,12 @@ export type Database = {
           commission_platform_percent?: number | null
           country?: string | null
           created_at?: string
+          current_status?: string | null
           experience_years?: number | null
           hourly_rate?: number | null
           id?: never
           is_active?: boolean | null
+          is_featured?: boolean | null
           is_verified?: boolean
           languages?: string[] | null
           profile_picture_url?: string | null
@@ -222,10 +226,12 @@ export type Database = {
           commission_platform_percent?: number | null
           country?: string | null
           created_at?: string
+          current_status?: string | null
           experience_years?: number | null
           hourly_rate?: number | null
           id?: never
           is_active?: boolean | null
+          is_featured?: boolean | null
           is_verified?: boolean
           languages?: string[] | null
           profile_picture_url?: string | null

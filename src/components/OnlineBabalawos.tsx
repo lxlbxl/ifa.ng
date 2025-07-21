@@ -129,10 +129,14 @@ const OnlineBabalawos = () => {
   // Use the search hook with a filter for online babalawos
   const { babalawos, loading, error, updateFilter } = useBabalawoSearch();
   
-  // Set the filter to show only online babalawos
-  useEffect(() => {
+  // Set the filter to show only online babalawos - use useCallback to prevent infinite loops
+  const setAvailabilityFilter = useCallback(() => {
     updateFilter('availability', 'available');
   }, [updateFilter]);
+  
+  useEffect(() => {
+    setAvailabilityFilter();
+  }, [setAvailabilityFilter]);
   
   // Memoize the babalawos to display to prevent unnecessary re-renders
   const displayBabalawos = useMemo(() => {

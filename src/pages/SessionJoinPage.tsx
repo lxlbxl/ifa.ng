@@ -18,7 +18,7 @@ const SessionJoinPage = () => {
 
   return (
     <div className="min-h-screen">
-      <SessionVideoRoom />
+      <SessionVideoRoom sessionId={sessionId} />
     </div>
   );
 };

@@ -30,9 +30,15 @@ export const useFeaturedBabalawos = () => {
           return;
         }
 
-        // Transform data to match our interface, ensuring correct types and fallbacks
+        // Transform data to match our interface, focusing on featured babalawos
         const transformedData: BabalawoProfile[] = data
-          .filter((b: any) => b.rating && b.rating >= 4.5) // Only featured ones with high ratings
+          .filter((b: any) => b.is_featured === true) // Only show featured babalawos
+          .sort((a: any, b: any) => {
+            // Sort by combined score of rating and total sessions
+            const scoreA = (a.rating || 0) * 0.7 + Math.min((a.total_sessions || 0) / 10, 5) * 0.3;
+            const scoreB = (b.rating || 0) * 0.7 + Math.min((b.total_sessions || 0) / 10, 5) * 0.3;
+            return scoreB - scoreA;
+          })
           .slice(0, 6) // Limit to 6 featured babalawos
           .map((b: any) => ({
             id: b.id,
@@ -48,6 +54,8 @@ export const useFeaturedBabalawos = () => {
             languages: b.languages || ['English'],
             timezone: b.timezone || 'Africa/Lagos',
             is_active: b.is_active ?? true,
+            is_featured: b.is_featured,
+            current_status: b.current_status || 'offline',
           }));
 
         console.log('[useFeaturedBabalawos] Transformed data:', transformedData);

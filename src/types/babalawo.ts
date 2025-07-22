@@ -12,6 +12,8 @@ export interface BabalawoProfile {
   languages: string[] | null;
   timezone: string | null;
   is_active: boolean | null;
+  is_featured?: boolean | null;
+  current_status?: string | null;
 }
 
 export interface SessionWithBabalawo {

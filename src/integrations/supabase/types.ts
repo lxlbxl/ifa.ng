@@ -855,6 +855,8 @@ export type Database = {
           languages: string[]
           timezone: string
           is_active: boolean
+          is_featured: boolean
+          current_status: string
         }[]
       }
       is_admin: {

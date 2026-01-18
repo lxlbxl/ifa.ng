@@ -9,12 +9,15 @@ import { Search, Star, Users, Award, Settings } from "lucide-react";
 import { useAdminBabalawos } from "@/hooks/useAdminBabalawos";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import BabalawoCommissionModal from "./BabalawoCommissionModal";
 
 const BabalawoManagement: React.FC = () => {
   const { data: babalawos, isLoading, error, refetch } = useAdminBabalawos();
   const [searchTerm, setSearchTerm] = useState("");
   const [updatingFeatured, setUpdatingFeatured] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [commissionModalOpen, setCommissionModalOpen] = useState(false);
+  const [selectedBabalawo, setSelectedBabalawo] = useState<{ id: string; name: string } | null>(null);
 
   const filteredBabalawos = babalawos?.filter(babalawo =>
     babalawo.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -261,12 +264,15 @@ const BabalawoManagement: React.FC = () => {
                     size="sm"
                     className="ml-auto"
                     onClick={() => {
-                      // Navigate to detailed management view
-                      console.log('Manage', babalawo.id);
+                      setSelectedBabalawo({
+                        id: babalawo.id,
+                        name: babalawo.full_name || 'Unnamed'
+                      });
+                      setCommissionModalOpen(true);
                     }}
                   >
                     <Settings className="h-4 w-4 mr-1" />
-                    Manage
+                    Manage Commission
                   </Button>
                 </div>
               </div>
@@ -274,6 +280,16 @@ const BabalawoManagement: React.FC = () => {
           )}
         </div>
       </CardContent>
+
+      {selectedBabalawo && (
+        <BabalawoCommissionModal
+          open={commissionModalOpen}
+          onOpenChange={setCommissionModalOpen}
+          babalawoId={selectedBabalawo.id}
+          babalawoName={selectedBabalawo.name}
+          onUpdate={refetch}
+        />
+      )}
     </Card>
   );
 };

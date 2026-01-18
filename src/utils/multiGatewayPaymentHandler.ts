@@ -183,7 +183,27 @@ const createSession = async (
 
   try {
     console.log("✅ Payment successful, creating session...");
-    
+
+    // Fetch babalawo's commission rates
+    const { data: babalawoData, error: babalawoErr } = await supabase
+      .from("babalawos")
+      .select("commission_platform_percent, commission_babalawo_percent")
+      .eq("id", babalawo.id)
+      .single();
+
+    if (babalawoErr) {
+      console.error("❌ Error fetching babalawo commission rates:", babalawoErr);
+    }
+
+    // Calculate commission split (default to 20/80 if not set)
+    const platformPercent = babalawoData?.commission_platform_percent || 20;
+    const babalawoPercent = babalawoData?.commission_babalawo_percent || 80;
+
+    const commissionAmount = (amount * platformPercent) / 100;
+    const babalawoAmount = (amount * babalawoPercent) / 100;
+
+    console.log(`💰 Commission split: Platform ${platformPercent}% (₦${commissionAmount.toFixed(2)}), Babalawo ${babalawoPercent}% (₦${babalawoAmount.toFixed(2)})`);
+
     // Determine session status based on isInstant flag
     const sessionStatus = isInstant ? "in_progress" : "confirmed";
 
@@ -206,7 +226,7 @@ const createSession = async (
       })
       .select()
       .single();
-      
+
     if (sessionErr) {
       console.error("❌ Session creation error:", sessionErr);
       onError("Payment successful but booking failed. Please contact support with reference: " + paymentRef);
@@ -215,25 +235,24 @@ const createSession = async (
 
     console.log("✅ Session created successfully:", sessionData);
 
-    // Save payment record
+    // Save payment record with commission split
     const { error: paymentErr } = await supabase.from("payments").insert({
       user_id: user.id,
-      babalawo_id: babalawo.id,
       session_id: sessionData.id,
       amount: amount,
-      payment_method: paymentMethod,
-      selected_payment_method: paymentMethod,
+      commission_amount: commissionAmount,
+      babalawo_amount: babalawoAmount,
+      payment_gateway: paymentMethod,
+      payment_reference: paymentRef,
       status: "completed",
-      flutterwave_reference: paymentMethod === 'flutterwave' ? paymentRef : null,
-      paystack_reference: paymentMethod === 'paystack' ? paymentRef : null,
     });
-    
+
     if (paymentErr) {
       console.error("❌ Payment record error:", paymentErr);
     }
-    
+
     onSuccess(String(sessionData.id)); // Pass sessionId to onSuccess
-    
+
   } catch (error) {
     console.error("❌ Error creating session:", error);
     onError("Payment successful but booking processing failed. Please contact support.");

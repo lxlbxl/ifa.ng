@@ -4,9 +4,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import { fetchBabalawoAvailability, AvailabilitySlot } from "@/utils/availabilityUtils";
 import { handlePaymentAndBooking, PaymentMethod } from "@/utils/multiGatewayPaymentHandler";
 import { getUserWallet } from "@/utils/walletUtils";
+import { parseBabalawoPrice, formatPrice } from "@/utils/priceUtils";
 import DateTimeSelector from "./DateTimeSelector";
 import PaymentMethodSelector from "./PaymentMethodSelector";
 
@@ -18,6 +20,7 @@ interface BookSessionModalProps {
 
 const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange, babalawo }) => {
   const { user, userProfile } = useAuth();
+  const navigate = useNavigate();
   const [date, setDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('wallet');
@@ -45,30 +48,20 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
       toast({ title: "Please select both date and time", variant: "destructive" });
       return;
     }
-    
+
     if (!user?.id) {
-      toast({ 
-        title: "Authentication Error", 
+      toast({
+        title: "Authentication Error",
         description: "Please sign in to continue.",
-        variant: "destructive" 
+        variant: "destructive"
       });
       return;
     }
-    
+
     setIsLoading(true);
 
-    // Extract amount from babalawo data more reliably
-    let amount = 15000; // default fallback
-    if (babalawo.hourly_rate) {
-      amount = parseInt(babalawo.hourly_rate.toString()) || 15000;
-    } else if (babalawo.price) {
-      const priceMatch = babalawo.price.toString().match(/\d+/);
-      amount = priceMatch ? parseInt(priceMatch[0]) : 15000;
-      // If the matched price seems too low (like 15 instead of 15000), multiply by 1000
-      if (amount < 1000) {
-        amount = amount * 1000;
-      }
-    }
+    // Use centralized price parsing utility
+    const amount = parseBabalawoPrice(babalawo);
 
     await handlePaymentAndBooking(
       {
@@ -81,37 +74,32 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
         paymentMethod,
         walletBalance
       },
-      () => {
+      (sessionId) => {
         setIsLoading(false);
         onOpenChange(false);
-        toast({ 
-          title: "Booking Successful!", 
-          description: "Your consultation session has been confirmed."
+        toast({
+          title: "Booking Successful!",
+          description: "Redirecting to your sessions..."
         });
+
+        // Auto-redirect to My Sessions page after 1.5 seconds
+        setTimeout(() => {
+          navigate('/dashboard/user');
+        }, 1500);
       },
       (errorMessage) => {
-        toast({ 
-          title: "Payment Error", 
+        toast({
+          title: "Payment Error",
           description: errorMessage,
-          variant: "destructive" 
+          variant: "destructive"
         });
         setIsLoading(false);
       }
     );
   }
 
-  // Extract amount for display
-  let amount = 15000;
-  if (babalawo.hourly_rate) {
-    amount = parseInt(babalawo.hourly_rate.toString()) || 15000;
-  } else if (babalawo.price) {
-    const priceMatch = babalawo.price.toString().match(/\d+/);
-    amount = priceMatch ? parseInt(priceMatch[0]) : 15000;
-    // If the matched price seems too low, multiply by 1000
-    if (amount < 1000) {
-      amount = amount * 1000;
-    }
-  }
+  // Extract amount for display using centralized utility
+  const amount = parseBabalawoPrice(babalawo);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

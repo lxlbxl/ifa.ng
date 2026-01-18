@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { handlePaymentAndBooking, PaymentMethod } from "@/utils/multiGatewayPaymentHandler";
 import { getUserWallet } from "@/utils/walletUtils";
+import { parseBabalawoPrice, formatPrice } from "@/utils/priceUtils";
 import PaymentMethodSelector from "./PaymentMethodSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -39,29 +40,20 @@ const InstantConsultationModal: React.FC<InstantConsultationModalProps> = ({
 
   async function handleInstantConsultation(e: React.FormEvent) {
     e.preventDefault();
-    
+
     if (!user?.id) {
-      toast({ 
-        title: "Authentication Error", 
+      toast({
+        title: "Authentication Error",
         description: "Please sign in to continue.",
-        variant: "destructive" 
+        variant: "destructive"
       });
       return;
     }
 
     setIsLoading(true);
 
-    // Extract amount from babalawo data
-    let amount = 15000; // default fallback
-    if (babalawo.hourly_rate) {
-      amount = parseInt(babalawo.hourly_rate.toString()) || 15000;
-    } else if (babalawo.price) {
-      const priceMatch = babalawo.price.toString().match(/\d+/);
-      amount = priceMatch ? parseInt(priceMatch[0]) : 15000;
-      if (amount < 1000) {
-        amount = amount * 1000;
-      }
-    }
+    // Use centralized price parsing utility
+    const amount = parseBabalawoPrice(babalawo);
 
     // Current date and time for instant session
     const now = new Date();
@@ -77,42 +69,33 @@ const InstantConsultationModal: React.FC<InstantConsultationModalProps> = ({
         amount,
         paymentMethod,
         walletBalance,
-        isInstant: true // Pass the isInstant flag
+        isInstant: true
       },
-      async (sessionId) => { // Receive sessionId from handlePaymentAndBooking
+      async (sessionId) => {
         setIsLoading(false);
         onOpenChange(false);
-        
-        toast({ 
-          title: "Payment Successful!", 
+
+        toast({
+          title: "Payment Successful!",
           description: "Joining instant consultation session..."
         });
 
         // Navigate to the session room
-        navigate(`/session/${sessionId}`); // Use the received sessionId
+        navigate(`/session/${sessionId}`);
       },
       (errorMessage) => {
-        toast({ 
-          title: "Payment Error", 
+        toast({
+          title: "Payment Error",
           description: errorMessage,
-          variant: "destructive" 
+          variant: "destructive"
         });
         setIsLoading(false);
       }
     );
   }
 
-  // Extract amount for display
-  let amount = 15000;
-  if (babalawo.hourly_rate) {
-    amount = parseInt(babalawo.hourly_rate.toString()) || 15000;
-  } else if (babalawo.price) {
-    const priceMatch = babalawo.price.toString().match(/\d+/);
-    amount = priceMatch ? parseInt(priceMatch[0]) : 15000;
-    if (amount < 1000) {
-      amount = amount * 1000;
-    }
-  }
+  // Extract amount for display using centralized utility
+  const amount = parseBabalawoPrice(babalawo);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

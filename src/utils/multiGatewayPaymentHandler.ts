@@ -1,14 +1,15 @@
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { 
-  getPaymentSettings, 
-  loadFlutterwaveScript, 
-  loadPaystackScript, 
+import {
+  getPaymentSettings,
+  loadFlutterwaveScript,
+  loadPaystackScript,
   generatePaymentRef,
   validateGatewaySettings,
-  PaymentGateway 
+  PaymentGateway
 } from "./paymentGatewayUtils";
-import { deductFromWallet, hasInsufficientBalance } from "./walletUtils";
+import { deductFromWallet, hasInsufficientBalance, rollbackWalletTransaction } from "./walletUtils";
+import { generateSessionIdempotencyKey, generateIdempotencyKey } from "./webhookVerification";
 
 export type PaymentMethod = 'wallet' | 'flutterwave' | 'paystack';
 
@@ -47,30 +48,72 @@ export const handlePaymentAndBooking = async (
 
 const handleWalletPayment = async (
   paymentData: PaymentData,
-  onSuccess: (sessionId: string) => void, // Modified signature
+  onSuccess: (sessionId: string) => void,
   onError: (message: string) => void
 ) => {
-  const { user, userProfile, babalawo, date, selectedTime, amount, walletBalance = 0 } = paymentData;
+  const { user, userProfile, babalawo, date, selectedTime, amount, walletBalance = 0, isInstant } = paymentData;
 
   if (hasInsufficientBalance(walletBalance, amount)) {
     onError("Insufficient wallet balance. Please add money to your wallet or use a different payment method.");
     return;
   }
 
+  let transactionId: string | null = null;
+
   try {
-    // Deduct from wallet
-    const walletDeducted = await deductFromWallet(user?.id, amount, undefined, "Consultation session payment");
-    
-    if (!walletDeducted) {
+    console.log("💰 Processing wallet payment for session...");
+
+    // Generate idempotency key for this transaction
+    const sessionDate = format(date, "yyyy-MM-dd");
+    const walletIdempotencyKey = generateIdempotencyKey(
+      user?.id,
+      `wallet-${babalawo.id}-${sessionDate}-${selectedTime}`,
+      Date.now()
+    );
+
+    // Deduct from wallet with idempotency key
+    const deductResult = await deductFromWallet(
+      user?.id,
+      amount,
+      undefined,
+      "Consultation session payment",
+      walletIdempotencyKey
+    );
+
+    if (!deductResult.success) {
       onError("Failed to process wallet payment. Please try again.");
       return;
     }
 
-    // Create session
-    await createSession({ ...paymentData, userProfile }, "wallet", "", onSuccess, onError);
-  } catch (error) {
+    transactionId = deductResult.transactionId || null;
+    console.log(`✅ Wallet debited successfully. Transaction ID: ${transactionId}`);
+
+    // Create session with rollback support
+    await createSession(
+      { ...paymentData, userProfile },
+      "wallet",
+      walletIdempotencyKey,
+      onSuccess,
+      onError,
+      transactionId
+    );
+
+  } catch (error: any) {
     console.error("❌ Wallet payment error:", error);
-    onError("Failed to process wallet payment. Please try again.");
+
+    // Rollback wallet deduction if we have a transaction ID
+    if (transactionId) {
+      console.log(`🔄 Rolling back wallet transaction: ${transactionId}`);
+      const rolledBack = await rollbackWalletTransaction(transactionId);
+
+      if (rolledBack) {
+        onError("Payment failed and has been refunded to your wallet. Please try again.");
+      } else {
+        onError("Payment failed. Please contact support with transaction ID: " + transactionId);
+      }
+    } else {
+      onError("Failed to process wallet payment. Please try again.");
+    }
   }
 };
 
@@ -176,23 +219,83 @@ const createSession = async (
   paymentData: PaymentData,
   paymentMethod: string,
   paymentRef: string,
-  onSuccess: (sessionId: string) => void, // Modified signature
-  onError: (message: string) => void
+  onSuccess: (sessionId: string) => void,
+  onError: (message: string) => void,
+  walletTransactionId?: string | null
 ) => {
   const { user, userProfile, babalawo, date, selectedTime, amount, isInstant } = paymentData;
 
   try {
     console.log("✅ Payment successful, creating session...");
 
+    const sessionDate = format(date, "yyyy-MM-dd");
+
+    // Generate idempotency key for session
+    const sessionIdempotencyKey = generateSessionIdempotencyKey(
+      user.id,
+      babalawo.id,
+      sessionDate,
+      selectedTime
+    );
+
+    // Check for duplicate session
+    const { data: duplicateCheck } = await supabase.rpc('check_duplicate_session', {
+      p_user_id: user.id,
+      p_babalawo_id: babalawo.id,
+      p_session_date: sessionDate,
+      p_start_time: selectedTime,
+      p_idempotency_key: sessionIdempotencyKey
+    });
+
+    if (duplicateCheck) {
+      console.log(`⚠️ Duplicate session detected: ${duplicateCheck}`);
+      onSuccess(String(duplicateCheck));
+      return;
+    }
+
+    // For instant sessions, check babalawo concurrent session limit
+    if (isInstant) {
+      const { data: canAcceptSession } = await supabase.rpc('check_babalawo_concurrent_sessions', {
+        p_babalawo_id: babalawo.id,
+        p_max_concurrent: 1
+      });
+
+      if (!canAcceptSession) {
+        // Rollback wallet transaction if applicable
+        if (walletTransactionId) {
+          await rollbackWalletTransaction(walletTransactionId);
+        }
+        onError("This babalawo is currently in another session. Please try again later.");
+        return;
+      }
+
+      // Re-check babalawo online status
+      const { data: babalawoStatus } = await supabase
+        .from('babalawos')
+        .select('is_active, current_status')
+        .eq('id', babalawo.id)
+        .single();
+
+      if (!babalawoStatus?.is_active || babalawoStatus?.current_status !== 'online') {
+        // Rollback wallet transaction if applicable
+        if (walletTransactionId) {
+          await rollbackWalletTransaction(walletTransactionId);
+        }
+        onError("This babalawo is no longer available for instant consultation.");
+        return;
+      }
+    }
+
     // Fetch babalawo's commission rates
     const { data: babalawoData, error: babalawoErr } = await supabase
       .from("babalawos")
-      .select("commission_platform_percent, commission_babalawo_percent")
+      .select("commission_platform_percent, commission_babalawo_percent, user_id")
       .eq("id", babalawo.id)
       .single();
 
     if (babalawoErr) {
-      console.error("❌ Error fetching babalawo commission rates:", babalawoErr);
+      console.error("❌ Error fetching babalawo data:", babalawoErr);
+      throw babalawoErr;
     }
 
     // Calculate commission split (default to 20/80 if not set)
@@ -213,7 +316,7 @@ const createSession = async (
       .insert({
         user_id: user.id,
         babalawo_id: babalawo.id,
-        session_date: format(date, "yyyy-MM-dd"),
+        session_date: sessionDate,
         start_time: selectedTime,
         end_time: selectedTime,
         status: sessionStatus,
@@ -223,21 +326,39 @@ const createSession = async (
         notes: isInstant ? "Instant consultation" : "",
         is_instant: isInstant || false,
         user_timezone: userProfile?.timezone || 'UTC',
+        idempotency_key: sessionIdempotencyKey,
+        duplicate_check_key: `${user.id}-${babalawo.id}-${sessionDate}-${selectedTime}`
       })
       .select()
       .single();
 
     if (sessionErr) {
       console.error("❌ Session creation error:", sessionErr);
-      onError("Payment successful but booking failed. Please contact support with reference: " + paymentRef);
+
+      // Rollback wallet transaction if applicable
+      if (walletTransactionId) {
+        console.log("🔄 Rolling back wallet transaction due to session creation failure");
+        await rollbackWalletTransaction(walletTransactionId);
+        onError("Booking failed and payment has been refunded. Please try again.");
+      } else {
+        onError("Payment successful but booking failed. Please contact support with reference: " + paymentRef);
+      }
       return;
     }
 
     console.log("✅ Session created successfully:", sessionData);
 
+    // Generate payment idempotency key
+    const paymentIdempotencyKey = generateIdempotencyKey(
+      user.id,
+      paymentRef,
+      Date.now()
+    );
+
     // Save payment record with commission split
     const { error: paymentErr } = await supabase.from("payments").insert({
       user_id: user.id,
+      babalawo_id: babalawo.id, // FIXED: Added babalawo_id
       session_id: sessionData.id,
       amount: amount,
       commission_amount: commissionAmount,
@@ -245,16 +366,41 @@ const createSession = async (
       payment_gateway: paymentMethod,
       payment_reference: paymentRef,
       status: "completed",
+      idempotency_key: paymentIdempotencyKey,
+      webhook_verified: paymentMethod === 'wallet' // Wallet payments don't need webhook
     });
 
     if (paymentErr) {
       console.error("❌ Payment record error:", paymentErr);
+      // Don't fail the session if payment record fails, but log it
     }
 
-    onSuccess(String(sessionData.id)); // Pass sessionId to onSuccess
+    // For instant sessions, create notification for babalawo
+    if (isInstant && babalawoData?.user_id) {
+      await supabase.rpc('create_notification', {
+        p_user_id: babalawoData.user_id,
+        p_type: 'instant_session_request',
+        p_title: 'New Instant Session',
+        p_message: `${userProfile?.full_name || 'A user'} has started an instant consultation`,
+        p_data: { session_id: sessionData.id },
+        p_priority: 'high'
+      });
 
-  } catch (error) {
+      console.log("🔔 Notification sent to babalawo for instant session");
+    }
+
+    onSuccess(String(sessionData.id));
+
+  } catch (error: any) {
     console.error("❌ Error creating session:", error);
-    onError("Payment successful but booking processing failed. Please contact support.");
+
+    // Rollback wallet transaction if applicable
+    if (walletTransactionId) {
+      console.log("🔄 Rolling back wallet transaction due to error");
+      await rollbackWalletTransaction(walletTransactionId);
+      onError("Booking failed and payment has been refunded. Please try again.");
+    } else {
+      onError("Payment successful but booking processing failed. Please contact support.");
+    }
   }
 };

@@ -5,15 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
-import { 
-  getPaymentSettings, 
-  loadFlutterwaveScript, 
-  loadPaystackScript, 
+import {
+  getPaymentSettings,
+  loadFlutterwaveScript,
+  loadPaystackScript,
   generatePaymentRef,
   validateGatewaySettings,
-  PaymentGateway 
+  PaymentGateway
 } from "@/utils/paymentGatewayUtils";
 import { addMoneyToWallet } from "@/utils/walletUtils";
+import { getSuggestedAmounts } from "@/utils/priceUtils";
+import { generateIdempotencyKey } from "@/utils/webhookVerification";
 
 interface AddMoneyToWalletModalProps {
   open: boolean;
@@ -72,15 +74,23 @@ const AddMoneyToWalletModal: React.FC<AddMoneyToWalletModalProps> = ({
           },
           callback: async function(response: any) {
             if (response.status === "successful") {
-              const success = await addMoneyToWallet(
-                user?.id, 
-                numAmount, 
-                'flutterwave', 
+              // Generate idempotency key for this transaction
+              const idempotencyKey = generateIdempotencyKey(
+                user?.id || '',
                 paymentRef,
-                `Added ₦${numAmount} to wallet via Flutterwave`
+                Date.now()
               );
-              
-              if (success) {
+
+              const result = await addMoneyToWallet(
+                user?.id,
+                numAmount,
+                'flutterwave',
+                paymentRef,
+                `Added ₦${numAmount} to wallet via Flutterwave`,
+                idempotencyKey
+              );
+
+              if (result.success) {
                 toast({ title: "Money added successfully!" });
                 onSuccess();
                 onOpenChange(false);
@@ -112,15 +122,23 @@ const AddMoneyToWalletModal: React.FC<AddMoneyToWalletModalProps> = ({
           ref: paymentRef,
           callback: async function(response: any) {
             if (response.status === "success") {
-              const success = await addMoneyToWallet(
-                user?.id, 
-                numAmount, 
-                'paystack', 
+              // Generate idempotency key for this transaction
+              const idempotencyKey = generateIdempotencyKey(
+                user?.id || '',
                 paymentRef,
-                `Added ₦${numAmount} to wallet via Paystack`
+                Date.now()
               );
-              
-              if (success) {
+
+              const result = await addMoneyToWallet(
+                user?.id,
+                numAmount,
+                'paystack',
+                paymentRef,
+                `Added ₦${numAmount} to wallet via Paystack`,
+                idempotencyKey
+              );
+
+              if (result.success) {
                 toast({ title: "Money added successfully!" });
                 onSuccess();
                 onOpenChange(false);
@@ -149,6 +167,8 @@ const AddMoneyToWalletModal: React.FC<AddMoneyToWalletModalProps> = ({
     }
   };
 
+  const suggestedAmounts = getSuggestedAmounts(0); // Can pass current balance if needed
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -157,7 +177,24 @@ const AddMoneyToWalletModal: React.FC<AddMoneyToWalletModalProps> = ({
         </DialogHeader>
         <form onSubmit={handleAddMoney} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Amount (₦)</label>
+            <label className="block text-sm font-medium mb-2">Quick Select</label>
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              {suggestedAmounts.map((suggested) => (
+                <Button
+                  key={suggested}
+                  type="button"
+                  variant={amount === suggested.toString() ? "default" : "outline"}
+                  onClick={() => setAmount(suggested.toString())}
+                  className="h-12 text-sm"
+                >
+                  ₦{suggested.toLocaleString()}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Custom Amount (₦)</label>
             <Input
               type="number"
               value={amount}
@@ -167,6 +204,9 @@ const AddMoneyToWalletModal: React.FC<AddMoneyToWalletModalProps> = ({
               step="10"
               required
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Minimum: ₦100 | Maximum: ₦1,000,000
+            </p>
           </div>
 
           <div>

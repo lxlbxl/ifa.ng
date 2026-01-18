@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '@/components/dashboard/user/Sidebar';
 import MobileBottomNav from '@/components/dashboard/user/MobileBottomNav';
 import DashboardHeader from '@/components/dashboard/user/DashboardHeader';
@@ -75,9 +76,21 @@ const UserDashboard = () => {
       <div className="flex-1 flex flex-col min-w-0">
         <DashboardHeader activeSection={activeSection} onSectionChange={setActiveSection} />
         <main className="flex-grow p-3 sm:p-6 lg:p-8 xl:p-10 pb-20 lg:pb-8 space-y-4 sm:space-y-6 lg:space-y-8 overflow-y-auto">
-          <div className="w-full max-w-none">
-            {SECTION_MAP[activeSection]}
-          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeSection}
+              className="w-full max-w-none"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{
+                duration: 0.3,
+                ease: [0.25, 0.1, 0.25, 1]
+              }}
+            >
+              {SECTION_MAP[activeSection]}
+            </motion.div>
+          </AnimatePresence>
         </main>
         {/* Mobile Bottom Navigation */}
         <MobileBottomNav activeSection={activeSection} onSectionChange={setActiveSection} />

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Home, Calendar, Search, Heart, User, Wallet } from 'lucide-react';
+import { Home, Calendar, Search, Heart, User } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 interface MobileBottomNavProps {
@@ -24,47 +25,70 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ activeSection, onSect
           const isActive = activeSection === item.id;
 
           return (
-            <button
+            <motion.button
               key={item.id}
               onClick={() => onSectionChange(item.id)}
-              className={cn(
-                "flex flex-col items-center justify-center flex-1 h-full transition-all duration-200",
-                "active:scale-95"
-              )}
+              className="flex flex-col items-center justify-center flex-1 h-full relative"
+              whileTap={{ scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
-              <div
-                className={cn(
-                  "flex flex-col items-center justify-center transition-all duration-200",
-                  isActive && "transform -translate-y-1"
-                )}
+              <motion.div
+                className="flex flex-col items-center justify-center"
+                animate={{
+                  y: isActive ? -4 : 0,
+                }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
               >
-                <div
+                <motion.div
                   className={cn(
-                    "flex items-center justify-center w-10 h-10 rounded-2xl transition-all duration-200",
-                    isActive
-                      ? "bg-gradient-to-br from-orange-500 to-pink-500 shadow-lg"
-                      : "bg-transparent"
+                    "flex items-center justify-center w-10 h-10 rounded-2xl",
+                    isActive && "bg-gradient-to-br from-orange-500 to-pink-500 shadow-lg"
                   )}
+                  animate={{
+                    scale: isActive ? 1 : 0.95,
+                  }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 >
-                  <Icon
-                    className={cn(
-                      "transition-all duration-200",
-                      isActive ? "text-white w-5 h-5" : "text-gray-500 w-6 h-6"
-                    )}
-                  />
-                </div>
-                <span
+                  <motion.div
+                    animate={{
+                      scale: isActive ? 1 : 1.15,
+                    }}
+                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  >
+                    <Icon
+                      className={cn(
+                        "transition-colors duration-200",
+                        isActive ? "text-white w-5 h-5" : "text-gray-500 w-5 h-5"
+                      )}
+                    />
+                  </motion.div>
+                </motion.div>
+                <motion.span
                   className={cn(
-                    "text-xs mt-1 font-medium transition-all duration-200",
+                    "text-xs mt-1 font-medium",
                     isActive
                       ? "text-orange-600 font-semibold"
                       : "text-gray-500"
                   )}
+                  animate={{
+                    opacity: isActive ? 1 : 0.7,
+                  }}
+                  transition={{ duration: 0.2 }}
                 >
                   {item.label}
-                </span>
-              </div>
-            </button>
+                </motion.span>
+              </motion.div>
+
+              {/* Active indicator ripple effect */}
+              {isActive && (
+                <motion.div
+                  className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-12 h-1 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full"
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: 48 }}
+                  transition={{ duration: 0.3, type: "spring" }}
+                />
+              )}
+            </motion.button>
           );
         })}
       </div>

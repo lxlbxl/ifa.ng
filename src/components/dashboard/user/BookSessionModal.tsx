@@ -9,8 +9,11 @@ import { fetchBabalawoAvailability, AvailabilitySlot } from "@/utils/availabilit
 import { handlePaymentAndBooking, PaymentMethod } from "@/utils/multiGatewayPaymentHandler";
 import { getUserWallet } from "@/utils/walletUtils";
 import { parseBabalawoPrice, formatPrice } from "@/utils/priceUtils";
+import { acquireSlotLock, releaseSlotLock, completeSlotLock } from "@/utils/slotLockUtils";
+import { format } from "date-fns";
 import DateTimeSelector from "./DateTimeSelector";
 import PaymentMethodSelector from "./PaymentMethodSelector";
+import FeeDisclosure from "./FeeDisclosure";
 
 interface BookSessionModalProps {
   open: boolean;
@@ -27,6 +30,8 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
   const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
+  const [slotLockId, setSlotLockId] = useState<string | null>(null);
+  const [lockExpiresAt, setLockExpiresAt] = useState<string | null>(null);
 
   // Fetch babalawo availability and user wallet
   useEffect(() => {
@@ -39,6 +44,53 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
       });
     }
   }, [open, babalawo?.id, user?.id]);
+
+  // Acquire slot lock when date and time are selected
+  useEffect(() => {
+    async function handleSlotLock() {
+      // Release previous lock if exists
+      if (slotLockId && user?.id) {
+        await releaseSlotLock(slotLockId, user.id);
+        setSlotLockId(null);
+        setLockExpiresAt(null);
+      }
+
+      // Acquire new lock if date and time are selected
+      if (date && selectedTime && babalawo?.id && user?.id) {
+        const sessionDate = format(date, 'yyyy-MM-dd');
+        const lockResult = await acquireSlotLock(
+          babalawo.id,
+          sessionDate,
+          selectedTime,
+          user.id
+        );
+
+        if (lockResult.success && lockResult.lockId) {
+          setSlotLockId(lockResult.lockId);
+          setLockExpiresAt(lockResult.expiresAt || null);
+          console.log('✅ Slot locked successfully until', lockResult.expiresAt);
+        } else if (lockResult.lockedByOther) {
+          toast({
+            title: "Slot Unavailable",
+            description: "This time slot is currently being booked by another user. Please select a different time.",
+            variant: "destructive"
+          });
+          setSelectedTime(""); // Clear the selection
+        }
+      }
+    }
+
+    handleSlotLock();
+  }, [date, selectedTime, babalawo?.id, user?.id]);
+
+  // Release lock when modal closes
+  useEffect(() => {
+    return () => {
+      if (slotLockId && user?.id) {
+        releaseSlotLock(slotLockId, user.id);
+      }
+    };
+  }, [slotLockId, user?.id, open]);
 
   if (!babalawo) return null;
 
@@ -74,7 +126,13 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
         paymentMethod,
         walletBalance
       },
-      (sessionId) => {
+      async (sessionId) => {
+        // Complete the slot lock
+        if (slotLockId && user?.id) {
+          await completeSlotLock(slotLockId, user.id);
+          setSlotLockId(null);
+        }
+
         setIsLoading(false);
         onOpenChange(false);
         toast({
@@ -87,7 +145,13 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
           navigate('/dashboard/user');
         }, 1500);
       },
-      (errorMessage) => {
+      async (errorMessage) => {
+        // Release the slot lock on error so it can be rebooked
+        if (slotLockId && user?.id) {
+          await releaseSlotLock(slotLockId, user.id);
+          setSlotLockId(null);
+        }
+
         toast({
           title: "Payment Error",
           description: errorMessage,
@@ -126,13 +190,32 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
             availability={availability}
           />
 
+          {slotLockId && lockExpiresAt && (
+            <div className="bg-green-50 border border-green-200 rounded-md p-3">
+              <div className="flex items-center gap-2 text-sm text-green-800">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <span className="font-medium">Slot Reserved</span>
+              </div>
+              <p className="text-xs text-green-700 mt-1">
+                This time slot is temporarily reserved for you. Complete payment within 5 minutes to confirm.
+              </p>
+            </div>
+          )}
+
           <PaymentMethodSelector
             selectedMethod={paymentMethod}
             onMethodChange={setPaymentMethod}
             walletBalance={walletBalance}
             amount={amount}
           />
-          
+
+          <FeeDisclosure
+            amount={amount}
+            paymentMethod={paymentMethod}
+          />
+
           <DialogFooter className="flex flex-col sm:flex-row gap-2">
             <Button type="submit" disabled={isLoading || !date || !selectedTime} className="w-full sm:w-auto">
               {isLoading ? "Processing..." : "Confirm & Pay"}

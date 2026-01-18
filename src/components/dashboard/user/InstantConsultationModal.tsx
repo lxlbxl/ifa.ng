@@ -7,6 +7,7 @@ import { handlePaymentAndBooking, PaymentMethod } from "@/utils/multiGatewayPaym
 import { getUserWallet } from "@/utils/walletUtils";
 import { parseBabalawoPrice, formatPrice } from "@/utils/priceUtils";
 import PaymentMethodSelector from "./PaymentMethodSelector";
+import FeeDisclosure from "./FeeDisclosure";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 
@@ -129,7 +130,12 @@ const InstantConsultationModal: React.FC<InstantConsultationModalProps> = ({
             walletBalance={walletBalance}
             amount={amount}
           />
-          
+
+          <FeeDisclosure
+            amount={amount}
+            paymentMethod={paymentMethod}
+          />
+
           <DialogFooter className="flex flex-col sm:flex-row gap-2">
             <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
               {isLoading ? "Processing..." : "Pay & Start Consultation"}

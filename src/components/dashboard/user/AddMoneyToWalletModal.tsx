@@ -16,6 +16,7 @@ import {
 import { addMoneyToWallet } from "@/utils/walletUtils";
 import { getSuggestedAmounts } from "@/utils/priceUtils";
 import { generateIdempotencyKey } from "@/utils/webhookVerification";
+import FeeDisclosure from "./FeeDisclosure";
 
 interface AddMoneyToWalletModalProps {
   open: boolean;
@@ -232,7 +233,12 @@ const AddMoneyToWalletModal: React.FC<AddMoneyToWalletModalProps> = ({
               </label>
             </div>
           </div>
-          
+
+          <FeeDisclosure
+            amount={parseFloat(amount) || 0}
+            paymentMethod={selectedGateway}
+          />
+
           <DialogFooter>
             <Button type="submit" disabled={isLoading || !amount}>
               {isLoading ? "Processing..." : "Add Money"}

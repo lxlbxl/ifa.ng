@@ -124,7 +124,7 @@ const HeroSection = () => {
                 <span className="text-sm font-bold text-gray-900">5.0 Average Rating</span>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Right Column - Testimonial Carousel */}
           <div className="relative animate-fade-in" style={{animationDelay: '0.3s'}}>

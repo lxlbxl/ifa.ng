@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
-import { Star, Shield, Video } from "lucide-react";
+import { Star, Shield, Video, ArrowRight, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 const testimonials = [
   {
@@ -57,33 +58,55 @@ const HeroSection = () => {
       <div className="container mx-auto px-4 py-20 relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Left Column - Hero Content */}
-          <div className="text-center lg:text-left animate-fade-in">
+          <motion.div
+            className="text-center lg:text-left"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium text-gray-900 mb-6 border-2 border-gray-900 shadow-lg"
+            >
+              <span className="flex w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+              50+ Verified Babalawos Online Now
+            </motion.div>
+
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-              Seek Guidance from{" "}
-              <span className="text-gray-900 bg-yellow-400 px-2 py-1 rounded-lg shadow-lg">
-                Verified Babalawos
+              Connect with Authentic{" "}
+              <span className="text-gray-900 bg-yellow-400 px-2 py-1 rounded-lg shadow-lg inline-block transform hover:scale-105 transition-transform">
+                Spiritual Guides
               </span>
+              {" "}Anytime, Anywhere
             </h1>
-            
+
             <p className="text-xl md:text-2xl text-gray-900 font-semibold mb-8 max-w-2xl bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-lg">
-              Connect with authentic spiritual guides for life-changing consultations through secure audio and video sessions. Your path to wisdom starts here.
+              Experience life-changing consultations with verified Babalawos through secure HD video sessions. Your journey to clarity begins here.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
-              <Button
-                size="lg"
-                className="bg-gray-900 text-white hover:bg-gray-800 font-semibold px-8 py-4 text-lg shadow-xl border-2 border-gray-900"
-                onClick={() => navigate('/auth?tab=signup')}
-              >
-                Book Consultation
-              </Button>
-              <Button
-                size="lg"
-                className="bg-white text-gray-900 hover:bg-gray-100 font-semibold px-8 py-4 text-lg shadow-xl border-2 border-gray-900 transition-all duration-300"
-                onClick={() => navigate('/dashboard?view=babalawos')}
-              >
-                Browse Babalawos
-              </Button>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  size="lg"
+                  className="bg-gray-900 text-white hover:bg-gray-800 font-semibold px-8 py-4 text-lg shadow-xl border-2 border-gray-900 inline-flex items-center gap-2"
+                  onClick={() => navigate('/auth?tab=signup')}
+                >
+                  Get Started Free
+                  <ArrowRight className="w-5 h-5" />
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  size="lg"
+                  className="bg-white text-gray-900 hover:bg-gray-100 font-semibold px-8 py-4 text-lg shadow-xl border-2 border-gray-900 transition-all duration-300 inline-flex items-center gap-2"
+                  onClick={() => navigate('/search')}
+                >
+                  <Play className="w-5 h-5" />
+                  Watch Demo
+                </Button>
+              </motion.div>
             </div>
 
             {/* Trust Indicators */}

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '@/components/dashboard/user/Sidebar';
 import DashboardHeader from '@/components/dashboard/user/DashboardHeader';
+import MobileBottomNav from '@/components/dashboard/user/MobileBottomNav';
 import SummaryCards from '@/components/dashboard/user/SummaryCards';
 import UpcomingSessions from '@/components/dashboard/user/UpcomingSessions';
 import MySessions from '@/components/dashboard/user/MySessions';
@@ -13,7 +15,8 @@ import WalletWidget from '@/components/dashboard/user/WalletWidget';
 import SpiritualJourney from '@/components/dashboard/user/SpiritualJourney';
 import Loyalty from '@/components/dashboard/user/Loyalty';
 import Support from '@/components/dashboard/user/Support';
-import { MobileBottomNav } from '@/components/shared/MobileBottomNav';
+import MobileBottomNav from '@/components/dashboard/user/MobileBottomNav';
+import Notifications from '@/components/dashboard/user/Notifications';
 
 // Updated section content for card-based, modern layout
 const DashboardContent = () => (
@@ -70,6 +73,7 @@ const SECTION_MAP: { [key: string]: React.ReactNode } = {
   'spiritual-journey': <SpiritualJourney />,
   'find-babalawo': <FindBabalawo />,
   'transaction-history': <TransactionHistory />,
+  'notifications': <Notifications />,
   'loyalty': <Loyalty />,
   'settings': <Settings />,
   'support': <Support />,
@@ -77,6 +81,19 @@ const SECTION_MAP: { [key: string]: React.ReactNode } = {
 
 const UserDashboard = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
+
+  // Page transition variants
+  const pageVariants = {
+    initial: { opacity: 0, x: -20 },
+    animate: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: 20 }
+  };
+
+  const pageTransition = {
+    type: "tween",
+    ease: "anticipate",
+    duration: 0.3
+  };
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-orange-50 via-pink-50/30 to-purple-50/20 font-poppins">
@@ -86,15 +103,25 @@ const UserDashboard = () => {
       </div>
       <div className="flex-1 flex flex-col min-w-0">
         <DashboardHeader activeSection={activeSection} onSectionChange={setActiveSection} />
-        <main className="flex-grow p-3 sm:p-6 lg:p-8 xl:p-10 space-y-4 sm:space-y-6 lg:space-y-8 overflow-y-auto pb-20 md:pb-6">
+        <main className="flex-grow p-3 sm:p-6 lg:p-8 xl:p-10 space-y-4 sm:space-y-6 lg:space-y-8 overflow-y-auto pb-20 lg:pb-8">
           <div className="w-full max-w-none">
-            {SECTION_MAP[activeSection]}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeSection}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageVariants}
+                transition={pageTransition}
+              >
+                {SECTION_MAP[activeSection]}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </main>
+        {/* Mobile Bottom Navigation */}
+        <MobileBottomNav activeSection={activeSection} onSectionChange={setActiveSection} />
       </div>
-
-      {/* Mobile Bottom Navigation - only visible on mobile for logged in users */}
-      <MobileBottomNav userType="user" />
     </div>
   );
 };

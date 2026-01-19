@@ -92,6 +92,35 @@ const AddMoneyToWalletModal: React.FC<AddMoneyToWalletModalProps> = ({
               );
 
               if (result.success) {
+                // Send wallet top-up confirmations
+                try {
+                  const newBalance = result.newBalance || 0;
+
+                  // Send email confirmation
+                  import('@/services/emailService').then(({ sendWalletTopUpConfirmation }) => {
+                    sendWalletTopUpConfirmation({
+                      to: user?.email || '',
+                      userName: userProfile?.full_name || user?.email || '',
+                      amount: numAmount,
+                      newBalance
+                    });
+                  }).catch(console.error);
+
+                  // Send SMS confirmation if user has phone number
+                  if (userProfile?.phone_number) {
+                    import('@/services/smsService').then(({ sendWalletTopUpSMS }) => {
+                      sendWalletTopUpSMS({
+                        to: userProfile.phone_number,
+                        userName: userProfile.full_name || 'User',
+                        amount: numAmount,
+                        newBalance
+                      });
+                    }).catch(console.error);
+                  }
+                } catch (error) {
+                  console.error('Error sending wallet top-up confirmations:', error);
+                }
+
                 toast({ title: "Money added successfully!" });
                 onSuccess();
                 onOpenChange(false);
@@ -140,6 +169,35 @@ const AddMoneyToWalletModal: React.FC<AddMoneyToWalletModalProps> = ({
               );
 
               if (result.success) {
+                // Send wallet top-up confirmations
+                try {
+                  const newBalance = result.newBalance || 0;
+
+                  // Send email confirmation
+                  import('@/services/emailService').then(({ sendWalletTopUpConfirmation }) => {
+                    sendWalletTopUpConfirmation({
+                      to: user?.email || '',
+                      userName: userProfile?.full_name || user?.email || '',
+                      amount: numAmount,
+                      newBalance
+                    });
+                  }).catch(console.error);
+
+                  // Send SMS confirmation if user has phone number
+                  if (userProfile?.phone_number) {
+                    import('@/services/smsService').then(({ sendWalletTopUpSMS }) => {
+                      sendWalletTopUpSMS({
+                        to: userProfile.phone_number,
+                        userName: userProfile.full_name || 'User',
+                        amount: numAmount,
+                        newBalance
+                      });
+                    }).catch(console.error);
+                  }
+                } catch (error) {
+                  console.error('Error sending wallet top-up confirmations:', error);
+                }
+
                 toast({ title: "Money added successfully!" });
                 onSuccess();
                 onOpenChange(false);

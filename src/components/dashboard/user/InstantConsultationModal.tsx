@@ -53,6 +53,55 @@ const InstantConsultationModal: React.FC<InstantConsultationModalProps> = ({
 
     setIsLoading(true);
 
+    // Phase 2: Real-time status check before payment
+    try {
+      const { data: currentStatus, error: statusError } = await supabase
+        .from('babalawos')
+        .select('is_active, current_status')
+        .eq('id', babalawo.id)
+        .single();
+
+      if (statusError) throw statusError;
+
+      if (!currentStatus?.is_active || currentStatus?.current_status === 'busy') {
+        toast({
+          title: "Babalawo Unavailable",
+          description: "This babalawo is no longer available for instant consultation. Please try again later.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Check for concurrent sessions
+      const { data: activeSessions, error: sessionsError } = await supabase
+        .from('sessions')
+        .select('id')
+        .eq('babalawo_id', babalawo.id)
+        .eq('status', 'in_progress');
+
+      if (sessionsError) throw sessionsError;
+
+      if (activeSessions && activeSessions.length >= 1) {
+        toast({
+          title: "Babalawo Busy",
+          description: "This babalawo is currently in another session. Please wait a moment and try again.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking babalawo status:', error);
+      toast({
+        title: "Error",
+        description: "Could not verify babalawo availability. Please try again.",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+      return;
+    }
+
     // Use centralized price parsing utility
     const amount = parseBabalawoPrice(babalawo);
 
@@ -73,6 +122,53 @@ const InstantConsultationModal: React.FC<InstantConsultationModalProps> = ({
         isInstant: true
       },
       async (sessionId) => {
+        // Phase 2: Send notification to babalawo about instant session
+        try {
+          // Get babalawo user_id
+          const { data: babalawoData } = await supabase
+            .from('babalawos')
+            .select('user_id, full_name, phone_number')
+            .eq('id', babalawo.id)
+            .single();
+
+          if (babalawoData?.user_id) {
+            // Create notification
+            await supabase
+              .from('notifications')
+              .insert({
+                user_id: babalawoData.user_id,
+                type: 'instant_session_request',
+                title: 'New Instant Session',
+                message: `${userProfile?.full_name || user.email} has started an instant consultation and is waiting for you!`,
+                data: { session_id: sessionId },
+                priority: 'urgent'
+              });
+
+            // Send email notification (imported dynamically to avoid circular deps)
+            import('@/services/emailService').then(({ sendInstantSessionAlert }) => {
+              sendInstantSessionAlert({
+                to: user.email || '',
+                babalawoName: babalawoData.full_name,
+                userName: userProfile?.full_name || user.email || 'A user'
+              });
+            }).catch(console.error);
+
+            // Send SMS notification
+            if (babalawoData.phone_number) {
+              import('@/services/smsService').then(({ sendInstantSessionAlertSMS }) => {
+                sendInstantSessionAlertSMS({
+                  to: babalawoData.phone_number,
+                  babalawoName: babalawoData.full_name,
+                  userName: userProfile?.full_name || 'A user'
+                });
+              }).catch(console.error);
+            }
+          }
+        } catch (error) {
+          console.error('Error sending babalawo notification:', error);
+          // Don't fail the whole flow if notification fails
+        }
+
         setIsLoading(false);
         onOpenChange(false);
 

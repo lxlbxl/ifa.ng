@@ -133,6 +133,40 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
           setSlotLockId(null);
         }
 
+        // Send booking confirmation via email and SMS
+        try {
+          const sessionDate = date ? format(date, 'MMM dd, yyyy') : '';
+
+          // Send email confirmation
+          import('@/services/emailService').then(({ sendBookingConfirmation }) => {
+            sendBookingConfirmation({
+              to: user.email || '',
+              userName: userProfile?.full_name || user.email || '',
+              babalawoName: babalawo.full_name || babalawo.name,
+              sessionDate,
+              sessionTime: selectedTime,
+              amount
+            });
+          }).catch(console.error);
+
+          // Send SMS confirmation if user has phone number
+          if (userProfile?.phone_number) {
+            import('@/services/smsService').then(({ sendBookingConfirmationSMS }) => {
+              sendBookingConfirmationSMS({
+                to: userProfile.phone_number,
+                userName: userProfile.full_name || 'User',
+                babalawoName: babalawo.full_name || babalawo.name,
+                sessionDate,
+                sessionTime: selectedTime,
+                amount
+              });
+            }).catch(console.error);
+          }
+        } catch (error) {
+          console.error('Error sending booking confirmations:', error);
+          // Don't fail the flow if notifications fail
+        }
+
         setIsLoading(false);
         onOpenChange(false);
         toast({

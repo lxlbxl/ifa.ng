@@ -9,7 +9,10 @@ import {
   LogOut,
   Star,
   Bell,
-  Clock
+  Clock,
+  CalendarClock,
+  Tag,
+  Wallet
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,8 +20,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const menu = [
   { icon: LayoutDashboard, label: "Dashboard", section: "dashboard" },
-  { icon: Calendar, label: "My Consultations", section: "consultations" },
-  { icon: DollarSign, label: "Earnings", section: "earnings" },
+  { icon: Calendar, label: "Sessions", section: "consultations" },
+  { icon: CalendarClock, label: "Availability", section: "availability" },
+  { icon: Tag, label: "Pricing", section: "pricing" },
+  { icon: Wallet, label: "Payments", section: "payments" },
+  { icon: DollarSign, label: "Earnings & Withdrawals", section: "earnings" },
   { icon: Star, label: "Reviews", section: "reviews" },
   { icon: Bell, label: "Notifications", section: "notifications" },
   { icon: Clock, label: "Reminders", section: "reminders" },

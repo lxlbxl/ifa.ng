@@ -14,6 +14,7 @@ import {
   Search,
   Award,
   Heart,
+  Clock,
 } from 'lucide-react';
 
 type UserType = 'user' | 'babalawo' | 'admin';
@@ -62,27 +63,27 @@ const BABALAWO_NAV_ITEMS: NavItem[] = [
   {
     icon: <Home className="w-5 h-5" />,
     label: 'Dashboard',
-    path: '/dashboard/babalawo',
+    path: '/dashboard',
   },
   {
     icon: <Calendar className="w-5 h-5" />,
     label: 'Sessions',
-    path: '/dashboard/babalawo?tab=consultations',
+    path: '/dashboard?tab=consultations',
   },
   {
     icon: <DollarSign className="w-5 h-5" />,
-    label: 'Earnings',
-    path: '/dashboard/babalawo?tab=earnings',
+    label: 'Payments',
+    path: '/dashboard?tab=payments',
   },
   {
-    icon: <Award className="w-5 h-5" />,
-    label: 'Reviews',
-    path: '/dashboard/babalawo?tab=reviews',
+    icon: <Clock className="w-5 h-5" />,
+    label: 'Hours',
+    path: '/dashboard?tab=availability',
   },
   {
     icon: <Settings className="w-5 h-5" />,
     label: 'Settings',
-    path: '/dashboard/babalawo?tab=settings',
+    path: '/dashboard?tab=settings',
   },
 ];
 

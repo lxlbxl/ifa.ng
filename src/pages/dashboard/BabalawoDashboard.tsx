@@ -9,7 +9,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
-import BabalawoConsultationsPanel from "@/components/dashboard/babalawo/BabalawoConsultationPanel";
+import BabalawoSessions from "@/components/dashboard/babalawo/BabalawoSessions";
+import BabalawoAvailabilityManager from "@/components/dashboard/babalawo/BabalawoAvailabilityManager";
+import BabalawoPricing from "@/components/dashboard/babalawo/BabalawoPricing";
+import BabalawoPayments from "@/components/dashboard/babalawo/BabalawoPayments";
+import NotificationSettings from "@/components/pwa/NotificationSettings";
+import { useSearchParams } from "react-router-dom";
 import BabalawoProfileSettings from "@/components/dashboard/babalawo/BabalawoProfileSettings";
 import BabalawoEarnings from "@/components/dashboard/babalawo/BabalawoEarnings";
 import BabalawoReviews from "@/components/dashboard/babalawo/BabalawoReviews";
@@ -120,13 +125,21 @@ const Reminders = () => {
 
 const SECTION_MAP: { [key: string]: React.ReactNode } = {
   dashboard: <BabalawoDashboardOverview />,
-  consultations: <BabalawoConsultationsPanel />,
+  consultations: <BabalawoSessions />,
+  availability: <BabalawoAvailabilityManager />,
+  pricing: <BabalawoPricing />,
+  payments: <BabalawoPayments />,
   earnings: <BabalawoEarnings />,
   reviews: <BabalawoReviews />,
   notifications: <Notifications />,
   reminders: <Reminders />,
   profile: <BabalawoProfileSettings />,
-  settings: <Settings />,
+  settings: (
+    <div className="space-y-6">
+      <NotificationSettings />
+      <Settings />
+    </div>
+  ),
   support: <Support />,
 };
 
@@ -187,7 +200,10 @@ const BabalawoDashboardHeader = ({ activeSection, onSectionChange }: { activeSec
 };
 
 const BabalawoDashboard = () => {
-  const [activeSection, setActiveSection] = useState<string>("dashboard");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab");
+  const activeSection = tab && tab in SECTION_MAP ? tab : "dashboard";
+  const setActiveSection = (section: string) => setSearchParams(section === "dashboard" ? {} : { tab: section });
   const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
   const [bankDetailsModalOpen, setBankDetailsModalOpen] = useState(false);
 

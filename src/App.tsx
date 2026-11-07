@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "./components/ProtectedRoute";
+import PwaPrompts from "./components/pwa/PwaPrompts";
 
 // Lazy-loaded components
 const Index = lazy(() => import("./pages/Index"));
@@ -32,6 +33,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <PwaPrompts />
         <BrowserRouter>
           <Suspense fallback={<LoadingFallback />}>
             <Routes>

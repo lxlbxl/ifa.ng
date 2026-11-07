@@ -12,10 +12,10 @@ import Settings from '@/components/dashboard/user/Settings';
 import TransactionHistory from '@/components/dashboard/user/TransactionHistory';
 import FeaturedBabalawos from '@/components/FeaturedBabalawos';
 import WalletWidget from '@/components/dashboard/user/WalletWidget';
-import SpiritualJourney from '@/components/dashboard/user/SpiritualJourney';
+import ClientConsultationRecords from '@/components/dashboard/user/ClientConsultationRecords';
 import Loyalty from '@/components/dashboard/user/Loyalty';
 import Support from '@/components/dashboard/user/Support';
-import MobileBottomNav from '@/components/dashboard/user/MobileBottomNav';
+import NotificationSettings from '@/components/pwa/NotificationSettings';
 import Notifications from '@/components/dashboard/user/Notifications';
 
 // Updated section content for card-based, modern layout
@@ -70,12 +70,12 @@ const SECTION_MAP: { [key: string]: React.ReactNode } = {
   'dashboard': <DashboardContent />,
   'my-sessions': <MySessions />,
   'session-history': <SessionHistory />,
-  'spiritual-journey': <SpiritualJourney />,
+  'spiritual-journey': <ClientConsultationRecords />,
   'find-babalawo': <FindBabalawo />,
   'transaction-history': <TransactionHistory />,
   'notifications': <Notifications />,
   'loyalty': <Loyalty />,
-  'settings': <Settings />,
+  'settings': <div className="space-y-6"><NotificationSettings /><Settings /></div>,
   'support': <Support />,
 };
 

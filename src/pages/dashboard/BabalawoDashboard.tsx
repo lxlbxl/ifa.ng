@@ -13,6 +13,7 @@ import BabalawoSessions from "@/components/dashboard/babalawo/BabalawoSessions";
 import BabalawoAvailabilityManager from "@/components/dashboard/babalawo/BabalawoAvailabilityManager";
 import BabalawoPricing from "@/components/dashboard/babalawo/BabalawoPricing";
 import BabalawoPayments from "@/components/dashboard/babalawo/BabalawoPayments";
+import NetworkStatusBar from "@/components/pwa/NetworkStatusBar";
 import InstallButton from "@/components/pwa/InstallButton";
 import NotificationSettings from "@/components/pwa/NotificationSettings";
 import { useSearchParams } from "react-router-dom";
@@ -149,7 +150,7 @@ const BabalawoDashboardHeader = ({ activeSection, onSectionChange }: { activeSec
   const userName = userProfile?.full_name || user?.email || "Babalawo";
   const userAvatar = userProfile?.avatar_url;
   return (
-    <header className="bg-white/95 backdrop-blur-md border-b border-gray-200 py-3 px-4 sm:px-6 lg:px-8 flex items-center justify-between sticky top-0 z-40 shadow-sm">
+    <header className="bg-white/95 backdrop-blur-md border-b border-gray-200 py-3 px-4 sm:px-6 lg:px-8 flex items-center justify-between shadow-sm">
       <div className="flex items-center lg:hidden">
         <Sheet>
           <SheetTrigger asChild>
@@ -224,10 +225,13 @@ const BabalawoDashboard = () => {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-violet-50 via-purple-50/30 to-indigo-50 flex flex-col font-poppins">
-      <BabalawoDashboardHeader
-        activeSection={activeSection}
-        onSectionChange={setActiveSection}
-      />
+      <div className="sticky top-0 z-40">
+        <NetworkStatusBar />
+        <BabalawoDashboardHeader
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+        />
+      </div>
 
       <div className="flex flex-1 min-h-0 w-full">
         <div className="hidden lg:block">

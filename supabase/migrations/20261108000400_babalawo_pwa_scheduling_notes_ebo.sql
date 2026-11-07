@@ -138,14 +138,14 @@ CREATE POLICY notes_babalawo_all ON public.consultation_notes FOR ALL TO authent
   USING (public.is_session_babalawo(session_id)) WITH CHECK (public.is_session_babalawo(session_id));
 CREATE POLICY notes_client_read ON public.consultation_notes FOR SELECT TO authenticated
   USING (status IN ('approved','shared') AND public.is_session_client(session_id));
-CREATE POLICY notes_admin_read ON public.consultation_notes FOR SELECT TO authenticated USING (public.is_admin());
+CREATE POLICY notes_admin_read ON public.consultation_notes FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
 
 -- Ebo: Babalawo manages their own; client reads theirs and may mark progress via RPC below
 CREATE POLICY ebo_babalawo_all ON public.ebo_prescriptions FOR ALL TO authenticated
   USING (babalawo_id = auth.uid() AND public.is_session_babalawo(session_id))
   WITH CHECK (babalawo_id = auth.uid() AND public.is_session_babalawo(session_id));
 CREATE POLICY ebo_client_read ON public.ebo_prescriptions FOR SELECT TO authenticated USING (client_id = auth.uid());
-CREATE POLICY ebo_admin_read ON public.ebo_prescriptions FOR SELECT TO authenticated USING (public.is_admin());
+CREATE POLICY ebo_admin_read ON public.ebo_prescriptions FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'));
 
 CREATE POLICY push_own ON public.push_subscriptions FOR ALL TO authenticated
   USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());

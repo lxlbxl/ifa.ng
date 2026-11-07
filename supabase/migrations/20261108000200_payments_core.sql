@@ -25,6 +25,26 @@ RETURNS numeric LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS
                    FROM public.admin_settings WHERE setting_key = p_key), p_default);
 $$;
 
+-- ------------------------------------------- babalawos: identity columns
+-- This migration identifies a babalawo by babalawos.user_id (= auth user id). The original repo schema had
+-- babalawos.id as the auth user id and no user_id column (production has id bigint + user_id), so make
+-- sure user_id exists and is filled whichever shape the table has.
+ALTER TABLE public.babalawos ADD COLUMN IF NOT EXISTS user_id uuid;
+DO $$
+BEGIN
+  IF (SELECT data_type FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name = 'babalawos' AND column_name = 'id') = 'uuid' THEN
+    UPDATE public.babalawos SET user_id = id WHERE user_id IS NULL;
+  END IF;
+END $$;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_babalawos_user_id ON public.babalawos(user_id);
+ALTER TABLE public.babalawos ADD COLUMN IF NOT EXISTS is_active boolean DEFAULT true;
+ALTER TABLE public.babalawos ADD COLUMN IF NOT EXISTS current_status text;
+ALTER TABLE public.babalawos ADD COLUMN IF NOT EXISTS hourly_rate numeric(10,2) DEFAULT 0;
+ALTER TABLE public.babalawos ADD COLUMN IF NOT EXISTS commission_platform_percent numeric DEFAULT 20;
+ALTER TABLE public.babalawos ADD COLUMN IF NOT EXISTS commission_babalawo_percent numeric DEFAULT 80;
+ALTER TABLE public.babalawos ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
+
 -- ----------------------------------------------------------- price columns
 ALTER TABLE public.babalawos ADD COLUMN IF NOT EXISTS session_price numeric(12,2);
 ALTER TABLE public.babalawos ADD COLUMN IF NOT EXISTS instant_price numeric(12,2);

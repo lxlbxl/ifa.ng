@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import InstallButton from '@/components/pwa/InstallButton';
 
 const Header = () => {
   const { user } = useAuth();
@@ -23,6 +24,7 @@ const Header = () => {
 
         {/* Desktop Menu */}
         <nav className="hidden md:flex items-center gap-6">
+          <InstallButton />
           <Link to="/search" className="text-sm font-medium text-gray-600 hover:text-primary">
             Find a Babalawo
           </Link>
@@ -38,7 +40,8 @@ const Header = () => {
         </nav>
 
         {/* Mobile Menu */}
-        <div className="md:hidden">
+        <div className="md:hidden flex items-center gap-1">
+          <InstallButton label="Install" />
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" aria-label="Open menu">
@@ -47,6 +50,7 @@ const Header = () => {
             </SheetTrigger>
             <SheetContent>
               <nav className="flex flex-col gap-4 mt-8">
+                <InstallButton variant="block" />
                 <Link to="/search" className="text-lg font-medium">
                   Find a Babalawo
                 </Link>

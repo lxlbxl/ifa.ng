@@ -13,6 +13,7 @@ import BabalawoSessions from "@/components/dashboard/babalawo/BabalawoSessions";
 import BabalawoAvailabilityManager from "@/components/dashboard/babalawo/BabalawoAvailabilityManager";
 import BabalawoPricing from "@/components/dashboard/babalawo/BabalawoPricing";
 import BabalawoPayments from "@/components/dashboard/babalawo/BabalawoPayments";
+import InstallButton from "@/components/pwa/InstallButton";
 import NotificationSettings from "@/components/pwa/NotificationSettings";
 import { useSearchParams } from "react-router-dom";
 import BabalawoProfileSettings from "@/components/dashboard/babalawo/BabalawoProfileSettings";
@@ -177,6 +178,7 @@ const BabalawoDashboardHeader = ({ activeSection, onSectionChange }: { activeSec
       </div>
 
       <div className="flex items-center gap-3">
+        <InstallButton label="Install app" />
         <Button
           variant="ghost"
           size="icon"

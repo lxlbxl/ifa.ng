@@ -49,3 +49,37 @@ export async function enablePush(userId: string): Promise<"enabled" | "denied" |
   if (error) throw error;
   return "enabled";
 }
+
+// ---- Install button support ----
+// beforeinstallprompt can fire before React mounts, so capture it at module load.
+type InstallState = { event: any | null; installed: boolean };
+const installState: InstallState = { event: null, installed: false };
+const installListeners = new Set<() => void>();
+const emitInstall = () => installListeners.forEach((l) => l());
+
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    installState.event = e;
+    emitInstall();
+  });
+  window.addEventListener("appinstalled", () => {
+    installState.installed = true;
+    installState.event = null;
+    emitInstall();
+  });
+}
+
+export const subscribeInstall = (l: () => void) => { installListeners.add(l); return () => { installListeners.delete(l); }; };
+export const getInstallSnapshot = () => installState;
+
+/** Triggers the browser's one-tap install. Returns "manual" when the browser needs manual steps (iOS, Firefox, etc). */
+export async function triggerInstall(): Promise<"accepted" | "dismissed" | "manual"> {
+  const ev = installState.event;
+  if (!ev) return "manual";
+  ev.prompt();
+  const { outcome } = await ev.userChoice;
+  installState.event = null; // a prompt event can only be used once
+  emitInstall();
+  return outcome === "accepted" ? "accepted" : "dismissed";
+}

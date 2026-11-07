@@ -1,4 +1,5 @@
 
+import InstallButton from "@/components/pwa/InstallButton";
 import React from 'react';
 import AuthenticatedHeader from '@/components/AuthenticatedHeader';
 import { useAuth } from '@/hooks/useAuth';
@@ -25,6 +26,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ activeSection, onSect
           <p className="text-gray-500">Here's your spiritual journey summary.</p>
         </div>
         <div className="flex items-center gap-4">
+          <InstallButton label="Install app" />
           {/* Hamburger menu for mobile */}
           <div className="md:hidden">
             <Sheet open={drawerOpen} onOpenChange={setDrawerOpen}>

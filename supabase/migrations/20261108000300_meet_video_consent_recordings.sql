@@ -1,7 +1,18 @@
 -- Google Meet as the default video provider, with two-sided consent, recordings,
 -- transcripts and a notification outbox. Agora stays as the fallback provider.
--- Depends on: public.is_admin() (existing / hardened by the roles migration).
--- All writes to recordings, transcripts and the outbox are service-role only.
+-- Depends on: public.is_admin(). Type-agnostic: sessions.id is uuid in the repo's
+-- original migrations but may be bigint in the live database, so the id column type
+-- is read from public.sessions at apply time and substituted for __SID__.
+DO $outer$
+DECLARE
+  sid_type text;
+  mig text;
+BEGIN
+  SELECT format_type(a.atttypid, a.atttypmod) INTO sid_type
+    FROM pg_attribute a
+   WHERE a.attrelid = 'public.sessions'::regclass AND a.attname = 'id' AND NOT a.attisdropped;
+  IF sid_type IS NULL THEN RAISE EXCEPTION 'public.sessions.id not found'; END IF;
+  mig := $body$
 
 ------------------------------------------------------------------------------
 -- 1. sessions: video provider + Meet fields
@@ -41,7 +52,7 @@ CREATE INDEX IF NOT EXISTS idx_sessions_recording_queue
   WHERE recording_status IN ('scheduled','processing');
 
 -- Participant helper (SECURITY DEFINER so it works inside other tables' RLS).
-CREATE OR REPLACE FUNCTION public.is_session_participant(p_session_id bigint)
+CREATE OR REPLACE FUNCTION public.is_session_participant(p_session_id __SID__)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.sessions s
@@ -51,7 +62,7 @@ $$;
 
 -- Absolute start of a session. Booking stores date + 'HH:MM' text; the client's
 -- timezone (user_timezone) is what the booking UI used, default Africa/Lagos.
-CREATE OR REPLACE FUNCTION public.session_start_at(p_session_id bigint)
+CREATE OR REPLACE FUNCTION public.session_start_at(p_session_id __SID__)
 RETURNS timestamptz LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT ((s.session_date::text || ' ' || s.start_time::text)::timestamp)
          AT TIME ZONE COALESCE(NULLIF(s.user_timezone, ''), 'Africa/Lagos')
@@ -63,7 +74,7 @@ $$;
 ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.session_consents (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  session_id bigint NOT NULL REFERENCES public.sessions(id) ON DELETE CASCADE,
+  session_id __SID__ NOT NULL REFERENCES public.sessions(id) ON DELETE CASCADE,
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   party text NOT NULL CHECK (party IN ('client','babalawo')),
   recording_consent boolean NOT NULL,
@@ -80,7 +91,7 @@ CREATE POLICY "consents readable by participants and admins" ON public.session_c
   FOR SELECT USING (public.is_session_participant(session_id) OR public.is_admin());
 -- No INSERT/UPDATE/DELETE policies: writes only via record_session_consent().
 
-CREATE OR REPLACE FUNCTION public.session_has_full_consent(p_session_id bigint)
+CREATE OR REPLACE FUNCTION public.session_has_full_consent(p_session_id __SID__)
 RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT COUNT(*) = 2 FROM public.session_consents c
    WHERE c.session_id = p_session_id AND c.withdrawn_at IS NULL
@@ -91,7 +102,7 @@ $$;
 -- change it until the session starts. Recording is only ever armed when BOTH
 -- parties said yes to recording and AI processing.
 CREATE OR REPLACE FUNCTION public.record_session_consent(
-  p_session_id bigint, p_recording boolean, p_ai boolean)
+  p_session_id __SID__, p_recording boolean, p_ai boolean)
 RETURNS text LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE
   s public.sessions%ROWTYPE;
@@ -136,8 +147,8 @@ BEGIN
   END IF;
   RETURN v_new_status;
 END $$;
-REVOKE ALL ON FUNCTION public.record_session_consent(bigint, boolean, boolean) FROM public, anon;
-GRANT EXECUTE ON FUNCTION public.record_session_consent(bigint, boolean, boolean) TO authenticated;
+REVOKE ALL ON FUNCTION public.record_session_consent(__SID__, boolean, boolean) FROM public, anon;
+GRANT EXECUTE ON FUNCTION public.record_session_consent(__SID__, boolean, boolean) TO authenticated;
 
 ------------------------------------------------------------------------------
 -- 3. Recordings + transcripts (service-role writes; participants read via RLS
@@ -145,7 +156,7 @@ GRANT EXECUTE ON FUNCTION public.record_session_consent(bigint, boolean, boolean
 ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.session_recordings (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  session_id bigint NOT NULL REFERENCES public.sessions(id) ON DELETE CASCADE,
+  session_id __SID__ NOT NULL REFERENCES public.sessions(id) ON DELETE CASCADE,
   source text NOT NULL DEFAULT 'meet' CHECK (source IN ('meet','upload')),
   conference_record text,
   recording_resource text,
@@ -160,7 +171,7 @@ CREATE TABLE IF NOT EXISTS public.session_recordings (
 );
 CREATE TABLE IF NOT EXISTS public.session_transcripts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  session_id bigint NOT NULL REFERENCES public.sessions(id) ON DELETE CASCADE,
+  session_id __SID__ NOT NULL REFERENCES public.sessions(id) ON DELETE CASCADE,
   recording_id uuid REFERENCES public.session_recordings(id) ON DELETE SET NULL,
   source text NOT NULL,         -- 'stt:openai', 'stt:http', 'meet_native'
   language text,                -- 'en' | 'yo' | 'mixed'
@@ -201,7 +212,7 @@ ON CONFLICT (id) DO UPDATE SET public = false;
 ------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.notification_outbox (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  session_id bigint NOT NULL REFERENCES public.sessions(id) ON DELETE CASCADE,
+  session_id __SID__ NOT NULL REFERENCES public.sessions(id) ON DELETE CASCADE,
   kind text NOT NULL CHECK (kind IN
     ('meet_link','reminder_24h','reminder_1h','rescheduled','completed','notes_ready','fallback_video')),
   dedupe_key text NOT NULL DEFAULT '',
@@ -270,3 +281,7 @@ INSERT INTO public.admin_settings (setting_key, setting_value, description) VALU
 ON CONFLICT (setting_key) DO UPDATE
   SET setting_value = EXCLUDED.setting_value
   WHERE public.admin_settings.setting_key IN ('video_provider');
+$body$;
+  EXECUTE replace(mig, '__SID__', sid_type);
+END
+$outer$;

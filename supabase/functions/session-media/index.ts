@@ -9,7 +9,7 @@ Deno.serve(handler(async (req) => {
   const db = serviceClient();
   const caller = await authenticate(req, db);
   const { session_id, kind } = await req.json().catch(() => ({}));
-  const s = await loadSessionFor(db, caller, Number(session_id), { allowAdmin: true });
+  const s = await loadSessionFor(db, caller, session_id, { allowAdmin: true });
   const isBabalawo = caller.kind === "service" || (caller.kind === "user" && caller.userId === s.babalawo_id);
   const isAdmin = caller.kind === "service" || (caller.kind === "user" && caller.isAdmin);
 

@@ -38,7 +38,7 @@ export async function authenticate(req: Request, db: SupabaseClient): Promise<Ca
 }
 
 export interface SessionRow {
-  id: number;
+  id: number | string;
   user_id: string;
   babalawo_id: string;
   session_date: string;
@@ -57,11 +57,13 @@ export interface SessionRow {
 
 /** Loads a session and verifies the caller may act on it. */
 export async function loadSessionFor(
-  db: SupabaseClient, caller: Caller, sessionId: number,
+  db: SupabaseClient, caller: Caller, sessionId: unknown,
   opts: { allowAdmin?: boolean } = {},
 ): Promise<SessionRow> {
-  if (!Number.isInteger(sessionId) || sessionId <= 0) throw new HttpError(400, "Invalid session_id");
-  const { data: s, error } = await db.from("sessions").select("*").eq("id", sessionId).maybeSingle();
+  // sessions.id may be a uuid or an integer depending on the deployment; accept either, nothing else.
+  const id = typeof sessionId === "number" ? String(sessionId) : sessionId;
+  if (typeof id !== "string" || !/^(\d{1,18}|[0-9a-fA-F-]{36})$/.test(id)) throw new HttpError(400, "Invalid session_id");
+  const { data: s, error } = await db.from("sessions").select("*").eq("id", id).maybeSingle();
   if (error) throw new HttpError(500, "Could not load session");
   if (!s) throw new HttpError(404, "Session not found");
   if (caller.kind === "user") {

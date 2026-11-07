@@ -10,7 +10,7 @@ Deno.serve(handler(async (req) => {
   const caller = await authenticate(req, db);
   if (caller.kind !== "user") throw new HttpError(403, "User token required");
   const body = await req.json().catch(() => ({}));
-  const s = await loadSessionFor(db, caller, Number(body.session_id ?? body.sessionId));
+  const s = await loadSessionFor(db, caller, body.session_id ?? body.sessionId);
 
   if (s.payment_status !== "paid") throw new HttpError(402, "Session is not paid");
   if (["cancelled", "completed"].includes(s.status)) throw new HttpError(409, `Session is ${s.status}`);

@@ -14,7 +14,7 @@ export interface AgoraTokenResponse {
  */
 export const generateAgoraToken = async (sessionId: string | number): Promise<AgoraTokenResponse> => {
   const { data, error } = await supabase.functions.invoke("generate-agora-token", {
-    body: { session_id: Number(sessionId) },
+    body: { session_id: String(sessionId) },
   });
   if (error) {
     // supabase-js hides the JSON body on non-2xx; surface it when present.

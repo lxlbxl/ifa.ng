@@ -83,3 +83,25 @@ export async function triggerInstall(): Promise<"accepted" | "dismissed" | "manu
   emitInstall();
   return outcome === "accepted" ? "accepted" : "dismissed";
 }
+
+// ---- Browser compatibility ----
+export type BrowserAdvice = { compatible: true } | { compatible: false; reason: string; recommend: string; inApp: boolean };
+
+/** Which browsers can truly install and run the PWA (installable app, service worker, push). */
+export function getBrowserAdvice(): BrowserAdvice {
+  const ua = navigator.userAgent;
+  const ios = /iphone|ipad|ipod/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+  const android = /android/i.test(ua);
+  const inApp = /FBAN|FBAV|FB_IAB|Instagram|Line\/|MicroMessenger|TikTok|musical_ly|Snapchat|Twitter|LinkedInApp|; wv\)|GSA\//i.test(ua);
+  const firefox = /firefox|fxios/i.test(ua);
+  const chromiumFamily = /chrome|crios|edg|opr|samsungbrowser|brave/i.test(ua) && !firefox;
+  const safari = /safari/i.test(ua) && !/chrome|crios|fxios|edg|opr|android/i.test(ua);
+  const best = ios ? "Safari" : android ? "Chrome" : "Chrome or Edge";
+
+  if (inApp) return { compatible: false, inApp: true, recommend: best, reason: "You're in an app's built-in browser, which can't install IFA.ng." };
+  if (!("serviceWorker" in navigator) || !window.isSecureContext) return { compatible: false, inApp: false, recommend: best, reason: "This browser can't run the IFA.ng app features." };
+  if (ios) return safari ? { compatible: true } : { compatible: false, inApp: false, recommend: "Safari", reason: "On iPhone and iPad the app installs from Safari." };
+  if (firefox) return { compatible: false, inApp: false, recommend: best, reason: "Firefox can't install IFA.ng as an app on most devices." };
+  if (chromiumFamily || safari) return { compatible: true };
+  return { compatible: false, inApp: false, recommend: best, reason: "This browser may not support installing the app." };
+}

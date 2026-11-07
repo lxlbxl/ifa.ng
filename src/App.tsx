@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PwaPrompts from "./components/pwa/PwaPrompts";
+import BrowserAdviceBanner from "./components/pwa/BrowserAdviceBanner";
 
 // Lazy-loaded components
 const Index = lazy(() => import("./pages/Index"));
@@ -34,6 +35,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <PwaPrompts />
+        <BrowserAdviceBanner />
         <BrowserRouter>
           <Suspense fallback={<LoadingFallback />}>
             <Routes>

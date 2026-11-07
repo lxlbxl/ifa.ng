@@ -31,7 +31,7 @@ const PwaPrompts: React.FC = () => {
         </div>
       )}
       {updateReg && (
-        <div className="fixed bottom-20 md:bottom-4 inset-x-4 md:left-auto md:right-4 md:w-80 z-[60] bg-white border shadow-lg rounded-xl p-3 flex items-center gap-3">
+        <div className="fixed bottom-28 md:bottom-12 inset-x-4 md:left-auto md:right-4 md:w-80 z-[60] bg-white border shadow-lg rounded-xl p-3 flex items-center gap-3">
           <RefreshCw className="h-5 w-5 text-primary shrink-0" />
           <span className="text-sm flex-1">A new version is ready.</span>
           <Button size="sm" onClick={() => { updateReg.waiting?.postMessage("SKIP_WAITING"); window.location.reload(); }}>Update</Button>

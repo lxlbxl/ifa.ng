@@ -1,159 +1,87 @@
-import React, { useState } from 'react';
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import BookSessionModal from "./dashboard/user/BookSessionModal";
-import BabalawoGrid from "./babalawo/BabalawoGrid";
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Marquee, PortraitCard, SectionHeading } from '@/components/brand';
 import { useFeaturedBabalawos } from '@/hooks/useBabalawoSearch';
 import { BabalawoProfile } from '@/types/babalawo';
-import { Button } from "@/components/ui/button";
-import { Loader2, AlertCircle, RefreshCw, Users } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { blockColors } from '@/design/tokens';
 
-const FeaturedBabalawos: React.FC = () => {
-  const { featuredBabalawos: babalawos, loading, error } = useFeaturedBabalawos(6);
-  const [bookingBabalawo, setBookingBabalawo] = useState<BabalawoProfile | null>(null);
-  const navigate = useNavigate();
-  const { user } = useAuth();
+export const babalawoChips = (b: BabalawoProfile) => {
+  const chips: string[] = [];
+  if (b.languages?.length) chips.push(b.languages.slice(0, 2).join(' · '));
+  else if (b.specialties?.length) chips.push(b.specialties[0]);
+  if (b.experience_years) chips.push(`${b.experience_years} yrs`);
+  if (b.hourly_rate) chips.push(`₦${Number(b.hourly_rate).toLocaleString()}`);
+  return chips;
+};
 
-  const handleBookSession = (babalawo: BabalawoProfile) => {
-    if (!user) {
-      navigate('/auth?tab=signin');
-      return;
-    }
-    
-    // Convert to the format expected by BookSessionModal
-    const babalawoForModal: BabalawoProfile = {
-      id: babalawo.id,
-      full_name: babalawo.full_name || "Babalawo",
-      avatar_url: babalawo.avatar_url,
-      specialties: Array.isArray(babalawo.specialties) ? babalawo.specialties : [],
-      experience_years: babalawo.experience_years,
-      hourly_rate: babalawo.hourly_rate ? Number(babalawo.hourly_rate) : 15000,
-      bio: babalawo.bio,
-      verification_status: babalawo.verification_status,
-      rating: babalawo.rating ? Number(babalawo.rating) : 5,
-      total_sessions: babalawo.total_sessions ?? 0,
-      languages: babalawo.languages,
-      timezone: babalawo.timezone,
-      is_active: babalawo.is_active,
-    };
-    
-    setBookingBabalawo(babalawoForModal);
-  };
+const statusOf = (b: BabalawoProfile) =>
+  b.current_status === 'available' || b.current_status === 'online'
+    ? 'available'
+    : b.current_status === 'busy' || b.current_status === 'in_session'
+      ? 'busy'
+      : null;
 
-  const handleViewProfile = (babalawoId: string) => {
-    navigate(`/babalawo/${babalawoId}`);
-  };
+/** "Meet the Babalawos": the right-to-left marquee of colour-block cards. */
+const FeaturedBabalawos = () => {
+  const { featuredBabalawos: babalawos, loading } = useFeaturedBabalawos(12);
 
-  const handleBrowseAll = () => {
-    navigate('/dashboard?view=babalawos');
-  };
+  return (
+    <section id="babalawos" aria-label="Babalawos" className="overflow-hidden pb-10 pt-[72px]">
+      <SectionHeading
+        className="wrap mb-8"
+        layout="split"
+        size="lg"
+        title={<>Meet the<br />Babalawos.</>}
+        lede="Each one is verified before they can take bookings. Tap a card to see their lineage, languages and fee."
+      />
 
-  // Loading state with skeleton
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="flex items-center justify-center mb-8">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mr-3" />
-          <h2 className="text-2xl font-semibold text-gray-700">Loading Featured Babalawos</h2>
-        </div>
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, index) => (
-            <Card key={index} className="rounded-xl shadow-md animate-pulse">
-              <CardContent className="p-6 flex flex-col items-center">
-                <div className="w-20 h-20 bg-gray-200 rounded-full mb-4"></div>
-                <div className="w-3/4 h-5 bg-gray-200 rounded mb-2"></div>
-                <div className="w-1/2 h-4 bg-gray-200 rounded mb-4"></div>
-                <div className="w-full h-10 bg-gray-200 rounded mb-2"></div>
-                <div className="w-full h-10 bg-gray-200 rounded"></div>
-              </CardContent>
-            </Card>
+      {loading ? (
+        <div className="flex gap-[22px] overflow-hidden px-5 pb-6 pt-4" aria-busy="true">
+          {blockColors.map((c, i) => (
+            <div
+              key={c}
+              className="h-[300px] w-[220px] flex-none animate-pulse rounded-card opacity-30 sm:h-[360px] sm:w-[268px]"
+              style={{ backgroundColor: c, transform: `rotate(${i % 2 ? 2 : -2}deg)` }}
+            />
           ))}
         </div>
-      </div>
-    );
-  }
-
-  // Error state with retry button
-  if (error) {
-    return (
-      <div className="container mx-auto px-4 py-12">
-        <Card className="max-w-lg mx-auto">
-          <CardContent className="p-8 text-center">
-            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">Unable to Load Babalawos</h3>
-            <p className="text-gray-600 mb-6">{error}</p>
-            <Button 
-              onClick={() => window.location.reload()} 
-              className="mx-auto flex items-center gap-2"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Try Again
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Empty state with CTA
-  if (!babalawos || babalawos.length === 0) {
-    return (
-      <div className="container mx-auto px-4 py-12">
-        <Card className="max-w-lg mx-auto">
-          <CardContent className="p-8 text-center">
-            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">No Featured Babalawos Available</h3>
-            <p className="text-gray-600 mb-6">
-              We're currently updating our featured Babalawos. Please check back soon or browse all available Babalawos.
+      ) : babalawos.length === 0 ? (
+        <div className="wrap">
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-panel border-2 border-dashed border-line bg-paper p-8">
+            <p className="m-0 max-w-[48ch] text-muted-foreground">
+              Our first Babalawos are being verified now. Browse everyone who is ready to take bookings.
             </p>
-            <Button 
-              onClick={handleBrowseAll} 
-              className="mx-auto"
-            >
-              Browse All Babalawos
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+            <Button asChild><Link to="/search">Browse Babalawos</Link></Button>
+          </div>
+        </div>
+      ) : (
+        <Marquee
+          items={babalawos}
+          label="Featured Babalawos"
+          trackClassName="pb-[26px] pt-4"
+          duration={Math.max(30, babalawos.length * 7.5)}
+          renderItem={(b, i, isClone) => (
+            <PortraitCard
+              key={`${b.id}${isClone ? '-c' : ''}`}
+              name={b.full_name}
+              imageUrl={b.avatar_url}
+              chips={babalawoChips(b)}
+              status={statusOf(b)}
+              color={blockColors[i % blockColors.length]}
+              tilt={i % 2 ? 'right' : 'left'}
+              to={`/babalawo/${b.id}`}
+              tabIndex={isClone ? -1 : undefined}
+            />
+          )}
+        />
+      )}
 
-  // Success state
-  return (
-    <div className="container mx-auto px-4 py-12">
-      <div className="mb-12 text-center">
-        <h2 className="text-3xl font-bold text-gray-900 mb-4">Featured Spiritual Guides</h2>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          Connect with our most experienced and highly-rated Babalawos for authentic spiritual guidance
-        </p>
-      </div>
-      
-      <BabalawoGrid
-        babalawos={babalawos}
-        onBookSession={handleBookSession}
-        onViewProfile={handleViewProfile}
-      />
-      
-      <div className="mt-12 text-center">
-        <Button 
-          onClick={handleBrowseAll}
-          variant="outline" 
-          size="lg"
-          className="border-primary text-primary hover:bg-primary hover:text-white"
-        >
-          Browse All Babalawos
+      <div className="wrap mt-2 flex justify-end">
+        <Button asChild variant="outline">
+          <Link to="/search">See every Babalawo →</Link>
         </Button>
       </div>
-      
-      {/* Book session modal */}
-      <BookSessionModal
-        open={!!bookingBabalawo}
-        onOpenChange={(open) => setBookingBabalawo(open ? bookingBabalawo : null)}
-        babalawo={bookingBabalawo}
-      />
-    </div>
+    </section>
   );
 };
 

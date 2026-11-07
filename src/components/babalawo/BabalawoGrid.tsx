@@ -1,7 +1,7 @@
-
 import React from 'react';
 import BabalawoCard from './BabalawoCard';
 import { BabalawoProfile } from '@/types/babalawo';
+import { blockColors } from '@/design/tokens';
 
 interface BabalawoGridProps {
   babalawos: BabalawoProfile[];
@@ -9,25 +9,17 @@ interface BabalawoGridProps {
   onViewProfile: (babalawoId: string) => void;
 }
 
-const BabalawoGrid: React.FC<BabalawoGridProps> = ({
-  babalawos,
-  onBookSession,
-  onViewProfile
-}) => {
+const BabalawoGrid: React.FC<BabalawoGridProps> = ({ babalawos, onBookSession, onViewProfile }) => {
   if (babalawos.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-gray-500">No verified babalawos available at the moment.</p>
-      </div>
-    );
+    return <p className="py-8 text-center text-muted-foreground">No verified Babalawos are available right now.</p>;
   }
-
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-      {babalawos.map((babalawo) => (
+    <div className="grid grid-cols-1 gap-x-5 gap-y-8 min-[460px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {babalawos.map((b, i) => (
         <BabalawoCard
-          key={babalawo.id}
-          babalawo={babalawo}
+          key={b.id}
+          babalawo={b}
+          color={blockColors[i % blockColors.length]}
           onBookSession={onBookSession}
           onViewProfile={onViewProfile}
         />

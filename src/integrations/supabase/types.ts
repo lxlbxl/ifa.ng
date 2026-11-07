@@ -602,7 +602,7 @@ export type Database = {
           babalawo_id: string
           deadline: string | null
           end_time: string
-          id: number
+          id: string
           is_instant: boolean | null
           items_needed: string | null
           next_appointment: string | null
@@ -618,7 +618,6 @@ export type Database = {
           status: Database["public"]["Enums"]["session_status_enum"]
           user_id: string
           user_timezone: string | null
-          warning: string | null
         }
         Insert: {
           agora_channel_name?: string | null
@@ -642,7 +641,6 @@ export type Database = {
           status: Database["public"]["Enums"]["session_status_enum"]
           user_id: string
           user_timezone?: string | null
-          warning?: string | null
         }
         Update: {
           agora_channel_name?: string | null
@@ -666,7 +664,6 @@ export type Database = {
           status?: Database["public"]["Enums"]["session_status_enum"]
           user_id?: string
           user_timezone?: string | null
-          warning?: string | null
         }
         Relationships: []
       }

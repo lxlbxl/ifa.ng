@@ -30,10 +30,9 @@ export const useSessionById = (sessionId: string) => {
           ritual_recommendations,
           items_needed,
           deadline,
-          next_appointment,
-          warning
+          next_appointment
         `)
-        .eq('id', parseInt(sessionId))
+        .eq('id', sessionId)
         .maybeSingle();
       if (error) throw error;
       return data;

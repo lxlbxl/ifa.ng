@@ -46,6 +46,8 @@ export const useBabalawoSearch = () => {
           languages: b.languages || ['English'],
           timezone: b.timezone || 'Africa/Lagos',
           is_active: b.is_active ?? true,
+          is_featured: b.is_featured ?? false,
+          current_status: b.current_status || 'offline',
         }));
         setBabalawos(transformedData);
       } catch (err: any) {
@@ -83,6 +85,8 @@ export const useBabalawoSearch = () => {
         languages: b.languages || ['English'],
         timezone: b.timezone || 'Africa/Lagos',
         is_active: b.is_active ?? true,
+        is_featured: b.is_featured ?? false,
+        current_status: b.current_status || 'offline',
       }));
       setBabalawos(transformedData);
     } catch (err: any) {
@@ -149,9 +153,9 @@ export const useBabalawoSearch = () => {
     // Apply availability filter
     if (filters.availability) {
       if (filters.availability === 'available') {
-        filtered = filtered.filter(babalawo => babalawo.is_active === true);
+        filtered = filtered.filter(babalawo => babalawo.current_status === 'online');
       } else if (filters.availability === 'offline') {
-        filtered = filtered.filter(babalawo => babalawo.is_active === false);
+        filtered = filtered.filter(babalawo => babalawo.current_status === 'offline');
       }
     }
 

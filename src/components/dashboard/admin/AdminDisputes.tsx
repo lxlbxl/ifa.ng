@@ -8,10 +8,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useResolveDispute } from "@/hooks/useAdminActions";
+import { useResolveDispute, useAdminRefundSession } from "@/hooks/useAdminActions";
 
 type Row = {
-  id: string; session_id: string; raised_by: string; reason: string; status: string;
+  id: string; session_id: number; raised_by: string; reason: string; status: string;
   resolution_note: string | null; refund_requested: boolean; created_at: string; raisedByName: string;
 };
 
@@ -34,6 +34,7 @@ const color: Record<string, string> = {
 const AdminDisputes: React.FC = () => {
   const { data, isLoading, error } = useQuery({ queryKey: ["adminDisputes"], queryFn: fetchDisputes });
   const resolve = useResolveDispute();
+  const refundSession = useAdminRefundSession();
   const [active, setActive] = useState<Row | null>(null);
   const [note, setNote] = useState("");
   const [refund, setRefund] = useState(false);
@@ -43,7 +44,16 @@ const AdminDisputes: React.FC = () => {
   const open = (d: Row) => { setActive(d); setNote(d.resolution_note ?? ""); setRefund(false); };
   const submit = (status: "investigating" | "resolved_refund" | "resolved_dismissed") => {
     if (!active) return;
-    resolve.mutate({ disputeId: active.id, status, note: note.trim(), refund: status === "resolved_refund" && refund });
+    const doRefund = status === "resolved_refund" && refund;
+    resolve.mutate(
+      { disputeId: active.id, status, note: note.trim(), refund: doRefund },
+      {
+        // Actually move the money through the payments flow once the decision is recorded.
+        onSuccess: () => {
+          if (doRefund) refundSession.mutate({ sessionId: active.session_id, reason: `Dispute: ${note.trim()}` });
+        },
+      },
+    );
     setActive(null);
   };
 
@@ -52,7 +62,7 @@ const AdminDisputes: React.FC = () => {
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle>Disputes</CardTitle>
-          <p className="text-sm text-gray-600">Raised by clients or Babalawos from a booking. Refund decisions are flagged for the payments flow.</p>
+          <p className="text-sm text-gray-600">Raised by clients or Babalawos from a booking. Approving a refund cancels and refunds the session through the payments flow.</p>
         </div>
         <Button variant="outline" size="sm" onClick={() => setShowResolved((v) => !v)}>
           {showResolved ? "Hide resolved" : "Show resolved"}
@@ -72,7 +82,7 @@ const AdminDisputes: React.FC = () => {
               <Button size="sm" variant="outline" onClick={() => open(d)}>Review</Button>
             </div>
             <p className="text-sm">{d.reason}</p>
-            <p className="text-xs text-gray-500">Session {d.session_id.slice(0, 8)}</p>
+            <p className="text-xs text-gray-500">Session #{d.session_id}</p>
             {d.resolution_note && <p className="text-xs text-gray-600">Resolution: {d.resolution_note}</p>}
           </div>
         ))}
@@ -88,7 +98,7 @@ const AdminDisputes: React.FC = () => {
           <Textarea placeholder="Resolution note (sent to the person who raised it)" value={note} onChange={(e) => setNote(e.target.value)} />
           <div className="flex items-center gap-2">
             <Checkbox id="refund" checked={refund} onCheckedChange={(v) => setRefund(v === true)} />
-            <Label htmlFor="refund">Approve a refund (flags it for the payments flow)</Label>
+            <Label htmlFor="refund">Approve a refund (cancels the session and refunds the client)</Label>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => submit("investigating")}>Mark investigating</Button>

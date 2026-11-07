@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { useUpdateSessionStatus } from "@/hooks/useAdminActions";
+import { useUpdateSessionStatus, useAdminRefundSession } from "@/hooks/useAdminActions";
 import type { Database } from "@/integrations/supabase/types";
 
 type SessionStatus = Database["public"]["Enums"]["session_status_enum"];
@@ -37,6 +37,7 @@ const fetchSessions = async () => {
 const AdminBookings: React.FC = () => {
   const { data, isLoading, error } = useQuery({ queryKey: ["adminSessions"], queryFn: fetchSessions });
   const update = useUpdateSessionStatus();
+  const refund = useAdminRefundSession();
   const [filter, setFilter] = useState<string>("all");
   const [q, setQ] = useState("");
 
@@ -46,9 +47,12 @@ const AdminBookings: React.FC = () => {
   );
 
   const change = (id: string, status: SessionStatus) => {
-    const reason = status === "cancelled" ? window.prompt("Reason for cancelling this booking?") : null;
-    if (status === "cancelled" && !reason) return;
-    update.mutate({ sessionId: id, status, reason: reason ?? undefined });
+    if (status === "cancelled") {
+      const reason = window.prompt("Reason for cancelling? Paid sessions are refunded to the client.");
+      if (reason) refund.mutate({ sessionId: id, reason });
+      return;
+    }
+    update.mutate({ sessionId: id, status });
   };
 
   return (
@@ -89,7 +93,7 @@ const AdminBookings: React.FC = () => {
                   <td className="py-2 px-3"><Badge variant="outline">{s.payment_status ?? "—"}</Badge></td>
                   <td className="py-2 px-3"><Badge className={statusColor[s.status] ?? ""}>{s.status.replace("_", " ")}</Badge></td>
                   <td className="py-2 px-3 text-right">
-                    <Select value={s.status} onValueChange={(v) => change(s.id, v as SessionStatus)} disabled={update.isPending}>
+                    <Select value={s.status} onValueChange={(v) => change(s.id, v as SessionStatus)} disabled={update.isPending || refund.isPending}>
                       <SelectTrigger className="w-36 ml-auto h-8"><SelectValue /></SelectTrigger>
                       <SelectContent>{STATUSES.map((x) => <SelectItem key={x} value={x}>{x.replace("_", " ")}</SelectItem>)}</SelectContent>
                     </Select>

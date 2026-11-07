@@ -14,6 +14,8 @@ import { format } from "date-fns";
 import DateTimeSelector from "./DateTimeSelector";
 import PaymentMethodSelector from "./PaymentMethodSelector";
 import FeeDisclosure from "./FeeDisclosure";
+import ConsentFields, { ConsentValue } from "@/components/session/ConsentFields";
+import { recordSessionConsent, ensureMeetLink } from "@/services/videoService";
 
 interface BookSessionModalProps {
   open: boolean;
@@ -32,6 +34,7 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
   const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
   const [slotLockId, setSlotLockId] = useState<string | null>(null);
   const [lockExpiresAt, setLockExpiresAt] = useState<string | null>(null);
+  const [consent, setConsent] = useState<ConsentValue>({ recording: false, ai: false });
 
   // Fetch babalawo availability and user wallet
   useEffect(() => {
@@ -131,6 +134,15 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
         if (slotLockId && user?.id) {
           await completeSlotLock(slotLockId, user.id);
           setSlotLockId(null);
+        }
+
+        // Save the client's explicit recording/AI choice, then let the server arm (or not) auto-recording.
+        // Best effort: the session page asks again if this did not go through.
+        try {
+          await recordSessionConsent(sessionId, consent.recording, consent.ai);
+          await ensureMeetLink(sessionId);
+        } catch (consentError) {
+          console.warn('Consent / Meet link will be completed on the session page:', consentError);
         }
 
         // Send booking confirmation via email and SMS
@@ -249,6 +261,8 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
             amount={amount}
             paymentMethod={paymentMethod}
           />
+
+          <ConsentFields value={consent} onChange={setConsent} role="client" />
 
           <DialogFooter className="flex flex-col sm:flex-row gap-2">
             <Button type="submit" disabled={isLoading || !date || !selectedTime} className="w-full sm:w-auto">

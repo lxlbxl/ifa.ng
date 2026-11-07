@@ -51,7 +51,7 @@ const AgoraVideoRoom: React.FC<AgoraVideoRoomProps> = ({ sessionId, onLeave }) =
         
         // Generate Agora token
         console.log("🎥 Fetching Agora token for session:", sessionId);
-        const tokenResponse = await generateAgoraToken(sessionId, user?.id);
+        const tokenResponse = await generateAgoraToken(sessionId);
         console.log("[AgoraVideoRoom] Token response:", tokenResponse);
         setTokenData(tokenResponse);
 
@@ -89,9 +89,9 @@ const AgoraVideoRoom: React.FC<AgoraVideoRoomProps> = ({ sessionId, onLeave }) =
         console.log("🚀 Joining Agora channel:", sessionId);
         await client.join(
           tokenResponse.appId,
-          sessionId,
+          tokenResponse.channel,
           tokenResponse.token,
-          user?.id || null
+          tokenResponse.account
         );
 
         // Create and publish local tracks

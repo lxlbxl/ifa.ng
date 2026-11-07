@@ -1,11 +1,11 @@
 
 import React from 'react';
-import { LayoutGrid, Users, UserCheck, Wallet, Settings, LogOut, CreditCard, History, Banknote } from 'lucide-react'; // Import Banknote icon
+import { LayoutGrid, Users, UserCheck, Wallet, Settings, LogOut, CreditCard, History, Banknote, CalendarCheck, AlertTriangle, ScrollText } from 'lucide-react'; // Import Banknote icon
 import { useAuth } from "@/hooks/useAuth";
 
 interface AdminSidebarProps {
-  activeSection: 'overview' | 'users' | 'babalawos' | 'finance' | 'transactions' | 'wallet-management' | 'settings' | 'withdrawal-management'; // Add new section type
-  onSectionChange: (section: 'overview' | 'users' | 'babalawos' | 'finance' | 'transactions' | 'wallet-management' | 'settings' | 'withdrawal-management') => void; // Add new section type
+  activeSection: 'overview' | 'users' | 'babalawos' | 'bookings' | 'disputes' | 'finance' | 'transactions' | 'wallet-management' | 'settings' | 'withdrawal-management' | 'activity'; // Add new section type
+  onSectionChange: (section: 'overview' | 'users' | 'babalawos' | 'bookings' | 'disputes' | 'finance' | 'transactions' | 'wallet-management' | 'settings' | 'withdrawal-management' | 'activity') => void; // Add new section type
   className?: string;
 }
 
@@ -13,10 +13,13 @@ const menuItems = [
   { icon: LayoutGrid, text: 'Dashboard', section: 'overview' },
   { icon: Users, text: 'User Management', section: 'users' },
   { icon: UserCheck, text: 'Babalawo Management', section: 'babalawos' },
+  { icon: CalendarCheck, text: 'Bookings', section: 'bookings' },
+  { icon: AlertTriangle, text: 'Disputes', section: 'disputes' },
   { icon: Wallet, text: 'Finance', section: 'finance' },
   { icon: History, text: 'Transactions', section: 'transactions' },
   { icon: CreditCard, text: 'Wallet Management', section: 'wallet-management' },
   { icon: Banknote, text: 'Withdrawals', section: 'withdrawal-management' }, // Add new menu item
+  { icon: ScrollText, text: 'Activity Log', section: 'activity' },
   { icon: Settings, text: 'Settings', section: 'settings' },
 ];
 

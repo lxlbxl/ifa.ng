@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Eyebrow, SoundWave } from '@/components/brand';
+import InstallButton from '@/components/pwa/InstallButton';
 
 /**
  * Full-bleed chant hero. Plays VITE_HERO_VIDEO_URL (an MP4 the team owns) muted
@@ -97,6 +98,7 @@ const HeroSection = () => {
               <Button asChild variant="glass" size="lg">
                 <a href="#sessions">How sessions work</a>
               </Button>
+              <InstallButton variant="hero" label="Download the app" buttonVariant="glass" />
             </div>
           </div>
         </div>

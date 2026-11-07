@@ -3,6 +3,7 @@ import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Logo } from '@/components/brand/Logo';
+import InstallButton from '@/components/pwa/InstallButton';
 import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
@@ -52,6 +53,7 @@ const Header = ({ variant = 'solid' }: HeaderProps) => {
         </nav>
 
         <div className="ml-auto flex items-center gap-2 lg:ml-0">
+          <InstallButton label="Install app" buttonVariant={overlay ? 'glass' : 'outline'} className="h-11 px-4" />
           <Link
             to={user ? '/dashboard' : '/auth'}
             className="hidden px-2 text-[15px] font-semibold no-underline opacity-90 hover:underline hover:opacity-100 sm:inline"
@@ -95,7 +97,8 @@ const Header = ({ variant = 'solid' }: HeaderProps) => {
                   {user ? 'Dashboard' : 'Sign in'}
                 </Link>
               </nav>
-              <div className="mt-auto p-6 pb-safe">
+              <div className="mt-auto space-y-3 p-6 pb-safe">
+                <InstallButton variant="block" label="Install the app" buttonVariant="glass" />
                 <Button asChild variant="sun" size="lg" className="w-full">
                   <Link to="/search">Book a consultation</Link>
                 </Button>

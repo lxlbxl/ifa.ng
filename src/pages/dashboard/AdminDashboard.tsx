@@ -13,14 +13,21 @@ import BabalawoManagement from "@/components/dashboard/admin/BabalawoManagement"
 import PaymentsFinancePanel from "@/components/dashboard/admin/PaymentsFinancePanel";
 import AdminSettingsPanel from "@/components/dashboard/admin/AdminSettingsPanel";
 import AdminWithdrawalManagement from "@/components/dashboard/admin/AdminWithdrawalManagement"; // Import the new component
+import AdminBookings from "@/components/dashboard/admin/AdminBookings";
+import AdminDisputes from "@/components/dashboard/admin/AdminDisputes";
+import AdminActivityLog from "@/components/dashboard/admin/AdminActivityLog";
+import { useAuth } from "@/hooks/useAuth";
+import { Navigate } from "react-router-dom";
 import { Menu } from "lucide-react";
 import { MobileBottomNav } from "@/components/shared/MobileBottomNav";
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState<
-    'overview' | 'users' | 'babalawos' | 'finance' | 'transactions' | 'wallet-management' | 'settings' | 'withdrawal-management' // Add new section type
+    'overview' | 'users' | 'babalawos' | 'bookings' | 'disputes' | 'finance' | 'transactions' | 'wallet-management' | 'settings' | 'withdrawal-management' | 'activity' // Add new section type
   >('overview');
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { isAdmin, loading } = useAuth();
+  if (!loading && !isAdmin) return <Navigate to="/dashboard" replace />;
 
   const renderActiveSection = () => {
     switch (activeSection) {
@@ -30,6 +37,12 @@ const AdminDashboard = () => {
         return <UserManagement />;
       case 'babalawos':
         return <BabalawoManagement />;
+      case 'bookings':
+        return <AdminBookings />;
+      case 'disputes':
+        return <AdminDisputes />;
+      case 'activity':
+        return <AdminActivityLog />;
       case 'finance':
         return <PaymentsFinancePanel />;
       case 'transactions':

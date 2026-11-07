@@ -35,13 +35,13 @@ const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
   return (
     <>
       <div>
-        <label className="block text-sm font-medium mb-2">Date</label>
+        <label className="mb-2 block text-sm font-bold">Date</label>
         <Popover>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
               className={cn(
-                "w-full justify-start text-left font-normal",
+                "h-12 w-full justify-start rounded-field border-[1.5px] border-input bg-paper text-left font-normal text-ink hover:bg-paper hover:text-ink",
                 !date && "text-muted-foreground"
               )}
             >
@@ -63,16 +63,17 @@ const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
       </div>
       
       <div>
-        <label className="block text-sm font-medium mb-2">Available Times</label>
+        <label className="mb-2 block text-sm font-bold">Time</label>
         {date && availableTimes.length > 0 ? (
           <div className="grid grid-cols-3 gap-2">
             {availableTimes.map((time) => (
               <Button
                 key={time}
                 type="button"
-                variant={selectedTime === time ? "default" : "outline"}
+                variant={selectedTime === time ? "default" : "secondary"}
                 size="sm"
                 onClick={() => setSelectedTime(time)}
+                aria-pressed={selectedTime === time}
                 className="text-xs"
               >
                 {time}
@@ -80,9 +81,9 @@ const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
             ))}
           </div>
         ) : date ? (
-          <p className="text-sm text-gray-500">No available times for this date</p>
+          <p className="text-sm text-muted-foreground">No free times on this day. Try another date.</p>
         ) : (
-          <p className="text-sm text-gray-500">Please select a date first</p>
+          <p className="text-sm text-muted-foreground">Pick a date to see times.</p>
         )}
       </div>
     </>

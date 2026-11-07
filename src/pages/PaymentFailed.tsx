@@ -59,7 +59,7 @@ const PaymentFailed: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 py-12 px-4">
+    <div className="min-h-screen bg-cloth py-12 px-4">
       <div className="max-w-2xl mx-auto">
         {/* Error Icon */}
         <div className="flex justify-center mb-8">

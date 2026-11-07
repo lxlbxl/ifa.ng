@@ -18,7 +18,7 @@ import AdminDisputes from "@/components/dashboard/admin/AdminDisputes";
 import AdminActivityLog from "@/components/dashboard/admin/AdminActivityLog";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
-import { Menu } from "lucide-react";
+import { adminSections } from "@/components/dashboard/admin/adminSections";
 import { MobileBottomNav } from "@/components/shared/MobileBottomNav";
 
 const AdminDashboard = () => {
@@ -58,17 +58,14 @@ const AdminDashboard = () => {
     }
   };
 
+  const sectionTitle = adminSections.find((s) => s.section === activeSection)?.label ?? 'Overview';
+
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 via-indigo-50/30 to-purple-50/20 flex font-poppins relative">
-      {/* Sidebar for Desktop */}
+    <div className="relative flex min-h-screen w-full bg-cloth">
       <div className="hidden lg:block">
-        <AdminSidebar
-          activeSection={activeSection}
-          onSectionChange={setActiveSection}
-        />
+        <AdminSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
       </div>
 
-      {/* Sidebar for Mobile */}
       <AdminSidebarMobile
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
@@ -76,34 +73,12 @@ const AdminDashboard = () => {
         onSectionChange={setActiveSection}
       />
 
-      <main className="flex-1 flex flex-col px-2 sm:px-4 lg:px-6 py-4 sm:py-6 pb-20 md:pb-6 max-w-[1440px] mx-auto w-full overflow-hidden">
-        {/* Hamburger button (mobile only) */}
-        <div className="lg:hidden flex items-center mb-3 animate-fade-in">
-          <button
-            className="p-2 rounded-xl bg-white shadow-md border border-gray-200 hover:bg-primary/10 hover:border-primary/30 focus:outline-none transition-all duration-200 hover:scale-105 active:scale-95"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Open sidebar"
-          >
-            <Menu className="w-6 h-6 text-primary" />
-          </button>
-        </div>
-
-        <div className="space-y-4 sm:space-y-6">
-          <div className="animate-fade-in-down">
-            <AdminHeader />
-          </div>
-          <div className="w-full animate-fade-in-up">
-            <AdminSummaryCards />
-          </div>
-          <div className="animate-fade-in" style={{animationDelay: '100ms'}}>
-            <AdminSectionTabs
-              activeSection={activeSection}
-              onSectionChange={setActiveSection}
-            />
-          </div>
-          <div className="w-full overflow-hidden animate-fade-in-up" style={{animationDelay: '200ms'}}>
-            {renderActiveSection()}
-          </div>
+      <main className="mx-auto flex w-full min-w-0 max-w-[1440px] flex-1 flex-col px-4 pb-24 pt-6 md:pb-10 lg:px-10 lg:pt-10">
+        <div className="space-y-6">
+          <AdminHeader title={sectionTitle} onOpenMenu={() => setMobileOpen(true)} />
+          {activeSection === 'overview' && <AdminSummaryCards />}
+          <AdminSectionTabs activeSection={activeSection} onSectionChange={setActiveSection} />
+          <div className="w-full min-w-0">{renderActiveSection()}</div>
         </div>
       </main>
 

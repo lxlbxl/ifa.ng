@@ -46,9 +46,9 @@ const FeeDisclosure: React.FC<FeeDisclosureProps> = ({ amount, paymentMethod, cl
   if (paymentMethod === 'wallet') {
     return (
       <div className={className}>
-        <Alert className="bg-green-50 border-green-200">
-          <Info className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-sm text-green-800">
+        <Alert className="bg-leaf/30 border-leaf-600/30 rounded-field">
+          <Info className="h-4 w-4 text-green-700" />
+          <AlertDescription className="text-sm text-ink">
             No transaction fees when paying with wallet balance
           </AlertDescription>
         </Alert>
@@ -60,11 +60,11 @@ const FeeDisclosure: React.FC<FeeDisclosureProps> = ({ amount, paymentMethod, cl
   if (feeCalculation) {
     return (
       <div className={className}>
-        <Alert className="bg-blue-50 border-blue-200">
-          <AlertCircle className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-sm text-blue-800">
+        <Alert className="bg-cloth border-line rounded-field">
+          <AlertCircle className="h-4 w-4 text-camwood" />
+          <AlertDescription className="text-sm text-ink">
             <div className="space-y-1">
-              <div className="font-medium">Payment Fee Breakdown:</div>
+              <div className="font-medium">What you pay</div>
               <div className="flex justify-between items-center">
                 <span>Service Amount:</span>
                 <span className="font-medium">₦{feeCalculation.amount.toLocaleString()}</span>

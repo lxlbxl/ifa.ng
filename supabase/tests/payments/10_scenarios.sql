@@ -1,9 +1,4 @@
 \set ON_ERROR_STOP 0
-create table public.availability(id uuid default gen_random_uuid(), babalawo_id uuid, day_of_week int, start_time time, end_time time, is_available boolean default true);
-alter table public.babalawos add column current_status text default 'online';
-create table public.babalawo_scheduling_settings(babalawo_id uuid primary key, timezone text default 'Africa/Lagos', slot_minutes int default 60, buffer_minutes int default 0, min_notice_hours int default 2, max_advance_days int default 60, accepting_bookings boolean default true);
-create table public.babalawo_time_off(babalawo_id uuid, start_date date, end_date date);
-create table public.availability_exceptions(babalawo_id uuid, exception_date date, kind text, start_time time, end_time time);
 -- re-apply is idempotent?
 \set ON_ERROR_STOP 0
 insert into auth.users(id) values ('00000000-0000-0000-0000-00000000000a'),('00000000-0000-0000-0000-00000000000b'),('00000000-0000-0000-0000-0000000000ad'),('00000000-0000-0000-0000-00000000000c');

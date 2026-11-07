@@ -43,3 +43,10 @@ create function public.create_notification(p_user_id uuid,p_type text,p_title te
 create function public.log_payment_audit(p_payment_id uuid,p_event_type text,p_event_data jsonb default null,p_ip_address inet default null,p_user_agent text default null) returns uuid language sql security definer as $$ insert into payment_audit_log(payment_id,event_type,event_data) values(p_payment_id,p_event_type,p_event_data) returning id $$;
 create function public.update_wallet_balance(p_user_id uuid,p_amount numeric,p_transaction_type text,p_transaction_source text) returns uuid language sql as $$ select null::uuid $$;
 grant execute on all functions in schema public to anon, authenticated;
+create function public.is_suspended(u uuid) returns boolean language sql as $$ select false $$;
+
+create table public.availability(id uuid default gen_random_uuid(), babalawo_id uuid, day_of_week int, start_time time, end_time time, is_available boolean default true);
+alter table public.babalawos add column current_status text default 'online';
+create table public.babalawo_scheduling_settings(babalawo_id uuid primary key, timezone text default 'Africa/Lagos', slot_minutes int default 60, buffer_minutes int default 0, min_notice_hours int default 2, max_advance_days int default 60, accepting_bookings boolean default true);
+create table public.babalawo_time_off(babalawo_id uuid, start_date date, end_date date);
+create table public.availability_exceptions(babalawo_id uuid, exception_date date, kind text, start_time time, end_time time);

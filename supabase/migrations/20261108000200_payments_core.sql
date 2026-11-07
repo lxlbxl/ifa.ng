@@ -354,6 +354,7 @@ RETURNS bigint LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE v_user uuid := auth.uid(); v_price numeric; v_existing bigint; v_ref text;
 BEGIN
   IF v_user IS NULL THEN RAISE EXCEPTION 'Not authenticated'; END IF;
+  IF public.is_suspended(v_user) THEN RAISE EXCEPTION 'Your account is suspended'; END IF;
   IF v_user = p_babalawo_user_id THEN RAISE EXCEPTION 'You cannot book yourself'; END IF;
   IF NOT EXISTS (SELECT 1 FROM babalawos WHERE user_id = p_babalawo_user_id AND COALESCE(is_active, true)) THEN
     RAISE EXCEPTION 'Babalawo not available';
@@ -379,6 +380,7 @@ CREATE OR REPLACE FUNCTION public.create_payment_intent(
 RETURNS TABLE(reference text, amount numeric) LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE v_amt numeric; v_ref text;
 BEGIN
+  IF public.is_suspended(p_user) THEN RAISE EXCEPTION 'Your account is suspended'; END IF;
   IF p_kind = 'wallet_topup' THEN
     v_amt := p_amount;
     IF v_amt IS NULL OR v_amt < get_setting_numeric('min_wallet_topup', 100) OR v_amt > 5000000 THEN
@@ -551,6 +553,7 @@ RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE v_uid uuid := auth.uid(); v_id uuid; v_bank jsonb; v_min numeric := get_setting_numeric('min_withdrawal_amount', 5000);
 BEGIN
   IF v_uid IS NULL THEN RAISE EXCEPTION 'Not authenticated'; END IF;
+  IF public.is_suspended(v_uid) THEN RAISE EXCEPTION 'Your account is suspended'; END IF;
   IF NOT EXISTS (SELECT 1 FROM babalawos WHERE user_id = v_uid) THEN RAISE EXCEPTION 'Only babalawos can withdraw'; END IF;
   IF p_amount IS NULL OR p_amount < v_min THEN RAISE EXCEPTION 'Minimum withdrawal is %', v_min; END IF;
   SELECT to_jsonb(b) - 'id' - 'babalawo_id' INTO v_bank FROM babalawo_bank_details b

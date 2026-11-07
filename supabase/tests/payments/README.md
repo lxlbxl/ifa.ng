@@ -6,7 +6,7 @@ Supabase pieces (`auth.uid()`, roles). Not a replacement for testing on a Supaba
 ```bash
 createdb pay_test
 psql -d pay_test -v ON_ERROR_STOP=1 -f supabase/tests/payments/00_stub_schema.sql
-# scenarios expect the migration to be applied after the extra scheduling tables created at the top of 10_scenarios.sql
+
 psql -d pay_test -f supabase/migrations/20261108000200_payments_core.sql
 psql -d pay_test -f supabase/tests/payments/10_scenarios.sql
 ```

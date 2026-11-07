@@ -55,9 +55,9 @@ export const useReviewBabalawo = () =>
 
 export const useUpdateSessionStatus = () =>
   useAdminRpc(
-    (v: { sessionId: string; status: SessionStatus; reason?: string }) =>
+    (v: { sessionId: string | number; status: SessionStatus; reason?: string }) =>
       supabase.rpc('admin_update_session_status', {
-        _session_id: v.sessionId, _status: v.status, _reason: v.reason,
+        _session_id: Number(v.sessionId), _status: v.status, _reason: v.reason,
       }),
     ['adminSessions', 'adminAuditLog'],
     'Booking updated',
@@ -71,4 +71,13 @@ export const useResolveDispute = () =>
       }),
     ['adminDisputes', 'adminAuditLog'],
     'Dispute updated',
+  );
+
+/** Cancel a session and refund it via the payments flow (admin_refund_session). */
+export const useAdminRefundSession = () =>
+  useAdminRpc(
+    (v: { sessionId: string | number; reason: string }) =>
+      supabase.rpc('admin_refund_session', { p_session_id: Number(v.sessionId), p_reason: v.reason }),
+    ['adminSessions', 'adminDisputes', 'adminAuditLog'],
+    'Session cancelled and refunded',
   );

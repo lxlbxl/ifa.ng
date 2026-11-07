@@ -9,10 +9,11 @@ interface Props {
   variant?: "header" | "hero" | "block";
   className?: string;
   label?: string;
+  buttonVariant?: "default" | "sun" | "primary" | "outline" | "glass";
 }
 
 /** Always-visible install button. One click starts the install: the browser shows its own confirm, then the app is added to the device. */
-const InstallButton: React.FC<Props> = ({ variant = "header", className = "", label = "Install App" }) => {
+const InstallButton: React.FC<Props> = ({ variant = "header", className = "", label = "Install App", buttonVariant }) => {
   const state = useSyncExternalStore(subscribeInstall, getInstallSnapshot);
   const [help, setHelp] = useState(false);
   if (state.installed || isStandalone()) return null;
@@ -27,7 +28,7 @@ const InstallButton: React.FC<Props> = ({ variant = "header", className = "", la
   const extra = variant === "hero" ? "text-base px-6 shadow-lg" : variant === "block" ? "w-full" : "";
   return (
     <>
-      <Button onClick={click} size={size as any} className={`gap-2 font-semibold ${extra} ${className}`} aria-label="Install the IFA.ng app">
+      <Button onClick={click} variant={buttonVariant as any} size={size as any} className={`gap-2 font-semibold ${extra} ${className}`} aria-label="Install the IFA.ng app">
         <Download className="h-4 w-4" />{label}
       </Button>
       <Dialog open={help} onOpenChange={setHelp}>

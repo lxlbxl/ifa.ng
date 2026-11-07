@@ -1,22 +1,23 @@
 {
-  "name": "IFA.ng - Spiritual Guidance",
+  "name": "IFA.ng",
   "short_name": "IFA.ng",
-  "description": "Book and manage consultations with verified Babalawos.",
+  "description": "Consult a verified Babalawo over Google Meet.",
   "id": "/",
   "start_url": "/dashboard?source=pwa",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#f6f1e4",
-  "theme_color": "#28367f",
+  "theme_color": "#121611",
   "categories": ["lifestyle", "health"],
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "/brand/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/brand/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/brand/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/brand/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "My sessions", "url": "/dashboard?tab=consultations", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Find a Babalawo", "url": "/search", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+    { "name": "My sessions", "url": "/dashboard?tab=consultations", "icons": [{ "src": "/brand/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Find a Babalawo", "url": "/search", "icons": [{ "src": "/brand/icon-192.png", "sizes": "192x192" }] }
   ]
 }

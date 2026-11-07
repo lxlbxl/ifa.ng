@@ -2,7 +2,7 @@
 const VERSION = "v1";
 const SHELL_CACHE = `ifa-shell-${VERSION}`;
 const ASSET_CACHE = `ifa-assets-${VERSION}`;
-const SHELL_URLS = ["/", "/offline.html", "/manifest.webmanifest", "/icons/icon-192.png"];
+const SHELL_URLS = ["/", "/offline.html", "/manifest.webmanifest", "/brand/icon-192.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(SHELL_CACHE).then((c) => c.addAll(SHELL_URLS)).then(() => self.skipWaiting()));
@@ -42,7 +42,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Hashed build assets and icons: cache-first with background refresh
-  if (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/icons/")) {
+  if (url.pathname.startsWith("/assets/") || url.pathname.startsWith("/brand/")) {
     event.respondWith(
       caches.match(req).then((hit) => {
         const net = fetch(req).then((res) => {
@@ -61,8 +61,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title || "IFA.ng", {
       body: data.body || "",
-      icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
+      icon: "/brand/icon-192.png",
+      badge: "/brand/icon-192.png",
       tag: data.tag,
       data: { url: data.url || "/dashboard" },
     })

@@ -5,6 +5,7 @@ import { Session, AuthError, User, AuthResponse } from '@supabase/supabase-js';
 import { Database } from '@/integrations/supabase/types';
 import { useToast } from '@/hooks/use-toast';
 type Profile = Database['public']['Tables']['profiles']['Row'];
+export type AppRole = Database['public']['Enums']['user_role'];
 
 // Enhanced auth error response type
 interface AuthErrorResponse {
@@ -16,6 +17,10 @@ interface AuthContextType {
   session: Session | null;
   user: User | null;
   userProfile: Profile | null;
+  /** Authoritative roles, read from the user_roles table (never from profiles.role). */
+  roles: AppRole[];
+  hasRole: (role: AppRole) => boolean;
+  isAdmin: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -37,6 +42,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<Profile | null>(null);
+  const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [authError, setAuthError] = useState<AuthError | null>(null);
   const { toast } = useToast();
@@ -47,10 +53,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       if (!user?.id) {
         setUserProfile(null);
+        setRoles([]);
         setIsProfileComplete(false);
         setLoading(false);
         return;
       }
+
+      const rolesResult = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+      const fetchedRoles: AppRole[] = rolesResult.error
+        ? []
+        : (rolesResult.data ?? []).map((r) => r.role as AppRole);
+      setRoles(fetchedRoles);
       
       // Attempt to fetch user profile with retries
       let attempts = 0;
@@ -72,34 +88,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         error = result.error;
         
-        // If profile doesn't exist, create one
-        if (result.error.code === 'PGRST116' || result.error.message?.includes('No rows')) {
-          console.log('[Auth] Profile not found, creating new profile for user:', user.id);
-          try {
-            const { data: newProfile, error: createError } = await supabase
-              .from('profiles')
-              .insert({
-                id: user.id,
-                email: user.email || '',
-                full_name: user.user_metadata?.full_name || '',
-                role: (user.user_metadata?.role as any) || 'user',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-              })
-              .select()
-              .single();
-              
-            if (!createError && newProfile) {
-              profile = newProfile;
-              break;
-            } else {
-              console.error('[Auth] Error creating profile:', createError);
-            }
-          } catch (createErr) {
-            console.error('[Auth] Exception creating profile:', createErr);
-          }
-        }
-        
+        // Profiles are created by the handle_new_user database trigger; the client
+        // never creates one (and can never choose its own role).
         attempts++;
         
         // Wait before retrying (exponential backoff)
@@ -116,16 +106,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserProfile(profile);
         
         // Check if profile is complete (has required fields)
-        const isComplete = Boolean(
-          profile.full_name && 
-          profile.email && 
-          (profile.role !== 'babalawo' || (
-            profile.bio && 
-            profile.specialties && 
-            profile.specialties.length > 0
-          ))
-        );
-        
+        const isComplete = Boolean(profile.full_name && profile.email);
         setIsProfileComplete(isComplete);
       }
     } catch (error) {
@@ -183,6 +164,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       // Clear user data regardless of error to prevent UI confusion
       setUserProfile(null);
+      setRoles([]);
       setIsProfileComplete(false);
     } catch (error) {
       console.error('Unexpected error during sign out:', error);
@@ -332,10 +314,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         };
       }
       
-      // Merge current profile with updates
+      // Merge current profile with updates. Identity and privilege fields are never
+      // sent from the client (the database also rejects changes to them).
+      const {
+        id: _id, role: _role, email: _email, created_at: _created,
+        ...safeData
+      } = data as Record<string, unknown>;
       const updatedProfile = {
         ...currentProfile,
-        ...data,
+        ...safeData,
         updated_at: new Date().toISOString(),
       };
       
@@ -375,6 +362,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         session,
         user,
         userProfile,
+        roles,
+        hasRole: (role: AppRole) => roles.includes(role),
+        isAdmin: roles.includes('admin'),
         loading,
         signOut,
         refreshProfile,

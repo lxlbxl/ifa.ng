@@ -121,11 +121,10 @@ describe("baseline behaviour on plain Postgres", () => {
 
   it("browsers cannot move wallet money", async () => {
     await expect(database.as({ kind: "user", userId: CLIENT }, (trx) =>
-      sql`select public.update_wallet_balance(${CLIENT}::uuid, 1000000, 'credit', 'hack')`.execute(trx))).rejects.toThrow(/permission denied/);
-    // No update policy on wallets: RLS filters the update down to zero rows.
-    const upd = await database.as({ kind: "user", userId: CLIENT }, (trx) =>
-      sql`update wallets set balance = 1000000`.execute(trx));
-    expect(Number(upd.numAffectedRows ?? 0)).toBe(0);
+      sql`select public.update_wallet_balance(${CLIENT}::uuid, 1000000, 'credit', 'hack')`.execute(trx))).rejects.toThrow(/permission denied|does not exist/);
+    // Either the privilege is revoked (payments migration) or RLS filters the update to zero rows.
+    await database.as({ kind: "user", userId: CLIENT }, (trx) =>
+      sql`update wallets set balance = 1000000`.execute(trx)).catch((e: Error) => expect(e.message).toMatch(/permission denied/));
     const b = await database.as({ kind: "service" }, (trx) =>
       sql<{ b: string }>`select balance b from wallets where user_id = ${CLIENT}`.execute(trx));
     expect(Number(b.rows[0].b)).toBe(0);

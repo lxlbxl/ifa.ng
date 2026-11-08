@@ -1,9 +1,9 @@
 \set ON_ERROR_STOP 0
 -- re-apply is idempotent?
 \set ON_ERROR_STOP 0
-insert into auth.users(id) values ('00000000-0000-0000-0000-00000000000a'),('00000000-0000-0000-0000-00000000000b'),('00000000-0000-0000-0000-0000000000ad'),('00000000-0000-0000-0000-00000000000c');
-insert into profiles values ('00000000-0000-0000-0000-0000000000ad','admin');
-insert into babalawos(user_id, hourly_rate) values ('00000000-0000-0000-0000-00000000000b', 10000);
+insert into auth.users(id, email, raw_user_meta_data) values ('00000000-0000-0000-0000-00000000000a','a@x.ng','{}'),('00000000-0000-0000-0000-00000000000b','b@x.ng','{"role":"babalawo"}'),('00000000-0000-0000-0000-0000000000ad','ad@x.ng','{}'),('00000000-0000-0000-0000-00000000000c','c@x.ng','{}');
+insert into user_roles(user_id, role) values ('00000000-0000-0000-0000-0000000000ad','admin');
+update babalawos set hourly_rate = 10000, is_verified = true where user_id = '00000000-0000-0000-0000-00000000000b';
 insert into availability(babalawo_id, day_of_week, start_time, end_time) select '00000000-0000-0000-0000-00000000000b', d, '08:00','18:00' from generate_series(0,6) d;
 insert into babalawo_bank_details(babalawo_id, account_name, account_number, bank_name) values ('00000000-0000-0000-0000-00000000000b','x','1','y');
 create or replace function as_user(u text) returns void language plpgsql as $$ begin perform set_config('request.jwt.claim.sub', u, false); end $$;
@@ -54,8 +54,8 @@ select public.set_my_session_price(12000, 18000);
 reset role;
 \echo '--- 5 admin pays withdrawal'
 set role authenticated; select as_user('00000000-0000-0000-0000-0000000000ad');
-select public.admin_process_withdrawal(:'wid', 'mark_paid', 'BANKREF1');
-select public.admin_process_withdrawal(:'wid', 'reject');
+select public.admin_process_withdrawal((select id from withdrawal_requests order by created_at desc limit 1), 'mark_paid', 'BANKREF1');
+select public.admin_process_withdrawal((select id from withdrawal_requests order by created_at desc limit 1), 'reject');
 select held_balance, lifetime_paid_out from babalawo_wallets;
 select kind, status, amount from public.admin_transactions(null,null,null,20,0);
 select public.admin_finance_summary();
@@ -68,8 +68,8 @@ select public.settle_payment_intent((select reference from r2), 12000, 'NGN','tx
 reset role;
 select id, amount, payment_status from sessions order by id;
 set role authenticated; select as_user('00000000-0000-0000-0000-00000000000c');
-select public.cancel_session(2);
-select public.cancel_session(2);
+select public.cancel_session((select id from sessions where user_id='00000000-0000-0000-0000-00000000000c' order by id limit 1));
+select public.cancel_session((select id from sessions where user_id='00000000-0000-0000-0000-00000000000c' order by id limit 1));
 reset role;
 select balance from wallets where user_id='00000000-0000-0000-0000-00000000000c';
 select pending_balance, available_balance, lifetime_earned from babalawo_wallets;

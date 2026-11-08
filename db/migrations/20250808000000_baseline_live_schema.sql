@@ -375,7 +375,7 @@ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS
   SELECT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 $$;
 
--- New account: profile, wallet, and a babalawos row when signing up as one.
+-- New account: profile, and a babalawos row when signing up as one.
 -- Replaced (with role hardening) in 20261108000100.
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
@@ -386,13 +386,23 @@ DECLARE
 BEGIN
   INSERT INTO public.profiles (id, email, full_name, role)
   VALUES (NEW.id, COALESCE(NEW.email, ''), COALESCE(NEW.raw_user_meta_data->>'full_name', ''), wanted);
-  INSERT INTO public.wallets (user_id) VALUES (NEW.id) ON CONFLICT (user_id) DO NOTHING;
   IF wanted = 'babalawo' THEN
     INSERT INTO public.babalawos (user_id) VALUES (NEW.id) ON CONFLICT (user_id) DO NOTHING;
-    INSERT INTO public.babalawo_wallets (babalawo_id) VALUES (NEW.id) ON CONFLICT (babalawo_id) DO NOTHING;
   END IF;
   RETURN NEW;
 END $$;
+
+-- Wallets are created per profile by their own trigger (as on Supabase), so
+-- later versions of handle_new_user do not need to repeat it.
+CREATE OR REPLACE FUNCTION public.create_user_wallet()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  INSERT INTO public.wallets (user_id) VALUES (NEW.id) ON CONFLICT (user_id) DO NOTHING;
+  RETURN NEW;
+END $$;
+CREATE TRIGGER on_profile_created_wallet
+  AFTER INSERT ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.create_user_wallet();
 
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users

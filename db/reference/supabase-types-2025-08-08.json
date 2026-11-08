@@ -1,0 +1,988 @@
+{
+ "tables": {
+  "admin_email_settings": {
+   "columns": {
+    "created_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "id": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "is_enabled": {
+     "ts": "boolean | null",
+     "insertOptional": true
+    },
+    "smtp_from_email": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "smtp_from_name": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "smtp_host": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "smtp_password": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "smtp_port": {
+     "ts": "number | null",
+     "insertOptional": true
+    },
+    "smtp_username": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "updated_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    }
+   },
+   "fks": []
+  },
+  "admin_settings": {
+   "columns": {
+    "created_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "description": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "id": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "is_encrypted": {
+     "ts": "boolean | null",
+     "insertOptional": true
+    },
+    "setting_key": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "setting_value": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "updated_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    }
+   },
+   "fks": []
+  },
+  "availability": {
+   "columns": {
+    "babalawo_id": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "created_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "day_of_week": {
+     "ts": "number",
+     "insertOptional": false
+    },
+    "end_time": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "id": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "is_available": {
+     "ts": "boolean | null",
+     "insertOptional": true
+    },
+    "start_time": {
+     "ts": "string",
+     "insertOptional": false
+    }
+   },
+   "fks": []
+  },
+  "babalawo_bank_details": {
+   "columns": {
+    "account_name": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "account_number": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "babalawo_id": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "bank_name": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "created_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "id": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "updated_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    }
+   },
+   "fks": []
+  },
+  "babalawo_wallets": {
+   "columns": {
+    "available_balance": {
+     "ts": "number",
+     "insertOptional": true
+    },
+    "babalawo_id": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "created_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "id": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "updated_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    }
+   },
+   "fks": []
+  },
+  "babalawos": {
+   "columns": {
+    "availability": {
+     "ts": "Json | null",
+     "insertOptional": true
+    },
+    "bio": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "city": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "commission_babalawo_percent": {
+     "ts": "number | null",
+     "insertOptional": true
+    },
+    "commission_platform_percent": {
+     "ts": "number | null",
+     "insertOptional": true
+    },
+    "country": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "created_at": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "current_status": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "experience_years": {
+     "ts": "number | null",
+     "insertOptional": true
+    },
+    "hourly_rate": {
+     "ts": "number | null",
+     "insertOptional": true
+    },
+    "id": {
+     "ts": "number",
+     "insertOptional": true
+    },
+    "is_active": {
+     "ts": "boolean | null",
+     "insertOptional": true
+    },
+    "is_featured": {
+     "ts": "boolean | null",
+     "insertOptional": true
+    },
+    "is_verified": {
+     "ts": "boolean",
+     "insertOptional": true
+    },
+    "languages": {
+     "ts": "string[] | null",
+     "insertOptional": true
+    },
+    "profile_picture_url": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "rating": {
+     "ts": "number | null",
+     "insertOptional": true
+    },
+    "region": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "specialties": {
+     "ts": "string[] | null",
+     "insertOptional": true
+    },
+    "timezone": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "total_sessions": {
+     "ts": "number | null",
+     "insertOptional": true
+    },
+    "updated_at": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "user_id": {
+     "ts": "string",
+     "insertOptional": false
+    }
+   },
+   "fks": []
+  },
+  "notifications": {
+   "columns": {
+    "action_label": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "action_url": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "created_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "id": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "message": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "read": {
+     "ts": "boolean | null",
+     "insertOptional": true
+    },
+    "timestamp": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "title": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "type": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "user_id": {
+     "ts": "string",
+     "insertOptional": false
+    }
+   },
+   "fks": []
+  },
+  "payments": {
+   "columns": {
+    "amount": {
+     "ts": "number",
+     "insertOptional": false
+    },
+    "babalawo_amount": {
+     "ts": "number | null",
+     "insertOptional": true
+    },
+    "commission_amount": {
+     "ts": "number | null",
+     "insertOptional": true
+    },
+    "created_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "id": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "payment_gateway": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "payment_reference": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "session_id": {
+     "ts": "number | null",
+     "insertOptional": true
+    },
+    "status": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "updated_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "user_id": {
+     "ts": "string",
+     "insertOptional": false
+    }
+   },
+   "fks": [
+    {
+     "columns": [
+      "session_id"
+     ],
+     "ref": "sessions",
+     "refColumns": [
+      "id"
+     ]
+    }
+   ]
+  },
+  "payouts": {
+   "columns": {
+    "amount": {
+     "ts": "number",
+     "insertOptional": false
+    },
+    "babalawo_id": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "created_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "id": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "method": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "reference": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "status": {
+     "ts": "string | null",
+     "insertOptional": true
+    }
+   },
+   "fks": []
+  },
+  "profiles": {
+   "columns": {
+    "avatar_url": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "created_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "email": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "full_name": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "id": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "phone": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "role": {
+     "ts": "Database[\"public\"][\"Enums\"][\"user_role\"] | null",
+     "insertOptional": true
+    },
+    "updated_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    }
+   },
+   "fks": []
+  },
+  "refunds": {
+   "columns": {
+    "amount": {
+     "ts": "number",
+     "insertOptional": false
+    },
+    "created_at": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "flutterwave_refund_id": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "id": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "payment_id": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "processed_by": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "reason": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "status": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "updated_at": {
+     "ts": "string",
+     "insertOptional": true
+    }
+   },
+   "fks": [
+    {
+     "columns": [
+      "processed_by"
+     ],
+     "ref": "profiles",
+     "refColumns": [
+      "id"
+     ]
+    }
+   ]
+  },
+  "reminders": {
+   "columns": {
+    "created_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "description": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "id": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "is_completed": {
+     "ts": "boolean | null",
+     "insertOptional": true
+    },
+    "reminder_date": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "reminder_type": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "title": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "updated_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "user_id": {
+     "ts": "string",
+     "insertOptional": false
+    }
+   },
+   "fks": []
+  },
+  "reviews": {
+   "columns": {
+    "babalawo_id": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "comment": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "created_at": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "id": {
+     "ts": "number",
+     "insertOptional": true
+    },
+    "is_approved": {
+     "ts": "boolean",
+     "insertOptional": true
+    },
+    "rating": {
+     "ts": "number",
+     "insertOptional": false
+    },
+    "session_id": {
+     "ts": "number",
+     "insertOptional": false
+    },
+    "user_id": {
+     "ts": "string",
+     "insertOptional": false
+    }
+   },
+   "fks": [
+    {
+     "columns": [
+      "session_id"
+     ],
+     "ref": "sessions",
+     "refColumns": [
+      "id"
+     ]
+    }
+   ]
+  },
+  "ritual_reminders": {
+   "columns": {
+    "babalawo_id": {
+     "ts": "number",
+     "insertOptional": false
+    },
+    "created_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "description": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "due_date": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "id": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "reminder_days": {
+     "ts": "number[] | null",
+     "insertOptional": true
+    },
+    "ritual_type": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "status": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "title": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "updated_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "user_id": {
+     "ts": "string",
+     "insertOptional": false
+    }
+   },
+   "fks": [
+    {
+     "columns": [
+      "babalawo_id"
+     ],
+     "ref": "babalawos",
+     "refColumns": [
+      "id"
+     ]
+    }
+   ]
+  },
+  "session_logs": {
+   "columns": {
+    "action": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "id": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "metadata": {
+     "ts": "Json | null",
+     "insertOptional": true
+    },
+    "session_id": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "timestamp": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "user_id": {
+     "ts": "string",
+     "insertOptional": false
+    }
+   },
+   "fks": []
+  },
+  "sessions": {
+   "columns": {
+    "agora_channel_name": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "amount": {
+     "ts": "number | null",
+     "insertOptional": true
+    },
+    "babalawo_id": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "deadline": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "end_time": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "id": {
+     "ts": "number",
+     "insertOptional": true
+    },
+    "is_instant": {
+     "ts": "boolean | null",
+     "insertOptional": true
+    },
+    "items_needed": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "next_appointment": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "notes": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "other_odus": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "payment_reference": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "payment_status": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "primary_odu": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "ritual_recommendations": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "room_url": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "session_date": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "start_time": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "status": {
+     "ts": "Database[\"public\"][\"Enums\"][\"session_status_enum\"]",
+     "insertOptional": false
+    },
+    "user_id": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "user_timezone": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "warning": {
+     "ts": "string | null",
+     "insertOptional": true
+    }
+   },
+   "fks": []
+  },
+  "user_notification_preferences": {
+   "columns": {
+    "created_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "email": {
+     "ts": "boolean | null",
+     "insertOptional": true
+    },
+    "id": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "new_babalawos": {
+     "ts": "boolean | null",
+     "insertOptional": true
+    },
+    "payment_updates": {
+     "ts": "boolean | null",
+     "insertOptional": true
+    },
+    "session_reminders": {
+     "ts": "boolean | null",
+     "insertOptional": true
+    },
+    "sms": {
+     "ts": "boolean | null",
+     "insertOptional": true
+    },
+    "system_announcements": {
+     "ts": "boolean | null",
+     "insertOptional": true
+    },
+    "updated_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "user_id": {
+     "ts": "string",
+     "insertOptional": false
+    }
+   },
+   "fks": []
+  },
+  "wallet_transactions": {
+   "columns": {
+    "amount": {
+     "ts": "number",
+     "insertOptional": false
+    },
+    "created_at": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "description": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "id": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "payment_gateway": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "payment_reference": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "session_id": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "transaction_source": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "transaction_type": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "user_id": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "wallet_id": {
+     "ts": "string",
+     "insertOptional": false
+    }
+   },
+   "fks": [
+    {
+     "columns": [
+      "wallet_id"
+     ],
+     "ref": "wallets",
+     "refColumns": [
+      "id"
+     ]
+    }
+   ]
+  },
+  "wallets": {
+   "columns": {
+    "balance": {
+     "ts": "number",
+     "insertOptional": true
+    },
+    "created_at": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "id": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "updated_at": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "user_id": {
+     "ts": "string",
+     "insertOptional": false
+    }
+   },
+   "fks": []
+  },
+  "withdrawal_requests": {
+   "columns": {
+    "amount": {
+     "ts": "number",
+     "insertOptional": false
+    },
+    "babalawo_id": {
+     "ts": "string",
+     "insertOptional": false
+    },
+    "created_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "id": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "reason": {
+     "ts": "string | null",
+     "insertOptional": true
+    },
+    "status": {
+     "ts": "string",
+     "insertOptional": true
+    },
+    "updated_at": {
+     "ts": "string | null",
+     "insertOptional": true
+    }
+   },
+   "fks": []
+  }
+ },
+ "views": {},
+ "functions": {
+  "auto_complete_sessions": {
+   "args": "Record<PropertyKey, never>",
+   "returns": "undefined"
+  },
+  "coalesce_zero": {
+   "args": "{ val: unknown }",
+   "returns": "unknown"
+  },
+  "get_babalawo_details_by_ids": {
+   "args": "{ p_ids: string[] }",
+   "returns": "{ id: string full_name: string avatar_url: string specialties: string[] }[]"
+  },
+  "get_babalawo_earnings_stats": {
+   "args": "{ p_babalawo_id: string }",
+   "returns": "Json"
+  },
+  "get_public_babalawos": {
+   "args": "Record<PropertyKey, never>",
+   "returns": "{ id: string full_name: string avatar_url: string specialties: string[] experience_years: number hourly_rate: number bio: string verification_status: string rating: number total_sessions: number languages: string[] timezone: string is_active: boolean is_featured: boolean current_status: string }[]"
+  },
+  "is_admin": {
+   "args": "Record<PropertyKey, never>",
+   "returns": "boolean"
+  },
+  "update_wallet_balance": {
+   "args": "{\n          p_user_id: string\n          p_amount: number\n          p_transaction_type: string\n          p_transaction_source: string\n          p_payment_gateway?: string\n          p_payment_reference?: string\n          p_session_id?: string\n          p_description?: string\n        }",
+   "returns": "string"
+  }
+ },
+ "enums": {
+  "payment_status": [
+   "pending",
+   "paid",
+   "failed",
+   "refunded"
+  ],
+  "session_status": [
+   "pending",
+   "confirmed",
+   "completed",
+   "cancelled"
+  ],
+  "session_status_enum": [
+   "pending",
+   "confirmed",
+   "completed",
+   "cancelled",
+   "in_progress"
+  ],
+  "user_role": [
+   "user",
+   "babalawo",
+   "admin"
+  ],
+  "verification_status": [
+   "pending",
+   "approved",
+   "rejected"
+  ]
+ }
+}

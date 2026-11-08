@@ -19,7 +19,6 @@ begin
 end $$;
 
 -- fixtures (as superuser)
-create trigger t_new_user after insert on auth.users for each row execute function public.handle_new_user();
 insert into auth.users(id,email,raw_user_meta_data) values
  ('00000000-0000-0000-0000-00000000000a','admin@x','{}'),
  ('00000000-0000-0000-0000-00000000000b','bab@x','{"role":"babalawo"}'),
@@ -31,13 +30,13 @@ do $$ begin
     raise exception 'ATTACK SUCCEEDED: signup metadata granted admin'; end if;
   raise notice 'ok   (blocked) signup with role=admin metadata';
 end $$;
-insert into sessions(user_id,babalawo_id,status,payment_status) values
- ('00000000-0000-0000-0000-00000000000c','00000000-0000-0000-0000-00000000000b','confirmed','paid'),   -- 1 paid+confirmed
- ('00000000-0000-0000-0000-00000000000c','00000000-0000-0000-0000-00000000000b','pending','pending'), -- 2 unpaid pending
- ('00000000-0000-0000-0000-00000000000c','00000000-0000-0000-0000-00000000000b','pending','paid');    -- 3 paid pending
+insert into sessions(user_id,babalawo_id,status,payment_status,session_date,start_time,end_time) values
+ ('00000000-0000-0000-0000-00000000000c','00000000-0000-0000-0000-00000000000b','confirmed','paid',current_date+1,'10:00','11:00'),   -- 1 paid+confirmed
+ ('00000000-0000-0000-0000-00000000000c','00000000-0000-0000-0000-00000000000b','pending','pending',current_date+1,'12:00','13:00'), -- 2 unpaid pending
+ ('00000000-0000-0000-0000-00000000000c','00000000-0000-0000-0000-00000000000b','pending','paid',current_date+1,'14:00','15:00');    -- 3 paid pending
 
 -- ---- as a normal client
-set role authenticated; set request.uid = '00000000-0000-0000-0000-00000000000c';
+set role authenticated; select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000000c', false);
 select pg_temp.must_fail('client self-promotes profile role', $$update profiles set role='admin' where id=auth.uid()$$);
 select pg_temp.must_fail('client writes user_roles',          $$insert into user_roles(user_id,role) values (auth.uid(),'admin')$$);
 select pg_temp.must_fail('client calls admin RPC',            $$select admin_set_user_role(auth.uid(),'admin',true)$$);
@@ -52,7 +51,7 @@ select pg_temp.must_pass('client cancels own unpaid session', $$update sessions 
 select pg_temp.must_fail('client reopens cancelled session',  $$update sessions set status='pending' where id=2$$);
 
 -- ---- as the babalawo
-reset role; set role authenticated; set request.uid = '00000000-0000-0000-0000-00000000000b';
+reset role; set role authenticated; select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000000b', false);
 select pg_temp.must_fail('babalawo self-verifies',            $$update babalawos set is_verified=true where user_id=auth.uid()$$);
 select pg_temp.must_fail('babalawo moves unpaid session on', $$update sessions set status='confirmed' where id=2$$);
 select pg_temp.must_fail('babalawo skips pending->completed', $$update sessions set status='completed' where id=3$$);
@@ -64,11 +63,11 @@ select pg_temp.must_pass('babalawo starts then completes',    $$update sessions 
 select pg_temp.must_fail('babalawo reopens completed',        $$update sessions set status='confirmed' where id=1$$);
 
 -- ---- as an outsider
-reset role; set role authenticated; set request.uid = '00000000-0000-0000-0000-00000000000d';
+reset role; set role authenticated; select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000000d', false);
 select pg_temp.must_touch_nothing('outsider cancels others session', $$update sessions set status='cancelled' where id=3$$);
 
 -- ---- as admin
-reset role; set role authenticated; set request.uid = '00000000-0000-0000-0000-00000000000a';
+reset role; set role authenticated; select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000000a', false);
 select pg_temp.must_pass('admin approves babalawo',          $$select admin_review_babalawo('00000000-0000-0000-0000-00000000000b','approved',null)$$);
 select pg_temp.must_pass('admin overrides session status',   $$select admin_update_session_status(3,'in_progress')$$);
 select pg_temp.must_fail('admin cannot cancel via generic RPC', $$select admin_update_session_status(3,'cancelled')$$);

@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { AvailabilitySlot, getAvailableTimesForDate, isDateDisabled } from "@/utils/availabilityUtils";
+import { AvailabilitySlot, BabalawoSchedule, getBookableTimes, isDateUnavailable } from "@/utils/availabilityUtils";
 
 interface DateTimeSelectorProps {
   date: Date | undefined;
@@ -14,6 +14,7 @@ interface DateTimeSelectorProps {
   selectedTime: string;
   setSelectedTime: (time: string) => void;
   availability: AvailabilitySlot[];
+  schedule?: BabalawoSchedule | null;
 }
 
 const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
@@ -21,9 +22,10 @@ const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
   setDate,
   selectedTime,
   setSelectedTime,
-  availability
+  availability,
+  schedule
 }) => {
-  const availableTimes = date ? getAvailableTimesForDate(date, availability) : [];
+  const availableTimes = date ? getBookableTimes(date, availability, schedule) : [];
 
   const handleDateSelect = (newDate: Date | undefined) => {
     setDate(newDate);
@@ -52,7 +54,7 @@ const DateTimeSelector: React.FC<DateTimeSelectorProps> = ({
               mode="single"
               selected={date}
               onSelect={handleDateSelect}
-              disabled={(date) => isDateDisabled(date, availability)}
+              disabled={(date) => isDateUnavailable(date, availability, schedule)}
               initialFocus
               className="pointer-events-auto"
             />

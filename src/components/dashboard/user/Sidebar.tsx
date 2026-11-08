@@ -24,7 +24,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeSection, onSectionChange }) => 
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'my-sessions', label: 'My Sessions', icon: Calendar },
     { id: 'session-history', label: 'Session History', icon: History },
-    { id: 'spiritual-journey', label: 'Spiritual Journey', icon: BookOpen },
+    { id: 'spiritual-journey', label: 'Notes & Ebo', icon: BookOpen },
     { id: 'find-babalawo', label: 'Find Babalawo', icon: Search },
     { id: 'transaction-history', label: 'Transactions', icon: CreditCard },
     { id: 'notifications', label: 'Notifications', icon: Bell },

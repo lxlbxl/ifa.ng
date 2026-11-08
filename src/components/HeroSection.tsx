@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Star, Shield, Video, ArrowRight, Play } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import InstallButton from "@/components/pwa/InstallButton";
 
 const testimonials = [
   {
@@ -107,6 +108,7 @@ const HeroSection = () => {
                   Watch Demo
                 </Button>
               </motion.div>
+              <InstallButton variant="hero" label="Download the app" className="bg-yellow-400 text-gray-900 hover:bg-yellow-300 border-2 border-gray-900" />
             </div>
 
             {/* Trust Indicators */}

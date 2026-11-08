@@ -22,7 +22,7 @@ const menuItems = [
   { icon: Home, text: 'Dashboard', section: 'dashboard' },
   { icon: Calendar, text: 'My Sessions', section: 'my-sessions' },
   { icon: History, text: 'Session History', section: 'session-history' },
-  { icon: BookOpen, text: 'Spiritual Journey', section: 'spiritual-journey' },
+  { icon: BookOpen, text: 'Notes & Ebo', section: 'spiritual-journey' },
   { icon: Users, text: 'Find a Babalawo', section: 'find-babalawo' },
   { icon: CreditCard, text: 'Transactions', section: 'transaction-history' },
   { icon: Bell, text: 'Notifications', section: 'notifications' },

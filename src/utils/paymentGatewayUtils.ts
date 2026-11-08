@@ -1,16 +1,6 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export type PaymentGateway = 'flutterwave' | 'paystack';
-
-export interface PaymentSettings {
-  flutterwave_public_key?: string;
-  flutterwave_secret_key?: string;
-  flutterwave_environment?: string;
-  paystack_public_key?: string;
-  paystack_secret_key?: string;
-  paystack_environment?: string;
-}
 
 declare global {
   interface Window {
@@ -21,99 +11,106 @@ declare global {
   }
 }
 
-export const getPaymentSettings = async (): Promise<PaymentSettings> => {
-  try {
-    console.log("🔍 Fetching payment gateway settings...");
-    
-    // Default test keys to use if no settings are found or if settings are empty
-    const defaultSettings: PaymentSettings = {
-      flutterwave_public_key: "FLWPUBK_TEST-7d2b1d0e9b0d7a9f5f7b9f7b9f7b9f7b-X",
-      flutterwave_secret_key: "FLWSECK_TEST-REDACTED",
-      flutterwave_environment: "test",
-      paystack_public_key: "pk_test_1234567890abcdef1234567890abcdef1234567",
-      paystack_secret_key: "sk_test_1234567890abcdef1234567890abcdef1234567",
-      paystack_environment: "test"
-    };
-    
-    const { data, error } = await supabase
-      .from("admin_settings")
-      .select("setting_key, setting_value")
-      .in("setting_key", [
-        "flutterwave_public_key",
-        "flutterwave_secret_key", 
-        "flutterwave_environment",
-        "paystack_public_key",
-        "paystack_secret_key",
-        "paystack_environment"
-      ]);
-
-    if (error) {
-      console.error("❌ Database error:", error);
-      console.log("⚠️ Using default test payment settings");
-      return defaultSettings;
-    }
-
-    if (!data || data.length === 0) {
-      console.log("⚠️ No payment settings found, using default test settings");
-      return defaultSettings;
-    }
-
-    const settings: PaymentSettings = { ...defaultSettings };
-    data.forEach((row: any) => {
-      if (row.setting_key && row.setting_value !== null && row.setting_value !== undefined) {
-        const trimmedValue = row.setting_value.toString().trim();
-        if (trimmedValue !== '') {
-          settings[row.setting_key as keyof PaymentSettings] = trimmedValue;
-        }
-      }
-    });
-    
-    console.log("✅ Payment settings retrieved successfully");
-    return settings;
-  } catch (error: any) {
-    console.error("💥 Error getting payment settings:", error);
-    throw error;
-  }
-};
-
-export const loadFlutterwaveScript = (): Promise<boolean> => {
-  return new Promise((resolve, reject) => {
-    if (typeof window.FlutterwaveCheckout === 'function') {
-      return resolve(true);
-    }
-    
+export const loadFlutterwaveScript = (): Promise<boolean> =>
+  new Promise((resolve, reject) => {
+    if (typeof window.FlutterwaveCheckout === 'function') return resolve(true);
     const script = document.createElement("script");
     script.src = "https://checkout.flutterwave.com/v3.js";
     script.onload = () => resolve(true);
     script.onerror = () => reject(new Error("Failed to load Flutterwave script"));
     document.head.appendChild(script);
   });
-};
 
-export const loadPaystackScript = (): Promise<boolean> => {
-  return new Promise((resolve, reject) => {
-    if (typeof window.PaystackPop === 'object') {
-      return resolve(true);
-    }
-    
+export const loadPaystackScript = (): Promise<boolean> =>
+  new Promise((resolve, reject) => {
+    if (typeof window.PaystackPop === 'object') return resolve(true);
     const script = document.createElement("script");
     script.src = "https://js.paystack.co/v1/inline.js";
     script.onload = () => resolve(true);
     script.onerror = () => reject(new Error("Failed to load Paystack script"));
     document.head.appendChild(script);
   });
-};
 
-export const generatePaymentRef = (gateway: PaymentGateway) => {
-  const prefix = gateway === 'flutterwave' ? 'FLW' : 'PSK';
-  return `IFANG-${prefix}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-};
+export interface PaymentIntentInfo {
+  reference: string;
+  amount: number; // NGN, decided by the server
+  currency: string;
+  gateway: PaymentGateway;
+  public_key: string;
+  email: string;
+  name: string | null;
+}
 
-export const validateGatewaySettings = (gateway: PaymentGateway, settings: PaymentSettings): boolean => {
-  if (gateway === 'flutterwave') {
-    return !!(settings.flutterwave_public_key && settings.flutterwave_environment);
-  } else if (gateway === 'paystack') {
-    return !!(settings.paystack_public_key && settings.paystack_environment);
+export type SettleResult =
+  | { status: 'settled' | 'already_settled'; kind: 'session' | 'wallet_topup'; session_id?: number | null }
+  | { status: 'slot_taken_credited_to_wallet' }
+  | { status: 'pending' | 'failed' | 'amount_mismatch' | 'unknown_reference'; reason?: string };
+
+/** Ask the server to create a payment. The server picks the amount; we never send one for a session. */
+export const createPaymentIntent = async (body: {
+  kind: 'session' | 'wallet_topup';
+  gateway: PaymentGateway;
+  amount?: number; // only honoured for wallet top-ups
+  babalawo_user_id?: string;
+  session_date?: string;
+  start_time?: string;
+  is_instant?: boolean;
+}): Promise<PaymentIntentInfo> => {
+  const { data, error } = await supabase.functions.invoke('payment-init', { body });
+  if (error) {
+    let msg = error.message;
+    try { msg = (await (error as any).context?.json())?.error ?? msg; } catch { /* keep default */ }
+    throw new Error(msg);
   }
-  return false;
+  return data as PaymentIntentInfo;
+};
+
+/** Open the gateway popup. Resolves true when the popup reports success (still unverified!), false if closed/failed. */
+export const openCheckout = async (intent: PaymentIntentInfo, description: string): Promise<boolean> => {
+  if (intent.gateway === 'paystack') {
+    await loadPaystackScript();
+    return new Promise((resolve) => {
+      let done = false;
+      const finish = (v: boolean) => { if (!done) { done = true; resolve(v); } };
+      window.PaystackPop.setup({
+        key: intent.public_key,
+        email: intent.email,
+        amount: Math.round(intent.amount * 100),
+        currency: intent.currency,
+        ref: intent.reference,
+        callback: (r: any) => finish(r?.status === 'success'),
+        onClose: () => finish(false),
+      }).openIframe();
+    });
+  }
+  await loadFlutterwaveScript();
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = (v: boolean) => { if (!done) { done = true; resolve(v); } };
+    window.FlutterwaveCheckout({
+      public_key: intent.public_key,
+      tx_ref: intent.reference,
+      amount: intent.amount,
+      currency: intent.currency,
+      payment_options: "card,account,banktransfer,ussd",
+      customer: { email: intent.email, name: intent.name ?? "IFA.ng user" },
+      callback: (r: any) => finish(r?.status === 'successful' || r?.status === 'completed'),
+      onclose: () => finish(false),
+      customizations: { title: "IFA.ng", description, logo: "/favicon.ico" },
+    });
+  });
+};
+
+/** Server-side verification + settlement. Polls briefly because bank transfers/USSD can confirm a moment later. */
+export const verifyPayment = async (reference: string, attempts = 6, delayMs = 2000): Promise<SettleResult> => {
+  let last: SettleResult = { status: 'pending' };
+  for (let i = 0; i < attempts; i++) {
+    const { data, error } = await supabase.functions.invoke('payment-verify', { body: { reference } });
+    if (!error && data) {
+      last = data as SettleResult;
+      if (last.status !== 'pending') return last;
+    }
+    await new Promise((r) => setTimeout(r, delayMs));
+  }
+  return last;
 };

@@ -43,7 +43,7 @@ export type Database = {
       disputes: {
         Row: {
           id: string
-          session_id: string
+          session_id: number
           raised_by: string
           reason: string
           status: string
@@ -55,7 +55,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          session_id: string
+          session_id: number
           raised_by: string
           reason: string
         }
@@ -673,10 +673,10 @@ export type Database = {
           end_time: string
           id: string
           is_instant: boolean | null
-          items_needed: string | null
+          items_needed: Json | null
           next_appointment: string | null
           notes: string | null
-          other_odus: string | null
+          other_odus: string[] | null
           payment_reference: string | null
           payment_status: string | null
           primary_odu: string | null
@@ -697,6 +697,7 @@ export type Database = {
           recording_next_attempt_at: string | null
           recording_last_error: string | null
           video_fallback_reason: string | null
+          warning: string | null
         }
         Insert: {
           agora_channel_name?: string | null
@@ -706,10 +707,10 @@ export type Database = {
           end_time: string
           id?: never
           is_instant?: boolean | null
-          items_needed?: string | null
+          items_needed?: Json | null
           next_appointment?: string | null
           notes?: string | null
-          other_odus?: string | null
+          other_odus?: string[] | null
           payment_reference?: string | null
           payment_status?: string | null
           primary_odu?: string | null
@@ -730,6 +731,7 @@ export type Database = {
           recording_next_attempt_at?: string | null
           recording_last_error?: string | null
           video_fallback_reason?: string | null
+          warning?: string | null
         }
         Update: {
           agora_channel_name?: string | null
@@ -739,10 +741,10 @@ export type Database = {
           end_time?: string
           id?: never
           is_instant?: boolean | null
-          items_needed?: string | null
+          items_needed?: Json | null
           next_appointment?: string | null
           notes?: string | null
-          other_odus?: string | null
+          other_odus?: string[] | null
           payment_reference?: string | null
           payment_status?: string | null
           primary_odu?: string | null
@@ -763,6 +765,7 @@ export type Database = {
           recording_next_attempt_at?: string | null
           recording_last_error?: string | null
           video_fallback_reason?: string | null
+          warning?: string | null
         }
         Relationships: []
       }
@@ -932,6 +935,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"][]
       }
+      admin_refund_session: {
+        Args: { p_session_id: number; p_reason: string }
+        Returns: unknown
+      }
       is_suspended: {
         Args: { _user_id: string }
         Returns: boolean
@@ -949,7 +956,7 @@ export type Database = {
         Returns: undefined
       }
       admin_update_session_status: {
-        Args: { _session_id: string; _status: Database["public"]["Enums"]["session_status_enum"]; _reason?: string }
+        Args: { _session_id: number; _status: Database["public"]["Enums"]["session_status_enum"]; _reason?: string }
         Returns: undefined
       }
       admin_resolve_dispute: {

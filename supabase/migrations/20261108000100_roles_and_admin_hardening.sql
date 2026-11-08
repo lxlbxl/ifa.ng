@@ -209,6 +209,12 @@ BEGIN
   IF auth.uid() IS NULL OR public.is_admin() THEN
     RETURN NEW;
   END IF;
+  -- Updates fired by another trigger are system maintenance (e.g. the rating /
+  -- total_sessions recompute when a session completes or a review is approved);
+  -- they run as the caller but never copy user input into these fields.
+  IF pg_trigger_depth() > 1 THEN
+    RETURN NEW;
+  END IF;
   IF TG_OP = 'INSERT' THEN
     NEW.is_verified := false;
     NEW.is_featured := false;
@@ -295,7 +301,7 @@ REVOKE ALL ON FUNCTION public._require_admin() FROM PUBLIC, anon, authenticated;
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS public.disputes (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  session_id      uuid NOT NULL REFERENCES public.sessions(id) ON DELETE CASCADE,
+  session_id      bigint NOT NULL REFERENCES public.sessions(id) ON DELETE CASCADE,
   raised_by       uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   reason          text NOT NULL CHECK (char_length(reason) BETWEEN 10 AND 4000),
   status          text NOT NULL DEFAULT 'open'
@@ -405,13 +411,18 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.admin_update_session_status(_session_id uuid, _status public.session_status_enum, _reason text DEFAULT NULL)
+CREATE OR REPLACE FUNCTION public.admin_update_session_status(_session_id bigint, _status public.session_status_enum, _reason text DEFAULT NULL)
 RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
 AS $$
 DECLARE old_status text;
 BEGIN
   PERFORM public._require_admin();
+  -- Cancelling a paid session must refund; that path lives in the payments flow
+  -- (admin_refund_session), so this generic override refuses to cancel.
+  IF _status = 'cancelled' THEN
+    RAISE EXCEPTION 'Use admin_refund_session to cancel a session (handles refunds)';
+  END IF;
   SELECT status::text INTO old_status FROM public.sessions WHERE id = _session_id;
   IF NOT FOUND THEN RAISE EXCEPTION 'Session not found'; END IF;
   UPDATE public.sessions SET status = _status WHERE id = _session_id;
@@ -453,10 +464,10 @@ $$;
 REVOKE ALL ON FUNCTION public.admin_set_user_role(uuid, public.user_role, boolean),
                        public.admin_set_user_suspended(uuid, boolean, text),
                        public.admin_review_babalawo(uuid, text, text),
-                       public.admin_update_session_status(uuid, public.session_status_enum, text),
+                       public.admin_update_session_status(bigint, public.session_status_enum, text),
                        public.admin_resolve_dispute(uuid, text, text, boolean) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.admin_set_user_role(uuid, public.user_role, boolean),
                           public.admin_set_user_suspended(uuid, boolean, text),
                           public.admin_review_babalawo(uuid, text, text),
-                          public.admin_update_session_status(uuid, public.session_status_enum, text),
+                          public.admin_update_session_status(bigint, public.session_status_enum, text),
                           public.admin_resolve_dispute(uuid, text, text, boolean) TO authenticated;

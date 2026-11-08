@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { fetchBabalawoAvailability, AvailabilitySlot } from "@/utils/availabilityUtils";
+import { fetchBabalawoAvailability, fetchBabalawoSchedule, AvailabilitySlot, BabalawoSchedule } from "@/utils/availabilityUtils";
 import { handlePaymentAndBooking, PaymentMethod } from "@/utils/multiGatewayPaymentHandler";
 import { getUserWallet } from "@/utils/walletUtils";
 import { parseBabalawoPrice, formatPrice } from "@/utils/priceUtils";
@@ -32,6 +32,7 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
   const [walletBalance, setWalletBalance] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
   const [availability, setAvailability] = useState<AvailabilitySlot[]>([]);
+  const [schedule, setSchedule] = useState<BabalawoSchedule | null>(null);
   const [slotLockId, setSlotLockId] = useState<string | null>(null);
   const [lockExpiresAt, setLockExpiresAt] = useState<string | null>(null);
   const [consent, setConsent] = useState<ConsentValue>({ recording: false, ai: false });
@@ -40,6 +41,7 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
   useEffect(() => {
     if (open && babalawo?.id) {
       fetchBabalawoAvailability(babalawo.id).then(setAvailability);
+      fetchBabalawoSchedule(babalawo.id).then(setSchedule).catch(() => setSchedule(null));
     }
     if (open && user?.id) {
       getUserWallet(user.id).then(wallet => {
@@ -234,6 +236,7 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
             selectedTime={selectedTime}
             setSelectedTime={setSelectedTime}
             availability={availability}
+            schedule={schedule}
           />
 
           {slotLockId && lockExpiresAt && (

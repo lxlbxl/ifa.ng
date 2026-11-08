@@ -81,16 +81,16 @@ const SessionOutcomeModal: React.FC<SessionOutcomeModalProps> = ({
         .from("sessions")
         .update({
           primary_odu: formData.primary_odu,
-          other_odus: JSON.stringify(formData.other_odus),
+          other_odus: formData.other_odus, // text[] column: send an array, not a JSON string
           ritual_recommendations: formData.ritual_recommendations,
           items_needed: processedItemsNeeded,
-          deadline: formData.deadline,
-          next_appointment: formData.next_appointment,
-          warning: formData.warnings,
+          deadline: formData.deadline || null, // DATE columns reject ''
+          next_appointment: formData.next_appointment || null,
+          warning: formData.warnings || null,
           notes: formData.notes,
           status: "completed"
         })
-        .eq("id", parseInt(sessionId));
+        .eq("id", sessionId); // bigint id: PostgREST coerces the string, no parseInt
 
       if (sessionError) {
         throw sessionError;

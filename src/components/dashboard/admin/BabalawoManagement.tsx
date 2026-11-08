@@ -5,21 +5,28 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { Search, Star, Users, Award, Settings } from "lucide-react";
+import { Search, Star, Users, Award, Settings, Check, X, Clock } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { useReviewBabalawo } from "@/hooks/useAdminActions";
 import { useAdminBabalawos } from "@/hooks/useAdminBabalawos";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import BabalawoCommissionModal from "./BabalawoCommissionModal";
 
 const BabalawoManagement: React.FC = () => {
   const { data: babalawos, isLoading, error, refetch } = useAdminBabalawos();
   const [searchTerm, setSearchTerm] = useState("");
   const [updatingFeatured, setUpdatingFeatured] = useState<string | null>(null);
-  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null);
+  const [commissionModalOpen, setCommissionModalOpen] = useState(false);
+  const [selectedBabalawo, setSelectedBabalawo] = useState<{ id: string; name: string } | null>(null);
 
   const filteredBabalawos = babalawos?.filter(babalawo =>
+    (statusFilter === 'all' || babalawo.review_status === statusFilter) && (
     babalawo.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    babalawo.specialties?.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()))
+    babalawo.specialties?.some(s => s.toLowerCase().includes(searchTerm.toLowerCase())))
   ) || [];
+  const pendingCount = babalawos?.filter(b => b.review_status === 'pending').length || 0;
 
   const updateFeaturedStatus = async (babalawoId: string, isFeatured: boolean) => {
     setUpdatingFeatured(babalawoId);
@@ -49,33 +56,10 @@ const BabalawoManagement: React.FC = () => {
     }
   };
 
-  const updateVerificationStatus = async (babalawoId: string, isVerified: boolean) => {
-    setUpdatingStatus(babalawoId);
-    try {
-      const { error } = await supabase
-        .from('babalawos')
-        .update({ is_verified: isVerified })
-        .eq('user_id', babalawoId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Verification Updated",
-        description: `Babalawo ${isVerified ? 'verified' : 'unverified'}`,
-      });
-
-      refetch();
-    } catch (error) {
-      console.error('Error updating verification:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update verification status",
-        variant: "destructive",
-      });
-    } finally {
-      setUpdatingStatus(null);
-    }
-  };
+  const review = useReviewBabalawo();
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'suspended'>('pending');
+  const [rejectTarget, setRejectTarget] = useState<{ id: string; name: string } | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   if (isLoading) {
     return (
@@ -138,6 +122,14 @@ const BabalawoManagement: React.FC = () => {
               className="pl-9"
             />
           </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {(['pending','approved','rejected','suspended','all'] as const).map(f => (
+            <Button key={f} size="sm" variant={statusFilter === f ? 'default' : 'outline'} onClick={() => setStatusFilter(f)}>
+              {f.charAt(0).toUpperCase() + f.slice(1)}{f === 'pending' && pendingCount > 0 ? ` (${pendingCount})` : ''}
+            </Button>
+          ))}
         </div>
 
         {/* Stats Summary */}
@@ -238,15 +230,32 @@ const BabalawoManagement: React.FC = () => {
 
                 {/* Action Controls */}
                 <div className="flex flex-wrap items-center gap-4 pt-4 border-t">
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium">Verified:</label>
-                    <Switch
-                      checked={babalawo.is_verified}
-                      onCheckedChange={(checked) => updateVerificationStatus(babalawo.id, checked)}
-                      disabled={updatingStatus === babalawo.id}
-                    />
-                  </div>
-                  
+                  <Badge variant="outline" className="capitalize">
+                    {babalawo.review_status === 'pending' && <Clock className="h-3 w-3 mr-1" />}
+                    {babalawo.review_status}
+                  </Badge>
+                  {babalawo.review_status !== 'approved' && (
+                    <Button size="sm" disabled={review.isPending}
+                      onClick={() => review.mutate({ userId: babalawo.id, status: 'approved' })}>
+                      <Check className="h-4 w-4 mr-1" />Approve
+                    </Button>
+                  )}
+                  {babalawo.review_status !== 'rejected' && (
+                    <Button size="sm" variant="outline" className="text-red-600" disabled={review.isPending}
+                      onClick={() => { setRejectReason(""); setRejectTarget({ id: babalawo.id, name: babalawo.full_name || 'Unnamed' }); }}>
+                      <X className="h-4 w-4 mr-1" />Reject
+                    </Button>
+                  )}
+                  {babalawo.review_status === 'approved' && (
+                    <Button size="sm" variant="outline" disabled={review.isPending}
+                      onClick={() => review.mutate({ userId: babalawo.id, status: 'suspended', notes: 'Suspended by admin' })}>
+                      Suspend
+                    </Button>
+                  )}
+                  {babalawo.review_notes && babalawo.review_status !== 'approved' && (
+                    <span className="text-xs text-gray-500 w-full">Note: {babalawo.review_notes}</span>
+                  )}
+
                   <div className="flex items-center gap-2">
                     <label className="text-sm font-medium">Featured:</label>
                     <Switch
@@ -261,12 +270,15 @@ const BabalawoManagement: React.FC = () => {
                     size="sm"
                     className="ml-auto"
                     onClick={() => {
-                      // Navigate to detailed management view
-                      console.log('Manage', babalawo.id);
+                      setSelectedBabalawo({
+                        id: babalawo.id,
+                        name: babalawo.full_name || 'Unnamed'
+                      });
+                      setCommissionModalOpen(true);
                     }}
                   >
                     <Settings className="h-4 w-4 mr-1" />
-                    Manage
+                    Manage Commission
                   </Button>
                 </div>
               </div>
@@ -274,6 +286,35 @@ const BabalawoManagement: React.FC = () => {
           )}
         </div>
       </CardContent>
+
+      <Dialog open={!!rejectTarget} onOpenChange={(o) => !o && setRejectTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject {rejectTarget?.name}?</DialogTitle>
+            <DialogDescription>The reason is sent to the Babalawo so they can fix their profile.</DialogDescription>
+          </DialogHeader>
+          <Textarea placeholder="Reason" value={rejectReason} onChange={(e) => setRejectReason(e.target.value)} />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectTarget(null)}>Cancel</Button>
+            <Button variant="destructive" disabled={!rejectReason.trim()}
+              onClick={() => {
+                if (!rejectTarget) return;
+                review.mutate({ userId: rejectTarget.id, status: 'rejected', notes: rejectReason.trim() });
+                setRejectTarget(null);
+              }}>Reject</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {selectedBabalawo && (
+        <BabalawoCommissionModal
+          open={commissionModalOpen}
+          onOpenChange={setCommissionModalOpen}
+          babalawoId={selectedBabalawo.id}
+          babalawoName={selectedBabalawo.name}
+          onUpdate={refetch}
+        />
+      )}
     </Card>
   );
 };

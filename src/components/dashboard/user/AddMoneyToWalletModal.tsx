@@ -5,15 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
-import { 
-  getPaymentSettings, 
-  loadFlutterwaveScript, 
-  loadPaystackScript, 
-  generatePaymentRef,
-  validateGatewaySettings,
-  PaymentGateway 
-} from "@/utils/paymentGatewayUtils";
-import { addMoneyToWallet } from "@/utils/walletUtils";
+import { createPaymentIntent, openCheckout, verifyPayment, PaymentGateway } from "@/utils/paymentGatewayUtils";
+import { getSuggestedAmounts } from "@/utils/priceUtils";
+import FeeDisclosure from "./FeeDisclosure";
 
 interface AddMoneyToWalletModalProps {
   open: boolean;
@@ -33,121 +27,41 @@ const AddMoneyToWalletModal: React.FC<AddMoneyToWalletModalProps> = ({
 
   const handleAddMoney = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const numAmount = parseFloat(amount);
-    if (!numAmount || numAmount < 100) {
-      toast({ title: "Please enter a valid amount (minimum ₦100)", variant: "destructive" });
+    if (!numAmount || numAmount < 100 || numAmount > 1000000) {
+      toast({ title: "Enter an amount between ₦100 and ₦1,000,000", variant: "destructive" });
       return;
     }
 
     setIsLoading(true);
-
     try {
-      const settings = await getPaymentSettings();
-      
-      if (!validateGatewaySettings(selectedGateway, settings)) {
-        toast({ 
-          title: "Payment Gateway Error", 
-          description: `${selectedGateway} is not properly configured.`,
-          variant: "destructive" 
-        });
-        setIsLoading(false);
-        return;
-      }
+      // The server creates the payment, the provider is asked whether it really succeeded,
+      // and only the server can credit the wallet.
+      const intent = await createPaymentIntent({ kind: 'wallet_topup', gateway: selectedGateway, amount: numAmount });
+      const popupSaidPaid = await openCheckout(intent, "Top up your IFA.ng wallet");
+      const result = await verifyPayment(intent.reference, popupSaidPaid ? 6 : 1, popupSaidPaid ? 2000 : 0);
 
-      const paymentRef = generatePaymentRef(selectedGateway);
-
-      if (selectedGateway === 'flutterwave') {
-        await loadFlutterwaveScript();
-        
-        window.FlutterwaveCheckout({
-          public_key: settings.flutterwave_public_key,
-          tx_ref: paymentRef,
-          amount: numAmount,
-          currency: "NGN",
-          payment_options: "card,account,banktransfer,ussd",
-          customer: {
-            email: userProfile?.email || user?.email || "user@example.com",
-            name: userProfile?.full_name || "User"
-          },
-          callback: async function(response: any) {
-            if (response.status === "successful") {
-              const success = await addMoneyToWallet(
-                user?.id, 
-                numAmount, 
-                'flutterwave', 
-                paymentRef,
-                `Added ₦${numAmount} to wallet via Flutterwave`
-              );
-              
-              if (success) {
-                toast({ title: "Money added successfully!" });
-                onSuccess();
-                onOpenChange(false);
-              } else {
-                toast({ title: "Failed to update wallet", variant: "destructive" });
-              }
-            } else {
-              toast({ title: "Payment failed", variant: "destructive" });
-            }
-            setIsLoading(false);
-          },
-          onclose: function() {
-            setIsLoading(false);
-          },
-          customizations: {
-            title: "Add Money to Wallet",
-            description: "Top up your IFA.ng wallet",
-            logo: "/favicon.ico"
-          }
-        });
+      if (result.status === 'settled' || result.status === 'already_settled') {
+        toast({ title: "Money added successfully!" });
+        onSuccess();
+        onOpenChange(false);
+      } else if (!popupSaidPaid) {
+        toast({ title: "Payment cancelled", description: "No money was taken." });
+      } else if (result.status === 'pending') {
+        toast({ title: "Waiting for confirmation", description: `If you were charged your wallet will update shortly. Reference: ${intent.reference}` });
+        onOpenChange(false);
       } else {
-        await loadPaystackScript();
-        
-        const handler = window.PaystackPop.setup({
-          key: settings.paystack_public_key,
-          email: userProfile?.email || user?.email || "user@example.com",
-          amount: numAmount * 100, // Paystack expects kobo
-          currency: 'NGN',
-          ref: paymentRef,
-          callback: async function(response: any) {
-            if (response.status === "success") {
-              const success = await addMoneyToWallet(
-                user?.id, 
-                numAmount, 
-                'paystack', 
-                paymentRef,
-                `Added ₦${numAmount} to wallet via Paystack`
-              );
-              
-              if (success) {
-                toast({ title: "Money added successfully!" });
-                onSuccess();
-                onOpenChange(false);
-              } else {
-                toast({ title: "Failed to update wallet", variant: "destructive" });
-              }
-            } else {
-              toast({ title: "Payment failed", variant: "destructive" });
-            }
-            setIsLoading(false);
-          },
-          onClose: function() {
-            setIsLoading(false);
-          }
-        });
-
-        handler.openIframe();
+        toast({ title: "Payment could not be verified", description: `Contact support with reference ${intent.reference} if you were charged.`, variant: "destructive" });
       }
     } catch (error: any) {
-      toast({ 
-        title: "Error", 
-        description: error.message || "Failed to initialize payment",
-        variant: "destructive" 
-      });
+      toast({ title: "Error", description: error.message || "Failed to start payment", variant: "destructive" });
+    } finally {
       setIsLoading(false);
     }
   };
+
+  const suggestedAmounts = getSuggestedAmounts(0); // Can pass current balance if needed
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -157,7 +71,24 @@ const AddMoneyToWalletModal: React.FC<AddMoneyToWalletModalProps> = ({
         </DialogHeader>
         <form onSubmit={handleAddMoney} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Amount (₦)</label>
+            <label className="block text-sm font-medium mb-2">Quick Select</label>
+            <div className="grid grid-cols-3 gap-2 mb-3">
+              {suggestedAmounts.map((suggested) => (
+                <Button
+                  key={suggested}
+                  type="button"
+                  variant={amount === suggested.toString() ? "default" : "outline"}
+                  onClick={() => setAmount(suggested.toString())}
+                  className="h-12 text-sm"
+                >
+                  ₦{suggested.toLocaleString()}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Custom Amount (₦)</label>
             <Input
               type="number"
               value={amount}
@@ -167,6 +98,9 @@ const AddMoneyToWalletModal: React.FC<AddMoneyToWalletModalProps> = ({
               step="10"
               required
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Minimum: ₦100 | Maximum: ₦1,000,000
+            </p>
           </div>
 
           <div>
@@ -192,7 +126,12 @@ const AddMoneyToWalletModal: React.FC<AddMoneyToWalletModalProps> = ({
               </label>
             </div>
           </div>
-          
+
+          <FeeDisclosure
+            amount={parseFloat(amount) || 0}
+            paymentMethod={selectedGateway}
+          />
+
           <DialogFooter>
             <Button type="submit" disabled={isLoading || !amount}>
               {isLoading ? "Processing..." : "Add Money"}

@@ -1,333 +1,194 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { BadgeCheck, Clock, Globe, Star, Video, Zap } from 'lucide-react';
 import { useBabalawoById } from '@/hooks/useBabalawoById';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { 
-  Star, 
-  CheckCircle, 
-  Calendar, 
-  Globe, 
-  Award,
-  ArrowLeft,
-  Clock,
-  Users,
-  Zap
-} from 'lucide-react';
+import { Eyebrow, PageShell, PortraitCard, StickerPanel, TickDot } from '@/components/brand';
+import { pickBlock } from '@/design/tokens';
 import BookSessionModal from './dashboard/user/BookSessionModal';
 import InstantConsultationModal from './dashboard/user/InstantConsultationModal';
-import { useAuth } from '@/hooks/useAuth';
 
 const BabalawoProfile = () => {
   const { babalawoId } = useParams<{ babalawoId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { babalawo, loading: isLoading, error } = useBabalawoById(babalawoId);
+  const { babalawo, loading, error } = useBabalawoById(babalawoId);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [showInstantModal, setShowInstantModal] = useState(false);
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-pink-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading Babalawo profile...</p>
+      <PageShell>
+        <div className="wrap grid gap-10 py-14 md:grid-cols-[320px_1fr]" aria-busy="true">
+          <div className="aspect-[4/5] animate-pulse rounded-card bg-line" />
+          <div className="space-y-4">
+            <div className="h-4 w-32 animate-pulse rounded-pill bg-line" />
+            <div className="h-16 w-3/4 animate-pulse rounded-panel bg-line" />
+            <div className="h-24 w-full animate-pulse rounded-panel bg-line" />
+          </div>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
   if (error || !babalawo) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-pink-50 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-red-600">Profile Not Found</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 mb-4">
-              The Babalawo profile you're looking for could not be found.
-            </p>
-            <Button onClick={() => navigate('/')} className="w-full">
-              Go Back Home
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <PageShell>
+        <div className="wrap py-24 text-center">
+          <h1 className="font-display text-display-md font-extrabold">We couldn't find that Babalawo.</h1>
+          <p className="mt-3 text-muted-foreground">The profile may have moved or is not taking bookings yet.</p>
+          <Button asChild variant="sun" size="lg" className="mt-8">
+            <Link to="/search">See every Babalawo</Link>
+          </Button>
+        </div>
+      </PageShell>
     );
   }
 
-  const displayName = babalawo.full_name || "Babalawo";
-  const avatarUrl = babalawo.avatar_url;
+  const name = babalawo.full_name || 'Babalawo';
+  const fee = babalawo.hourly_rate ? Number(babalawo.hourly_rate) : 15000;
+  const color = pickBlock(name);
+  const verified = babalawo.verification_status === 'approved';
+  const online = !!babalawo.is_active;
 
-  const handleBookSession = () => {
-    if (!user) {
-      navigate('/auth?tab=signin');
-      return;
-    }
-    
-    setShowBookingModal(true);
-  };
-  
-  const handleInstantConsultation = () => {
-    if (!user) {
-      navigate('/auth?tab=signin');
-      return;
-    }
-    
-    setShowInstantModal(true);
-  };
+  const requireAuth = (open: () => void) => () => (user ? open() : navigate('/auth?tab=signin'));
 
   const babalawoForModal = {
     id: babalawo.id,
-    full_name: displayName,
-    avatar_url: avatarUrl,
-    title: "Ifa Priest & Spiritual Guide",
+    full_name: name,
+    avatar_url: babalawo.avatar_url,
+    title: 'Ifá priest',
     specialties: Array.isArray(babalawo.specialties) ? babalawo.specialties : [],
     rating: babalawo.rating ? Number(babalawo.rating) : 5,
     reviews: babalawo.total_sessions ?? 0,
-    verified: babalawo.verification_status === 'approved',
+    verified,
     nextAvailable: 'Flexible',
-    hourly_rate: babalawo.hourly_rate ? Number(babalawo.hourly_rate) : 15000,
-    price: babalawo.hourly_rate ? `₦${Number(babalawo.hourly_rate).toLocaleString()}/hr` : '₦15,000/hr',
+    hourly_rate: fee,
+    price: `₦${fee.toLocaleString()}/session`,
   };
 
+  const facts = [
+    babalawo.experience_years ? { k: 'Experience', v: `${babalawo.experience_years} years` } : null,
+    { k: 'Sessions', v: String(babalawo.total_sessions || 0) },
+    babalawo.languages?.length ? { k: 'Languages', v: babalawo.languages.join(', ') } : null,
+    babalawo.timezone ? { k: 'Time zone', v: babalawo.timezone.replace('_', ' ') } : null,
+  ].filter(Boolean) as { k: string; v: string }[];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-pink-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate(-1)}
-            className="mb-2"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-        </div>
-      </div>
-
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Profile Section */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Basic Info Card */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex flex-col sm:flex-row gap-6">
-                  <div className="flex justify-center sm:justify-start">
-                    <Avatar className="w-32 h-32 border-4 border-primary">
-                      {avatarUrl ? (
-                        <AvatarImage src={avatarUrl} alt={displayName} />
-                      ) : (
-                        <AvatarFallback className="text-3xl">
-                          {displayName.charAt(0).toUpperCase()}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                  </div>
-                  
-                  <div className="flex-1 text-center sm:text-left">
-                    <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
-                      <h1 className="text-2xl font-bold text-gray-900">{displayName}</h1>
-                      {babalawo.verification_status === 'approved' && (
-                        <CheckCircle className="h-6 w-6 text-green-500" />
-                      )}
-                    </div>
-                    
-                    <p className="text-gray-600 mb-4">Ifa Priest & Spiritual Guide</p>
-                    
-                    <div className="flex items-center justify-center sm:justify-start gap-4 mb-4">
-                      <div className="flex items-center gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star 
-                            key={star} 
-                            className={`h-5 w-5 ${
-                              star <= Math.round(babalawo.rating || 0) 
-                                ? "text-yellow-400 fill-current" 
-                                : "text-gray-300"
-                            }`} 
-                          />
-                        ))}
-                        <span className="ml-2 text-sm text-gray-600">
-                          {babalawo.rating?.toFixed(1) || '5.0'} ({babalawo.total_sessions || 0} sessions)
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-                      {babalawo.languages && babalawo.languages.length > 0 && 
-                        babalawo.languages.map((language, index) => (
-                          <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                            <Globe className="h-3 w-3" />
-                            {language}
-                          </Badge>
-                        ))
-                      }
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Bio Section */}
-            {babalawo.bio && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>About Me</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-700 leading-relaxed">{babalawo.bio}</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Specialties */}
-            {babalawo.specialties && babalawo.specialties.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Areas of Specialty</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {babalawo.specialties.map((specialty, index) => (
-                      <Badge key={index} className="bg-primary/10 text-primary hover:bg-primary/20">
-                        {specialty}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+    <PageShell>
+      {/* Hero band */}
+      <section className="relative overflow-hidden text-white" style={{ backgroundColor: color }}>
+        <div className="wrap grid items-end gap-8 py-10 md:grid-cols-[300px_1fr] md:py-16">
+          <PortraitCard
+            name=""
+            imageUrl={babalawo.avatar_url}
+            color="rgba(0,0,0,.18)"
+            className="mx-auto w-[220px] md:mx-0 md:h-[380px] md:w-[300px]"
+            tilt="left"
+          />
+          <div>
+            <Eyebrow className="text-white/80">{verified ? 'Verified Babalawo' : 'Babalawo'}</Eyebrow>
+            <h1 className="mt-3 font-display text-[clamp(44px,7vw,104px)] font-extrabold leading-[.9] tracking-[-0.045em]">
+              {name}
+              {verified && <BadgeCheck className="ml-3 inline h-[0.5em] w-[0.5em] align-baseline text-leaf" aria-label="Verified" />}
+            </h1>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-pill bg-white/90 px-3 py-1.5 text-sm font-bold text-ink">
+                <Star className="h-4 w-4 fill-sun text-sun" aria-hidden="true" />
+                {Number(babalawo.rating || 5).toFixed(1)} · {babalawo.total_sessions || 0} sessions
+              </span>
+              {babalawo.languages?.slice(0, 3).map((l) => (
+                <span key={l} className="rounded-pill bg-white/90 px-3 py-1.5 text-sm font-bold text-ink">{l}</span>
+              ))}
+              {online && (
+                <span className="inline-flex items-center gap-1.5 rounded-pill bg-ink px-3 py-1.5 text-sm font-bold">
+                  <span className="h-2 w-2 rounded-full bg-leaf" /> Available now
+                </span>
+              )}
+            </div>
           </div>
+        </div>
+      </section>
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Booking Card */}
-            <Card className="sticky top-4">
-              <CardHeader>
-                <CardTitle className="text-center">Book a Session</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-primary">
-                    ₦{(babalawo.hourly_rate || 15000).toLocaleString()}
-                  </div>
-                  <div className="text-sm text-gray-500">per session</div>
+      <div className="wrap grid gap-10 py-12 lg:grid-cols-[1fr_380px] lg:py-16">
+        <div className="min-w-0 space-y-12">
+          {babalawo.bio && (
+            <section>
+              <Eyebrow className="text-camwood">About</Eyebrow>
+              <p className="mt-3 max-w-[62ch] whitespace-pre-line text-lg leading-relaxed">{babalawo.bio}</p>
+            </section>
+          )}
+
+          {babalawo.specialties && babalawo.specialties.length > 0 && (
+            <section>
+              <Eyebrow className="text-camwood">Specialties</Eyebrow>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {babalawo.specialties.map((s) => (
+                  <span key={s} className="rounded-pill border-2 border-ink px-4 py-2 text-sm font-bold">{s}</span>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section>
+            <Eyebrow className="text-camwood">At a glance</Eyebrow>
+            <dl className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-panel border border-line bg-line sm:grid-cols-4">
+              {facts.map((f) => (
+                <div key={f.k} className="bg-paper p-4">
+                  <dt className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{f.k}</dt>
+                  <dd className="m-0 mt-1 font-display text-xl font-extrabold">{f.v}</dd>
                 </div>
-                
-                <Separator />
-                
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Clock className="h-4 w-4" />
-                    <span>Duration: 60 minutes</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Calendar className="h-4 w-4" />
-                    <span>Available: Flexible scheduling</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Users className="h-4 w-4" />
-                    <span>Private 1-on-1 consultation</span>
-                  </div>
-                </div>
-                
-                {/* Online Status Badge */}
-                {babalawo.is_active && (
-                  <div className="bg-green-50 p-3 rounded-md mb-2">
-                    <div className="flex items-center gap-2">
-                      <div className="relative">
-                        <div className="h-3 w-3 bg-green-500 rounded-full"></div>
-                        <div className="h-3 w-3 bg-green-500 rounded-full absolute top-0 animate-ping opacity-75"></div>
-                      </div>
-                      <span className="text-green-700 font-medium">Online Now</span>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Instant Consultation Button - Only show when babalawo is online */}
-                {babalawo.is_active && (
-                  <Button 
-                    onClick={handleInstantConsultation}
-                    className="w-full bg-green-600 hover:bg-green-700 mb-2"
-                    size="lg"
-                  >
-                    <Zap className="h-4 w-4 mr-2" />
-                    Start Instant Consultation
-                  </Button>
-                )}
-                
-                {/* Regular Booking Button */}
-                <Button 
-                  onClick={handleBookSession}
-                  className="w-full"
-                  size="lg"
-                  variant={babalawo.is_active ? "outline" : "default"}
-                >
-                  Book Session Now
+              ))}
+            </dl>
+          </section>
+
+          <section>
+            <Eyebrow className="text-camwood">How a session works</Eyebrow>
+            <ul className="mt-4 grid list-none gap-3.5 p-0">
+              {[
+                'Pick a time and pay. Your Google Meet link arrives once payment clears.',
+                'Join from your phone or laptop. No app to install.',
+                `${name.split(' ').slice(0, 2).join(' ')} approves your written notes before they reach you.`,
+              ].map((t, i) => (
+                <li key={t} className="grid grid-cols-[30px_1fr] items-start gap-3">
+                  <TickDot>{i + 1}</TickDot>
+                  <span className="pt-1">{t}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+
+        {/* Booking card */}
+        <aside className="lg:sticky lg:top-24 lg:self-start">
+          <StickerPanel className="p-6">
+            <Eyebrow className="text-muted-foreground">Consultation fee</Eyebrow>
+            <p className="mt-2 font-display text-[44px] font-extrabold leading-none tracking-[-0.03em]">
+              ₦{fee.toLocaleString()}
+            </p>
+            <ul className="mt-5 space-y-2.5 text-[15px]">
+              <li className="flex items-center gap-2.5"><Video className="h-4 w-4 text-green-700" />One-to-one on Google Meet</li>
+              <li className="flex items-center gap-2.5"><Clock className="h-4 w-4 text-green-700" />Pick a time that suits you</li>
+              <li className="flex items-center gap-2.5"><Globe className="h-4 w-4 text-green-700" />Notes you can keep</li>
+            </ul>
+            <div className="mt-6 grid gap-2.5">
+              <Button variant="sun" size="lg" onClick={requireAuth(() => setShowBookingModal(true))}>
+                Book a session
+              </Button>
+              {online && (
+                <Button variant="outline" size="lg" onClick={requireAuth(() => setShowInstantModal(true))}>
+                  <Zap /> Consult now
                 </Button>
-              </CardContent>
-            </Card>
-
-            {/* Experience Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Award className="h-5 w-5" />
-                  Experience
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {babalawo.experience_years && (
-                  <div>
-                    <div className="font-semibold">{babalawo.experience_years} Years</div>
-                    <div className="text-sm text-gray-600">Spiritual Practice</div>
-                  </div>
-                )}
-                
-                <div>
-                  <div className="font-semibold">{babalawo.total_sessions || 0}</div>
-                  <div className="text-sm text-gray-600">Total Sessions</div>
-                </div>
-                
-                {babalawo.verification_status === 'approved' && (
-                  <div className="flex items-center gap-2 text-green-600">
-                    <CheckCircle className="h-4 w-4" />
-                    <span className="text-sm font-medium">Verified Babalawo</span>
-                  </div>
-                )}
-                
-                {babalawo.timezone && (
-                  <div>
-                    <div className="font-semibold">Timezone</div>
-                    <div className="text-sm text-gray-600">{babalawo.timezone}</div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+              )}
+            </div>
+          </StickerPanel>
+        </aside>
       </div>
 
-      {/* Booking Modal */}
-      <BookSessionModal
-        open={showBookingModal}
-        onOpenChange={setShowBookingModal}
-        babalawo={babalawoForModal}
-      />
-      
-      {/* Instant Consultation Modal */}
-      <InstantConsultationModal
-        open={showInstantModal}
-        onOpenChange={setShowInstantModal}
-        babalawo={babalawoForModal}
-      />
-    </div>
+      <BookSessionModal open={showBookingModal} onOpenChange={setShowBookingModal} babalawo={babalawoForModal} />
+      <InstantConsultationModal open={showInstantModal} onOpenChange={setShowInstantModal} babalawo={babalawoForModal} />
+    </PageShell>
   );
 };
 

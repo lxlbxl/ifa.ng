@@ -1,111 +1,60 @@
-
 import React from 'react';
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { CheckCircle, MapPin } from 'lucide-react';
+import { BadgeCheck, Star } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { PortraitCard } from '@/components/brand';
+import { babalawoChips } from '@/components/FeaturedBabalawos';
 import { BabalawoProfile } from '@/types/babalawo';
 
 interface BabalawoCardProps {
   babalawo: BabalawoProfile;
   onBookSession: (babalawo: BabalawoProfile) => void;
   onViewProfile: (babalawoId: string) => void;
+  color?: string;
 }
 
-const BabalawoCard: React.FC<BabalawoCardProps> = ({
-  babalawo,
-  onBookSession,
-  onViewProfile
-}) => {
-  const displayName = babalawo.full_name; // Now guaranteed to be a string
-  const avatarUrl = babalawo.avatar_url;
-  const isVerified = babalawo.verification_status === 'approved';
-  
-  console.log('[BabalawoCard] Rendering babalawo:', babalawo.id, 'with name:', displayName);
-  
+/** Grid version of the portrait card, with Book and Profile actions under it. */
+const BabalawoCard: React.FC<BabalawoCardProps> = ({ babalawo, onBookSession, onViewProfile, color }) => {
+  const name = babalawo.full_name;
+  const status =
+    babalawo.current_status === 'online' || babalawo.current_status === 'available'
+      ? 'available'
+      : babalawo.current_status === 'busy' || babalawo.current_status === 'in_session'
+        ? 'busy'
+        : null;
+
   return (
-    <div className="bg-white rounded-xl shadow-md p-4 sm:p-5 flex flex-col items-center text-center fade-in">
-      {/* Avatar */}
-      <div className="relative mb-3">
-        <Avatar className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-primary">
-          {avatarUrl ? (
-            <AvatarImage
-              src={avatarUrl}
-              alt={displayName}
-            />
-          ) : (
-            <AvatarFallback className="text-lg sm:text-xl bg-primary/10 text-primary">
-              {displayName.charAt(0).toUpperCase()}
-            </AvatarFallback>
+    <article className="flex flex-col gap-3">
+      <PortraitCard
+        fluid
+        name={name}
+        imageUrl={babalawo.avatar_url}
+        chips={babalawoChips(babalawo)}
+        status={status}
+        color={color}
+        onClick={() => onViewProfile(babalawo.id)}
+      />
+      <div className="flex items-center justify-between gap-2 px-1 text-sm text-muted-foreground">
+        <span className="inline-flex items-center gap-1 truncate">
+          {babalawo.verification_status === 'approved' && (
+            <BadgeCheck className="h-4 w-4 flex-none text-green-700" aria-label="Verified" />
           )}
-        </Avatar>
-        {isVerified && (
-          <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1">
-            <CheckCircle className="w-4 h-4 text-white" />
-          </div>
-        )}
+          <span className="truncate">{babalawo.specialties?.slice(0, 2).join(' · ') || 'Ifá divination'}</span>
+        </span>
+        <span className="inline-flex flex-none items-center gap-1 font-semibold text-ink">
+          <Star className="h-4 w-4 fill-sun text-sun" aria-hidden="true" />
+          {Number(babalawo.rating || 5).toFixed(1)}
+          <span className="font-normal text-muted-foreground">· {babalawo.total_sessions || 0}</span>
+        </span>
       </div>
-      
-      {/* Name and Title */}
-      <div className="mb-2">
-        <div className="font-semibold text-base sm:text-lg text-gray-900 mb-1 text-center">
-          {displayName}
-        </div>
-        <div className="text-sm text-gray-600">
-          Ifa Priest & Spiritual Guide
-        </div>
+      <div className="grid grid-cols-2 gap-2">
+        <Button onClick={() => onBookSession(babalawo)} aria-label={`Book a session with ${name}`}>
+          Book
+        </Button>
+        <Button variant="outline" onClick={() => onViewProfile(babalawo.id)} aria-label={`View profile of ${name}`}>
+          Profile
+        </Button>
       </div>
-      
-      {/* Rating and Sessions */}
-      <div className="text-xs sm:text-sm text-gray-600 mb-2">
-        ⭐ {babalawo.rating || 5.0} • {babalawo.total_sessions || 0} sessions
-      </div>
-      
-      {/* Location/Timezone */}
-      {babalawo.timezone && (
-        <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
-          <MapPin className="w-3 h-3" />
-          <span>{babalawo.timezone}</span>
-        </div>
-      )}
-      
-      {/* Specialties */}
-      {babalawo.specialties && babalawo.specialties.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-3 justify-center">
-          {babalawo.specialties.slice(0, 2).map((specialty, index) => (
-            <span key={index} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">
-              {specialty}
-            </span>
-          ))}
-          {babalawo.specialties.length > 2 && (
-            <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-              +{babalawo.specialties.length - 2} more
-            </span>
-          )}
-        </div>
-      )}
-      
-      {/* Price */}
-      <div className="text-sm font-semibold text-gray-800 mb-3">
-        ₦{(babalawo.hourly_rate || 15000).toLocaleString()}/session
-      </div>
-      
-      {/* Action Buttons */}
-      <div className="w-full space-y-2">
-        <button 
-          className="w-full bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors text-sm sm:text-base"
-          onClick={() => onBookSession(babalawo)}
-          aria-label={`Book a session with ${displayName}`}
-        >
-          Book Session
-        </button>
-        <button 
-          className="w-full border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors text-sm sm:text-base"
-          onClick={() => onViewProfile(babalawo.id)}
-          aria-label={`View profile of ${displayName}`}
-        >
-          View Profile
-        </button>
-      </div>
-    </div>
+    </article>
   );
 };
 

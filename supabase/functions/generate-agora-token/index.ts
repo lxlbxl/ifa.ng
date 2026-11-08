@@ -1,52 +1,37 @@
-import { serve } from "std/server";
-import { createClient } from "@supabase/supabase-js";
-import { RtcTokenBuilder, RtcRole } from "agora-access-token";
+// Agora fallback token service. Only participants of a PAID session can get a
+// token, only near the session window, and the token is bound to the caller's
+// user id (string account), so a leaked token cannot impersonate anyone else.
+import { RtcTokenBuilder, RtcRole } from "npm:agora-token@2.0.7";
+import { handler, json, HttpError } from "../_shared/http.ts";
+import { authenticate, loadSessionFor, serviceClient, sessionWindow } from "../_shared/auth.ts";
 
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
+Deno.serve(handler(async (req) => {
+  const db = serviceClient();
+  const caller = await authenticate(req, db);
+  if (caller.kind !== "user") throw new HttpError(403, "User token required");
+  const body = await req.json().catch(() => ({}));
+  const s = await loadSessionFor(db, caller, body.session_id ?? body.sessionId);
 
-serve(async (req) => {
-  try {
-    const { sessionId, userId } = await req.json();
+  if (s.payment_status !== "paid") throw new HttpError(402, "Session is not paid");
+  if (["cancelled", "completed"].includes(s.status)) throw new HttpError(409, `Session is ${s.status}`);
+  const { start, end } = sessionWindow(s);
+  const now = Date.now();
+  if (now < start.getTime() - 15 * 60_000) throw new HttpError(425, "Too early to join");
+  if (now > end.getTime() + 60 * 60_000) throw new HttpError(410, "Session window has passed");
 
-    // Fetch Agora settings from admin_settings table
-    const { data: settings, error } = await supabase
-      .from("admin_settings")
-      .select("setting_key, setting_value")
-      .in("setting_key", ["agora_app_id", "agora_app_certificate", "agora_token_expiry"]);
+  const { data: rows } = await db.from("admin_settings").select("setting_key, setting_value")
+    .in("setting_key", ["agora_app_id", "agora_app_certificate"]);
+  const cfg = Object.fromEntries((rows ?? []).map((r) => [r.setting_key, r.setting_value]));
+  const appId = Deno.env.get("AGORA_APP_ID") || cfg.agora_app_id;
+  const cert = Deno.env.get("AGORA_APP_CERTIFICATE") || cfg.agora_app_certificate;
+  if (!appId || !cert) throw new HttpError(503, "Agora is not configured");
 
-    if (error) {
-      return new Response(JSON.stringify({ error: "Failed to fetch Agora settings" }), { status: 500 });
-    }
+  const channel = s.agora_channel_name || `session-${s.id}`;
+  if (!s.agora_channel_name) await db.from("sessions").update({ agora_channel_name: channel }).eq("id", s.id);
 
-    // Map settings to key-value
-    const settingsMap: Record<string, string> = {};
-    for (const setting of settings || []) {
-      settingsMap[setting.setting_key] = setting.setting_value;
-    }
-
-    const appId = settingsMap["agora_app_id"];
-    const appCertificate = settingsMap["agora_app_certificate"];
-    const tokenExpiry = parseInt(settingsMap["agora_token_expiry"]) || 3600;
-
-    if (!appId || !appCertificate) {
-      return new Response(JSON.stringify({ error: "Agora App ID or Certificate not configured" }), { status: 500 });
-    }
-
-    // Use sessionId as channel name
-    const channelName = sessionId;
-    const uid = userId || 0;
-    const role = RtcRole.PUBLISHER;
-    const currentTimestamp = Math.floor(Date.now() / 1000);
-    const privilegeExpiredTs = currentTimestamp + tokenExpiry;
-
-    const token = RtcTokenBuilder.buildTokenWithUid(appId, appCertificate, channelName, uid, role, privilegeExpiredTs);
-
-    return new Response(JSON.stringify({ token, appId }), {
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
-  }
-});
+  // Token lifetime: until 30 minutes after the booked end.
+  const expireTs = Math.floor((end.getTime() + 30 * 60_000) / 1000);
+  const token = RtcTokenBuilder.buildTokenWithUserAccount(
+    appId, cert, channel, caller.userId, RtcRole.PUBLISHER, expireTs, expireTs);
+  return json({ token, appId, channel, account: caller.userId });
+}));

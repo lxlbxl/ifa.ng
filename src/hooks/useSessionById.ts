@@ -31,9 +31,12 @@ export const useSessionById = (sessionId: string) => {
           items_needed,
           deadline,
           next_appointment,
-          warning
+          video_provider,
+          meet_uri,
+          recording_status,
+          video_fallback_reason
         `)
-        .eq('id', parseInt(sessionId))
+        .eq('id', sessionId)
         .maybeSingle();
       if (error) throw error;
       return data;

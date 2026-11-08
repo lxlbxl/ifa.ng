@@ -1,5 +1,7 @@
-
 import { supabase } from "@/integrations/supabase/client";
+
+// Wallet balances can only be READ from the browser. Every change (top-up, payment, refund,
+// adjustment) happens on the server, so there is intentionally no credit/debit helper here.
 
 export interface WalletBalance {
   id: string;
@@ -23,24 +25,10 @@ export const getUserWallet = async (userId: string): Promise<WalletBalance | nul
       .from('wallets')
       .select('*')
       .eq('user_id', userId)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        // No wallet found, create one
-        const { data: newWallet, error: createError } = await supabase
-          .from('wallets')
-          .insert({ user_id: userId })
-          .select()
-          .single();
-
-        if (createError) throw createError;
-        return newWallet;
-      }
-      throw error;
-    }
-
-    return data;
+      .maybeSingle();
+    if (error) throw error;
+    // A user with no wallet row yet simply has a zero balance; the row is created server-side on first credit.
+    return data ?? { id: '', balance: 0, user_id: userId };
   } catch (error) {
     console.error('Error fetching wallet:', error);
     return null;
@@ -55,92 +43,25 @@ export const getWalletTransactions = async (userId: string): Promise<WalletTrans
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(50);
-
     if (error) throw error;
-    
-    // Ensure proper typing for transaction_type
-    return (data || []).map(transaction => ({
-      ...transaction,
-      transaction_type: transaction.transaction_type as 'credit' | 'debit'
-    }));
+    return (data || []).map(t => ({ ...t, transaction_type: t.transaction_type as 'credit' | 'debit' }));
   } catch (error) {
     console.error('Error fetching wallet transactions:', error);
     return [];
   }
 };
 
-export const addMoneyToWallet = async (
+/** Admin only (enforced in the database): credit or debit a user's wallet with a mandatory reason. */
+export const adminAdjustWallet = async (
   userId: string,
   amount: number,
-  paymentGateway: string,
-  paymentReference: string,
-  description?: string
-): Promise<boolean> => {
-  try {
-    const { error } = await supabase.rpc('update_wallet_balance', {
-      p_user_id: userId,
-      p_amount: amount,
-      p_transaction_type: 'credit',
-      p_transaction_source: 'payment_gateway',
-      p_payment_gateway: paymentGateway,
-      p_payment_reference: paymentReference,
-      p_description: description || `Added money via ${paymentGateway}`
-    });
-
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error('Error adding money to wallet:', error);
-    return false;
-  }
-};
-
-export const deductFromWallet = async (
-  userId: string,
-  amount: number,
-  sessionId?: string,
-  description?: string
-): Promise<boolean> => {
-  try {
-    const { error } = await supabase.rpc('update_wallet_balance', {
-      p_user_id: userId,
-      p_amount: amount,
-      p_transaction_type: 'debit',
-      p_transaction_source: 'session_payment',
-      p_session_id: sessionId,
-      p_description: description || 'Session payment'
-    });
-
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error('Error deducting from wallet:', error);
-    return false;
-  }
-};
-
-export const adminCreditWallet = async (
-  userId: string,
-  amount: number,
+  type: 'credit' | 'debit',
   description: string
-): Promise<boolean> => {
-  try {
-    const { error } = await supabase.rpc('update_wallet_balance', {
-      p_user_id: userId,
-      p_amount: amount,
-      p_transaction_type: 'credit',
-      p_transaction_source: 'admin_adjustment',
-      p_description: description
-    });
-
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error('Error crediting wallet (admin):', error);
-    return false;
-  }
+): Promise<{ success: boolean; error?: string }> => {
+  const { error } = await supabase.rpc('admin_adjust_wallet' as any, {
+    p_user_id: userId, p_amount: amount, p_type: type, p_description: description,
+  });
+  return error ? { success: false, error: error.message } : { success: true };
 };
 
-export const hasInsufficientBalance = (walletBalance: number, amount: number): boolean => {
-  return walletBalance < amount;
-};
+export const hasInsufficientBalance = (walletBalance: number, amount: number): boolean => walletBalance < amount;

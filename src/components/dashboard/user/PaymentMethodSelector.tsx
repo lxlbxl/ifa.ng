@@ -22,15 +22,15 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
 
   return (
     <div className="space-y-4">
-      <label className="block text-sm font-medium mb-2">Payment Method</label>
+      <label className="mb-2 block text-sm font-bold">Pay with</label>
       
       <div className="space-y-3">
         {/* Wallet Option */}
         <Card 
           className={`cursor-pointer transition-all ${
             selectedMethod === 'wallet' 
-              ? 'ring-2 ring-primary border-primary' 
-              : 'hover:bg-gray-50'
+              ? 'border-2 border-ink bg-leaf/40' 
+              : 'border-2 border-line hover:border-ink/40'
           } ${hasInsufficientBalance ? 'opacity-50' : ''}`}
           onClick={() => !hasInsufficientBalance && onMethodChange('wallet')}
         >
@@ -39,7 +39,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
               <div className="flex items-center space-x-3">
                 <Wallet className="h-6 w-6 text-green-600" />
                 <div>
-                  <div className="font-medium">Wallet Balance</div>
+                  <div className="font-bold">IFA.ng wallet</div>
                   <div className="text-sm text-gray-500">
                     Available: ₦{walletBalance.toLocaleString()}
                   </div>
@@ -58,16 +58,16 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
         <Card 
           className={`cursor-pointer transition-all ${
             selectedMethod === 'flutterwave' 
-              ? 'ring-2 ring-primary border-primary' 
-              : 'hover:bg-gray-50'
+              ? 'border-2 border-ink bg-leaf/40' 
+              : 'border-2 border-line hover:border-ink/40'
           }`}
           onClick={() => onMethodChange('flutterwave')}
         >
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <CreditCard className="h-6 w-6 text-orange-600" />
+              <CreditCard className="h-6 w-6 text-camwood" />
               <div>
-                <div className="font-medium">Flutterwave</div>
+                <div className="font-bold">Flutterwave</div>
                 <div className="text-sm text-gray-500">
                   Pay with card, bank transfer, or USSD
                 </div>
@@ -80,16 +80,16 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
         <Card 
           className={`cursor-pointer transition-all ${
             selectedMethod === 'paystack' 
-              ? 'ring-2 ring-primary border-primary' 
-              : 'hover:bg-gray-50'
+              ? 'border-2 border-ink bg-leaf/40' 
+              : 'border-2 border-line hover:border-ink/40'
           }`}
           onClick={() => onMethodChange('paystack')}
         >
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <CreditCard className="h-6 w-6 text-blue-600" />
+              <CreditCard className="h-6 w-6 text-indigo-700" />
               <div>
-                <div className="font-medium">Paystack</div>
+                <div className="font-bold">Paystack</div>
                 <div className="text-sm text-gray-500">
                   Pay with card or bank transfer
                 </div>

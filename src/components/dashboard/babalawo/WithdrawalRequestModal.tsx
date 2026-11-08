@@ -29,7 +29,6 @@ const WithdrawalRequestModal: React.FC<WithdrawalRequestModalProps> = ({
   const [fetchingBalance, setFetchingBalance] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bankDetails, setBankDetails] = useState<any>(null);
-  const [babalawoId, setBabalawoId] = useState<number | null>(null);
 
   useEffect(() => {
     if (open && user?.id) {
@@ -42,41 +41,23 @@ const WithdrawalRequestModal: React.FC<WithdrawalRequestModalProps> = ({
     setError(null);
     
     try {
-      // First, get the babalawo_id for the current user
-      const { data: babalawoData, error: babalawoError } = await supabase
-        .from('babalawos')
-        .select('id')
-        .eq('user_id', user?.id)
-        .single();
-      
-      if (babalawoError) throw babalawoError;
-      
-      if (!babalawoData?.id) {
-        throw new Error('Babalawo profile not found');
-      }
-      
-      setBabalawoId(Number(babalawoData.id));
-      
-      // Get the babalawo's available balance
+      // Wallet, bank details and withdrawals are all keyed by the babalawo's auth user id.
+      const uid = String(user?.id);
+
       const { data: walletData, error: walletError } = await supabase
         .from('babalawo_wallets')
         .select('available_balance')
-        .eq('babalawo_id', String(babalawoData.id))
-        .single();
+        .eq('babalawo_id', uid)
+        .maybeSingle();
+      if (walletError) throw walletError;
+      setAvailableBalance(Number(walletData?.available_balance || 0));
 
-      if (walletError && walletError.code !== 'PGRST116') throw walletError;
-      
-      setAvailableBalance(walletData?.available_balance || 0);
-      
-      // Get bank details
       const { data: bankData, error: bankError } = await supabase
         .from("babalawo_bank_details")
         .select("*")
-        .eq("babalawo_id", String(babalawoData.id))
+        .eq("babalawo_id", uid)
         .maybeSingle();
-
       if (bankError && bankError.code !== 'PGRST116') throw bankError;
-      
       setBankDetails(bankData);
     } catch (err: any) {
       console.error('Error fetching babalawo data:', err);
@@ -120,28 +101,13 @@ const WithdrawalRequestModal: React.FC<WithdrawalRequestModalProps> = ({
     setIsLoading(true);
     
     try {
-      // Create withdrawal request
-      const { error: insertError } = await supabase
-        .from("withdrawal_requests")
-        .insert({
-          babalawo_id: String(babalawoId),
-          amount: numAmount,
-          reason: reason || "Regular withdrawal",
-          status: "pending",
-        });
+      // One server call: checks the balance, moves the money into "on hold" and records the request.
+      const { error: rpcError } = await supabase.rpc('request_withdrawal' as any, {
+        p_amount: numAmount,
+        p_reason: reason || null,
+      });
+      if (rpcError) throw rpcError;
 
-      if (insertError) throw insertError;
-      
-      // Update babalawo wallet balance
-      const { error: updateError } = await supabase
-        .from('babalawo_wallets')
-        .update({ 
-          available_balance: availableBalance - numAmount
-        })
-        .eq('babalawo_id', String(babalawoId));
-        
-      if (updateError) throw updateError;
-      
       toast({ 
         title: "Withdrawal request submitted", 
         description: "Your request has been submitted and is pending approval"

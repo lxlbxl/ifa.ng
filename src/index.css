@@ -2,86 +2,94 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
+/*
+ * IFA.ng design system: CSS variables.
+ * Raw brand values live in src/design/tokens.ts (Tailwind reads them from there).
+ * These HSL variables drive the shadcn/ui primitives in src/components/ui.
+ * Rules of use: DESIGN_SYSTEM.md at the repo root.
+ */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Surfaces */
+    --background: 43 50% 93%;        /* cloth  #f6f1e4 */
+    --foreground: 108 13% 8%;        /* ink    #121611 */
+    --card: 45 100% 98%;             /* paper  #fffdf7 */
+    --card-foreground: 108 13% 8%;
+    --popover: 45 100% 98%;
+    --popover-foreground: 108 13% 8%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* Brand roles */
+    --primary: 142 56% 28%;          /* green  #1f6e3c */
+    --primary-foreground: 45 100% 98%;
+    --secondary: 43 38% 88%;         /* deeper cloth, for quiet buttons */
+    --secondary-foreground: 108 13% 8%;
+    --accent: 45 88% 88%;            /* pale sun, hover and selection */
+    --accent-foreground: 108 13% 8%;
+    --muted: 43 38% 89%;
+    --muted-foreground: 92 7% 37%;   /* muted  #5d6457 */
+    --destructive: 9 66% 51%;        /* coral  #d4472f */
+    --destructive-foreground: 45 100% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    /* Lines and focus */
+    --border: 43 30% 84%;            /* line   #e3dccb */
+    --input: 43 24% 78%;
+    --ring: 142 56% 28%;
 
-    --primary: 282 44% 53%;
-    --primary-foreground: 210 40% 98%;
+    --radius: 1.125rem;
 
-    --secondary: 174 55% 42%;
-    --secondary-foreground: 210 40% 98%;
+    /* Brand colour blocks, for inline styles and SVG */
+    --ink: #121611;
+    --cloth: #f6f1e4;
+    --paper: #fffdf7;
+    --line: #e3dccb;
+    --green: #1f6e3c;
+    --leaf: #c7e86a;
+    --sun: #f2c230;
+    --coral: #d4472f;
+    --indigo: #28367f;
+    --camwood: #b5502b;
+    --teal: #2aa39a;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 45 87% 44%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 282 44% 53%;
-
-    --radius: 0.75rem;
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 45 100% 98%;
+    --sidebar-foreground: 108 13% 8%;
+    --sidebar-primary: 108 13% 8%;
+    --sidebar-primary-foreground: 43 50% 93%;
+    --sidebar-accent: 76 73% 66%;    /* leaf */
+    --sidebar-accent-foreground: 108 13% 8%;
+    --sidebar-border: 43 30% 84%;
+    --sidebar-ring: 142 56% 28%;
   }
 
+  /* Dark surfaces (Babalawo PWA night mode, hero bands). Built from ink. */
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 282 44% 53%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 174 55% 42%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 45 87% 44%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --background: 108 13% 8%;
+    --foreground: 43 50% 93%;
+    --card: 105 9% 12%;
+    --card-foreground: 43 50% 93%;
+    --popover: 105 9% 12%;
+    --popover-foreground: 43 50% 93%;
+    --primary: 76 73% 66%;           /* leaf reads best on ink */
+    --primary-foreground: 108 13% 8%;
+    --secondary: 105 8% 18%;
+    --secondary-foreground: 43 50% 93%;
+    --accent: 105 8% 20%;
+    --accent-foreground: 43 50% 93%;
+    --muted: 105 8% 16%;
+    --muted-foreground: 60 9% 70%;
+    --destructive: 9 70% 58%;
+    --destructive-foreground: 45 100% 98%;
+    --border: 105 7% 22%;
+    --input: 105 7% 26%;
+    --ring: 45 88% 57%;
+    --sidebar-background: 108 13% 8%;
+    --sidebar-foreground: 43 50% 93%;
+    --sidebar-primary: 76 73% 66%;
+    --sidebar-primary-foreground: 108 13% 8%;
+    --sidebar-accent: 105 8% 18%;
+    --sidebar-accent-foreground: 43 50% 93%;
+    --sidebar-border: 105 7% 22%;
+    --sidebar-ring: 45 88% 57%;
   }
 }
 
@@ -90,47 +98,99 @@
     @apply border-border;
   }
 
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
-    @apply bg-background text-foreground font-poppins;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-size: 16px;
+    line-height: 1.55;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display;
+    text-wrap: balance;
+    letter-spacing: -0.02em;
+  }
+
+  :focus-visible {
+    outline: 3px solid hsl(var(--ring));
+    outline-offset: 3px;
+  }
+
+  ::selection {
+    background: var(--leaf);
+    color: var(--ink);
   }
 }
 
-/* Custom gradient backgrounds */
-.gradient-primary {
-  background: linear-gradient(135deg, #9B59B6 0%, #BB8FCC 100%);
+@layer components {
+  /* Small uppercase label above a heading. */
+  .eyebrow {
+    @apply text-eyebrow uppercase font-sans;
+  }
+
+  /* Page gutter that respects notches, matching the homepage. */
+  .wrap {
+    @apply mx-auto w-full max-w-[1320px];
+    padding-left: max(20px, env(safe-area-inset-left, 0px));
+    padding-right: max(20px, env(safe-area-inset-right, 0px));
+  }
+
+  /* Vertical rhythm for full-width colour bands. */
+  .band {
+    @apply py-16 md:py-24;
+  }
+
+  /* Pauses any marquee track inside on hover or keyboard focus. */
+  .marquee:hover .marquee-track,
+  .marquee:focus-within .marquee-track {
+    animation-play-state: paused;
+  }
+
+  /* Hand-drawn checkbox used in session notes. */
+  .check-item {
+    @apply flex items-start gap-2;
+  }
+  .check-item::before {
+    content: "";
+    @apply mt-[3px] h-[15px] w-[15px] flex-none rounded border-2 border-green-700;
+  }
 }
 
-.gradient-secondary {
-  background: linear-gradient(135deg, #1ABC9C 0%, #48C9B0 100%);
+/* Thin warm scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cdc5b1; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #7a7a6c; }
+
+/* Legacy gradient helpers, re-pointed to the brand. */
+.gradient-primary { background: var(--green); }
+.gradient-secondary { background: var(--teal); }
+.gradient-warm { background: var(--cloth); }
+.gradient-hero { background: var(--ink); }
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.gradient-warm {
-  background: linear-gradient(135deg, #FDEBD0 0%, #F8D7DA 100%);
-}
+.safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.pb-safe { padding-bottom: max(0.5rem, env(safe-area-inset-bottom)); }
 
-.gradient-hero {
-  background: linear-gradient(135deg, #9B59B6 0%, #1ABC9C 50%, #D4AC0D 100%);
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #9B59B6;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #7B4396;
-}
-
-/* Improved card backgrounds for contrast */
-.bg-white\/90 {
-  background-color: rgba(255, 255, 255, 0.90) !important;
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  /* Marquees become a swipeable row with no duplicate items. */
+  .marquee { overflow-x: auto; }
+  .marquee-track { animation: none !important; }
+  .marquee-clone { display: none !important; }
 }

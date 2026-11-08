@@ -13,7 +13,7 @@ const RecentSignups = () => {
     if (!users || users.length === 0) return (
         <Card>
             <CardHeader>
-                <CardTitle>Recent Sign-ups</CardTitle>
+                <CardTitle>Recent sign-ups</CardTitle>
             </CardHeader>
             <CardContent>
                 <p className="text-muted-foreground">No recent user sign-ups.</p>
@@ -24,7 +24,7 @@ const RecentSignups = () => {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Recent Sign-ups</CardTitle>
+                <CardTitle>Recent sign-ups</CardTitle>
                 <CardDescription>The 5 most recent user sign-ups.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -33,7 +33,7 @@ const RecentSignups = () => {
                         <div key={user.id} className="flex items-center">
                             <Avatar className="h-9 w-9">
                                 <AvatarImage src={user.avatar_url || undefined} alt={user.full_name || ''} />
-                                <AvatarFallback>{user.full_name?.[0].toUpperCase()}</AvatarFallback>
+                                <AvatarFallback className="bg-leaf font-bold text-ink">{user.full_name?.[0].toUpperCase()}</AvatarFallback>
                             </Avatar>
                             <div className="ml-4 space-y-1">
                                 <p className="text-sm font-medium leading-none">{user.full_name}</p>

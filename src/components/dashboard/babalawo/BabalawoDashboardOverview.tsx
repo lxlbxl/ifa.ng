@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar, Clock, DollarSign, Star, TrendingUp, Users } from "lucide-react";
 import { useBabalawoDashboardStats } from "@/hooks/useBabalawoDashboardStatsSimple";
 import { useAuth } from "@/hooks/useAuth";
-import BabalawoStatusToggle from "./BabalawoStatusToggle";
+import { PresenceCard } from "./PresenceToggle";
 
 const BabalawoDashboardOverview: React.FC = () => {
   const { userProfile } = useAuth();
@@ -51,7 +51,7 @@ const BabalawoDashboardOverview: React.FC = () => {
       {/* Status Control and Stats Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Status Toggle */}
-        <BabalawoStatusToggle className="lg:col-span-1" />
+        <PresenceCard className="lg:col-span-1" />
         
         {/* Quick Stats */}
         <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -1,5 +1,5 @@
 /* IFA.ng service worker: offline app shell + push. Bump VERSION to invalidate caches. */
-const VERSION = "v1";
+const VERSION = "v2";
 const SHELL_CACHE = `ifa-shell-${VERSION}`;
 const ASSET_CACHE = `ifa-assets-${VERSION}`;
 const SHELL_URLS = ["/", "/offline.html", "/manifest.webmanifest", "/brand/icon-192.png"];
@@ -55,18 +55,35 @@ self.addEventListener("fetch", (event) => {
   }
 });
 
+// Consult Now requests ring harder and stay on screen until tapped. Browsers use the
+// phone's notification sound; vibration works on Android (iOS ignores it).
+const VIBRATE_URGENT = [400, 150, 400, 150, 800, 300, 400, 150, 400];
+const VIBRATE_NORMAL = [250, 100, 250];
+
 self.addEventListener("push", (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch { data = { body: event.data && event.data.text() }; }
-  event.waitUntil(
-    self.registration.showNotification(data.title || "IFA.ng", {
+  const urgent = !!data.urgent;
+  event.waitUntil((async () => {
+    const wins = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    // An open, focused app plays its own alert (chime + ringing dialog).
+    wins.forEach((w) => w.postMessage({ type: "ifa-push", payload: data }));
+    const focused = wins.some((w) => w.focused && w.visibilityState === "visible");
+    if (focused && data.type !== "test") return;
+    await self.registration.showNotification(data.title || "IFA.ng", {
       body: data.body || "",
       icon: "/brand/icon-192.png",
       badge: "/brand/icon-192.png",
       tag: data.tag,
-      data: { url: data.url || "/dashboard" },
-    })
-  );
+      renotify: Boolean(data.tag),
+      requireInteraction: urgent,
+      silent: false,
+      vibrate: urgent ? VIBRATE_URGENT : VIBRATE_NORMAL,
+      timestamp: Date.now(),
+      actions: urgent ? [{ action: "open", title: "Join now" }] : [],
+      data: { url: data.url || "/dashboard", id: data.id },
+    });
+  })());
 });
 
 self.addEventListener("notificationclick", (event) => {

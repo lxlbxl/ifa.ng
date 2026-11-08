@@ -67,7 +67,7 @@ export function createApp(deps: {
   registerV1(app, { config, database, fetch: deps.fetch ?? globalThis.fetch, files: deps.files ?? createFileStore(config) }, deps.live);
 
   app.onError((err, c) => {
-    if (err instanceof HttpError) return c.json({ error: err.message }, err.status as 400);
+    if (err instanceof HttpError) return c.json({ error: err.message, ...(err.code ? { code: err.code } : {}) }, err.status as 400);
     console.error(err);
     return c.json({ error: "internal_error" }, 500);
   });

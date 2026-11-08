@@ -11,7 +11,8 @@ import { asService, type Services } from "./context.js";
  */
 type Send = (row: Record<string, unknown>) => void;
 
-export function createLiveHub(svc: Services, connectionString: string) {
+export function createLiveHub(svc: Services, connectionString: string,
+  opts: { onNotification?: (id: string, userId: string) => void } = {}) {
   const subscribers = new Map<string, Set<Send>>();
   let client: pg.Client | null = null;
   let closed = false;
@@ -20,6 +21,7 @@ export function createLiveHub(svc: Services, connectionString: string) {
   async function deliver(payload: string) {
     let msg: { id?: string; user_id?: string };
     try { msg = JSON.parse(payload); } catch { return; }
+    if (msg.id && msg.user_id) opts.onNotification?.(msg.id, msg.user_id);
     const subs = msg.user_id ? subscribers.get(msg.user_id) : undefined;
     if (!subs?.size || !msg.id) return;
     const row = (await asService(svc, (trx) => sql<Record<string, unknown>>`

@@ -1,6 +1,8 @@
 import { sql } from "kysely";
 import { asService, type Services } from "./context.js";
 import { notificationTick } from "./notify.js";
+import { expireStalePresence } from "./presence.js";
+import { pushPending } from "./push.js";
 
 /**
  * Scheduled work that pg_cron / Supabase schedules used to run. One API
@@ -8,6 +10,8 @@ import { notificationTick } from "./notify.js";
  */
 export const JOBS: { name: string; everySeconds: number; run: (svc: Services) => Promise<unknown> }[] = [
   { name: "notifications", everySeconds: 60, run: notificationTick },
+  { name: "push missed notifications", everySeconds: 30, run: pushPending },
+  { name: "switch off stale Online", everySeconds: 60, run: expireStalePresence },
   { name: "release expired slot holds", everySeconds: 60,
     run: (svc) => asService(svc, (trx) => sql`select public.cleanup_expired_slot_locks()`.execute(trx)) },
   { name: "complete finished sessions", everySeconds: 300,

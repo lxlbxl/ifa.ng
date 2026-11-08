@@ -47,7 +47,8 @@ serve(async (_req) => {
     return new Response(
       JSON.stringify({
         ...checks,
-        error: error instanceof Error ? error.message : "Unknown error",
+        // do not echo internal error text to an unauthenticated caller
+        error: "Health check failed",
       }, null, 2),
       {
         status: 503,

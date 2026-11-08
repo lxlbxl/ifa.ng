@@ -1,0 +1,17 @@
+{
+  "name": "ifa-recording-processor",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Fetches Google Meet recordings, transcribes (English/Yoruba), checks accuracy and drafts consultation notes",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node index.mjs",
+    "once": "node index.mjs --once",
+    "eval-stt": "node scripts/eval-stt.mjs",
+    "test": "node --test test/lib.test.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.50.0"
+  }
+}

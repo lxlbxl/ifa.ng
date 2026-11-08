@@ -30,7 +30,11 @@ export const useSessionById = (sessionId: string) => {
           ritual_recommendations,
           items_needed,
           deadline,
-          next_appointment
+          next_appointment,
+          video_provider,
+          meet_uri,
+          recording_status,
+          video_fallback_reason
         `)
         .eq('id', sessionId)
         .maybeSingle();

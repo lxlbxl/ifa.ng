@@ -687,6 +687,16 @@ export type Database = {
           status: Database["public"]["Enums"]["session_status_enum"]
           user_id: string
           user_timezone: string | null
+          video_provider: string
+          meet_uri: string | null
+          meet_code: string | null
+          meet_space_name: string | null
+          meet_created_at: string | null
+          recording_status: string
+          recording_attempts: number
+          recording_next_attempt_at: string | null
+          recording_last_error: string | null
+          video_fallback_reason: string | null
           warning: string | null
         }
         Insert: {
@@ -711,6 +721,16 @@ export type Database = {
           status: Database["public"]["Enums"]["session_status_enum"]
           user_id: string
           user_timezone?: string | null
+          video_provider?: string
+          meet_uri?: string | null
+          meet_code?: string | null
+          meet_space_name?: string | null
+          meet_created_at?: string | null
+          recording_status?: string
+          recording_attempts?: number
+          recording_next_attempt_at?: string | null
+          recording_last_error?: string | null
+          video_fallback_reason?: string | null
           warning?: string | null
         }
         Update: {
@@ -735,6 +755,16 @@ export type Database = {
           status?: Database["public"]["Enums"]["session_status_enum"]
           user_id?: string
           user_timezone?: string | null
+          video_provider?: string
+          meet_uri?: string | null
+          meet_code?: string | null
+          meet_space_name?: string | null
+          meet_created_at?: string | null
+          recording_status?: string
+          recording_attempts?: number
+          recording_next_attempt_at?: string | null
+          recording_last_error?: string | null
+          video_fallback_reason?: string | null
           warning?: string | null
         }
         Relationships: []
@@ -751,6 +781,16 @@ export type Database = {
           system_announcements: boolean | null
           updated_at: string | null
           user_id: string
+          video_provider: string
+          meet_uri: string | null
+          meet_code: string | null
+          meet_space_name: string | null
+          meet_created_at: string | null
+          recording_status: string
+          recording_attempts: number
+          recording_next_attempt_at: string | null
+          recording_last_error: string | null
+          video_fallback_reason: string | null
         }
         Insert: {
           created_at?: string | null

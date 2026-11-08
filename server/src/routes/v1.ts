@@ -21,6 +21,18 @@ export function registerV1(app: Hono<AppEnv>, svc: Services, live?: LiveHub) {
     return c.json(signDataToken(svc.config.DATA_JWT_SECRET, c.get("caller")) ?? { token: null, expires_at: null });
   });
 
+  // Best guess of the visitor's country (ISO 3166 alpha-2) for the phone number's country code.
+  // Read from a header the edge sets (Cloudflare's CF-IPCountry, or GEO_COUNTRY_HEADER behind Caddy).
+  app.get("/v1/geo", (c) => {
+    c.header("Cache-Control", "private, max-age=3600");
+    const names = [svc.config.GEO_COUNTRY_HEADER, "cf-ipcountry", "x-vercel-ip-country", "x-country-code"].filter(Boolean) as string[];
+    for (const n of names) {
+      const v = c.req.header(n)?.trim().toUpperCase();
+      if (v && /^[A-Z]{2}$/.test(v) && v !== "XX" && v !== "T1") return c.json({ country: v });
+    }
+    return c.json({ country: null });
+  });
+
   // Payments (was payment-init and payment-verify).
   app.post("/v1/payments/init", async (c) => {
     const user = requireUser(c.get("caller"));

@@ -16,6 +16,7 @@ const svc = { config, database, fetch: globalThis.fetch, files };
 const live = createLiveHub(svc, config.DATABASE_URL);
 // Reminders, WhatsApp/SMS sends, slot-hold cleanup and session completion.
 const stopJobs = config.JOBS_ENABLED === "true" ? startJobs(svc) : () => {};
+const phoneCleanup = setInterval(() => auth.phone.cleanup().catch((e) => console.error("phone cleanup", e)), 3600_000);
 const app = createApp({ config, database, auth, files, live });
 
 serve({ fetch: app.fetch, port: config.PORT }, (info) => {
@@ -25,6 +26,7 @@ serve({ fetch: app.fetch, port: config.PORT }, (info) => {
 for (const sig of ["SIGINT", "SIGTERM"] as const) {
   process.on(sig, async () => {
     stopJobs();
+    clearInterval(phoneCleanup);
     await live.close();
     await database.close();
     await auth.close();

@@ -5,6 +5,8 @@ import { bearer } from "better-auth/plugins";
 import type { Config } from "./config.js";
 import type { Mailer } from "./mailer.js";
 import type { Caller } from "./db.js";
+import { phoneAuthPlugin } from "./phoneAuthPlugin.js";
+import { createPhoneAuth, devSender, otpDevMode, termiiSender, type OtpSender } from "./services/phoneAuth.js";
 
 /**
  * Login, replacing Supabase Auth.
@@ -17,13 +19,19 @@ import type { Caller } from "./db.js";
  * Browsers authenticate with an httpOnly session cookie. The PWA may instead
  * send `Authorization: Bearer <session token>` (bearer plugin).
  */
-export function createAuth(config: Config, mailer: Mailer) {
+export function createAuth(config: Config, mailer: Mailer, opts: { otpSender?: OtpSender; fetch?: typeof fetch } = {}) {
   const pool = new pg.Pool({ connectionString: config.DATABASE_URL, max: 5 });
   pool.on("connect", (client) => {
     client.query("set role service_role").catch((e) => console.error("auth pool: set role failed", e));
   });
 
   const secure = config.API_URL.startsWith("https://");
+
+  const devMode = otpDevMode(config);
+  const phone = createPhoneAuth({
+    pool, secret: config.AUTH_SECRET, devMode,
+    sender: opts.otpSender ?? (devMode ? devSender : termiiSender(config, opts.fetch ?? globalThis.fetch)),
+  });
 
   const auth = betterAuth({
     appName: "IFA.ng",
@@ -66,6 +74,8 @@ export function createAuth(config: Config, mailer: Mailer) {
     },
     emailAndPassword: {
       enabled: true,
+      // People sign in with phone + PIN (plugin below). Email sign-up stays off unless EMAIL_SIGNUP=true.
+      disableSignUp: config.EMAIL_SIGNUP !== "true",
       minPasswordLength: 8,
       maxPasswordLength: 128,
       autoSignIn: true,
@@ -90,8 +100,11 @@ export function createAuth(config: Config, mailer: Mailer) {
     },
     rateLimit: { enabled: config.NODE_ENV !== "test", window: 60, max: 30, storage: "memory",
       customRules: { "/sign-in/email": { window: 60, max: 5 }, "/sign-up/email": { window: 60, max: 3 },
-        "/request-password-reset": { window: 300, max: 3 } } },
-    plugins: [bearer()],
+        "/request-password-reset": { window: 300, max: 3 },
+        // Coarse per-IP caps; the precise per-number limits and lockouts are in services/phoneAuth.ts.
+        "/phone/start": { window: 60, max: 10 }, "/phone/verify-otp": { window: 60, max: 10 },
+        "/phone/sign-in-pin": { window: 60, max: 10 }, "/phone/set-pin": { window: 60, max: 10 } } },
+    plugins: [bearer(), phoneAuthPlugin(phone)],
   });
 
   /** Who is calling: a signed-in user (cookie or bearer token) or anonymous. */
@@ -101,7 +114,7 @@ export function createAuth(config: Config, mailer: Mailer) {
     return { kind: "user", userId: session.user.id, email: session.user.email };
   }
 
-  return { auth, resolveCaller, close: () => pool.end() };
+  return { auth, resolveCaller, phone, close: () => pool.end() };
 }
 
 export type Auth = ReturnType<typeof createAuth>;

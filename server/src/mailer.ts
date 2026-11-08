@@ -31,5 +31,9 @@ export class SmtpMailer implements Mailer {
 }
 
 export function createMailer(smtpUrl: string | undefined, from: string): Mailer {
-  return smtpUrl ? new SmtpMailer(smtpUrl, from) : new ConsoleMailer();
+  const inner = smtpUrl ? new SmtpMailer(smtpUrl, from) : new ConsoleMailer();
+  return {
+    // Phone-only accounts carry a placeholder address under the reserved .invalid TLD; never mail it.
+    send: async (mail) => { if (!/\.invalid$/i.test(mail.to.trim())) await inner.send(mail); },
+  };
 }

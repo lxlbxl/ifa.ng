@@ -16,6 +16,11 @@ const Env = z.object({
   SMTP_URL: z.string().optional(),
   MAIL_FROM: z.string().default("IFA.ng <no-reply@ifa.ng>"),
   NODE_ENV: z.string().default("development"),
+  /**
+   * Signs the short-lived tokens the web app sends to PostgREST (/rest/v1). Must equal
+   * PGRST_JWT_SECRET in deploy/.env. At least 32 random characters in production.
+   */
+  DATA_JWT_SECRET: z.string().min(32).default("dev-only-data-secret-change-me-dev-only"),
 
   // Payments. Keys live only in the server's environment, never in the database.
   PAYSTACK_SECRET_KEY: z.string().optional(),
@@ -49,6 +54,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   const c = Env.parse(env);
   if (c.NODE_ENV === "production" && c.AUTH_SECRET.startsWith("dev-only")) {
     throw new Error("AUTH_SECRET must be set in production");
+  }
+  if (c.NODE_ENV === "production" && c.DATA_JWT_SECRET.startsWith("dev-only")) {
+    throw new Error("DATA_JWT_SECRET must be set in production");
   }
   return c;
 }

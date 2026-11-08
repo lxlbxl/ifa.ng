@@ -46,6 +46,15 @@ comes back in the `set-auth-token` header on sign-in). Signup accepts
 `signupRole: "user" | "babalawo"` only; admin is never granted at signup.
 Emails go through `SMTP_URL`, or are printed to the log when it is unset.
 
+## How the web app reads and writes tables
+
+Exactly as it did on Supabase, through PostgREST, but our own copy on the VPS
+(`postgrest` in `deploy/docker-compose.yml`, served at `/rest/v1`). PostgREST logs in
+as `ifa_rest`, which can only become `anon` or `authenticated`. A signed-in browser
+asks `GET /v1/data-token` for a 10 minute token (signed with `DATA_JWT_SECRET`, which
+PostgREST also holds), so every row-level security policy applies unchanged.
+`e2e/postgrest.test.ts` runs a real PostgREST in CI to prove it.
+
 ## What replaced the edge functions
 
 | Old Supabase function | Now |
@@ -73,6 +82,6 @@ Paystack, Flutterwave, Google, Termii and WhatsApp (`test/integrations.test.ts`)
 - [x] Self-hosted deploy: docker compose (Postgres, API, Caddy, offsite backups), see deploy/README.md
 - [x] Phase 2: port edge functions (payments, webhooks, Meet, notifications)
 - [x] Phase 3: login with Better Auth
-- [ ] Phase 4: frontend data layer
+- [x] Phase 4: frontend data layer (login, data, payments, video calls)
 - [ ] Phase 5: files (R2), live notifications (SSE), jobs (pg-boss)
 - [ ] Phase 6: data migration and cutover

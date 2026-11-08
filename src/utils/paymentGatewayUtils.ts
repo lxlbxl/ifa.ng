@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/integrations/api/config";
 
 export type PaymentGateway = 'flutterwave' | 'paystack';
 
@@ -56,13 +56,7 @@ export const createPaymentIntent = async (body: {
   start_time?: string;
   is_instant?: boolean;
 }): Promise<PaymentIntentInfo> => {
-  const { data, error } = await supabase.functions.invoke('payment-init', { body });
-  if (error) {
-    let msg = error.message;
-    try { msg = (await (error as any).context?.json())?.error ?? msg; } catch { /* keep default */ }
-    throw new Error(msg);
-  }
-  return data as PaymentIntentInfo;
+  return apiFetch<PaymentIntentInfo>('/v1/payments/init', { method: 'POST', body: JSON.stringify(body) });
 };
 
 /** Open the gateway popup. Resolves true when the popup reports success (still unverified!), false if closed/failed. */
@@ -105,11 +99,10 @@ export const openCheckout = async (intent: PaymentIntentInfo, description: strin
 export const verifyPayment = async (reference: string, attempts = 6, delayMs = 2000): Promise<SettleResult> => {
   let last: SettleResult = { status: 'pending' };
   for (let i = 0; i < attempts; i++) {
-    const { data, error } = await supabase.functions.invoke('payment-verify', { body: { reference } });
-    if (!error && data) {
-      last = data as SettleResult;
+    try {
+      last = await apiFetch<SettleResult>('/v1/payments/verify', { method: 'POST', body: JSON.stringify({ reference }) });
       if (last.status !== 'pending') return last;
-    }
+    } catch { /* retry */ }
     await new Promise((r) => setTimeout(r, delayMs));
   }
   return last;

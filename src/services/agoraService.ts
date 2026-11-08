@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/integrations/api/config";
 
 export interface AgoraTokenResponse {
   token: string;
@@ -13,14 +14,11 @@ export interface AgoraTokenResponse {
  * paid session within the join window; nothing about identity is trusted from the client.
  */
 export const generateAgoraToken = async (sessionId: string | number): Promise<AgoraTokenResponse> => {
-  const { data, error } = await supabase.functions.invoke("generate-agora-token", {
-    body: { session_id: String(sessionId) },
-  });
-  if (error) {
-    // supabase-js hides the JSON body on non-2xx; surface it when present.
-    let msg = error.message;
-    try { msg = (await (error as any).context?.json?.())?.error ?? msg; } catch { /* keep default */ }
-    throw new Error(msg || "Failed to get a video token");
+  let data: AgoraTokenResponse;
+  try {
+    data = await apiFetch<AgoraTokenResponse>(`/v1/sessions/${encodeURIComponent(String(sessionId))}/agora-token`, { method: "POST", body: "{}" });
+  } catch (e) {
+    throw new Error((e as Error).message || "Failed to get a video token");
   }
   if (!data?.token || !data?.appId) throw new Error("Invalid response from token service");
   return data as AgoraTokenResponse;

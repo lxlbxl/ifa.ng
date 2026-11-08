@@ -5,10 +5,17 @@ import { createMeetLink } from "../services/meet.js";
 import { notificationTick } from "../services/notify.js";
 import { handleFlutterwaveWebhook, handlePaystackWebhook, initPayment, verifyForUser } from "../services/payments.js";
 import { agoraToken, sessionTranscript } from "../services/video.js";
+import { signDataToken } from "../services/dataToken.js";
 
 /** The work the old Supabase edge functions did, now inside the API. */
 export function registerV1(app: Hono<AppEnv>, svc: Services) {
   const body = async (req: Request) => (await req.json().catch(() => ({}))) as Record<string, unknown>;
+
+  // Short-lived token for PostgREST (/rest/v1). Anonymous callers get none and read as 'anon'.
+  app.get("/v1/data-token", (c) => {
+    c.header("Cache-Control", "no-store");
+    return c.json(signDataToken(svc.config.DATA_JWT_SECRET, c.get("caller")) ?? { token: null, expires_at: null });
+  });
 
   // Payments (was payment-init and payment-verify).
   app.post("/v1/payments/init", async (c) => {

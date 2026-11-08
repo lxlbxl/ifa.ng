@@ -2,9 +2,9 @@ name: server
 
 on:
   push:
-    paths: ["server/**", "db/**", ".github/workflows/server.yml"]
+    paths: ["server/**", "db/**", "deploy/**", ".github/workflows/server.yml"]
   pull_request:
-    paths: ["server/**", "db/**", ".github/workflows/server.yml"]
+    paths: ["server/**", "db/**", "deploy/**", ".github/workflows/server.yml"]
 
 jobs:
   test:
@@ -37,3 +37,22 @@ jobs:
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
         run: npm run migrate
+      - name: Web app data path through a real PostgREST
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+          DATA_JWT_SECRET: ci-only-data-secret-0123456789abcdef0123
+          POSTGREST_URL: http://localhost:3000
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d postgres -c "CREATE ROLE ifa_rest LOGIN NOINHERIT PASSWORD 'rest'"
+          npm run migrate
+          docker run -d --name postgrest --network host \
+            -e PGRST_DB_URI=postgres://ifa_rest:rest@localhost:5432/postgres \
+            -e PGRST_DB_SCHEMAS=public -e PGRST_DB_ANON_ROLE=anon \
+            -e PGRST_JWT_SECRET="$DATA_JWT_SECRET" -e PGRST_JWT_AUD=authenticated \
+            -e PGRST_DB_CHANNEL_ENABLED=true -e PGRST_SERVER_PORT=3000 \
+            postgrest/postgrest:v12.2.12
+          npm run test:e2e
+      - name: PostgREST log
+        if: failure()
+        run: docker logs postgrest || true

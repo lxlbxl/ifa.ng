@@ -12,6 +12,7 @@ services:
       POSTGRES_USER: ifa_admin
       POSTGRES_PASSWORD: ${DB_ADMIN_PASSWORD:?set in .env}
       API_DB_PASSWORD: ${API_DB_PASSWORD:?set in .env}
+      REST_DB_PASSWORD: ${REST_DB_PASSWORD:?set in .env}
       POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
     command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
     volumes:
@@ -41,6 +42,7 @@ services:
       API_URL: https://${API_DOMAIN}
       APP_URL: ${APP_URL:?set in .env}
       AUTH_SECRET: ${AUTH_SECRET:?set in .env}
+      DATA_JWT_SECRET: ${DATA_JWT_SECRET:?set in .env}
       COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
       SMTP_URL: ${SMTP_URL:-}
       MAIL_FROM: ${MAIL_FROM:-IFA.ng <no-reply@ifa.ng>}
@@ -58,10 +60,29 @@ services:
       TERMII_API_KEY: ${TERMII_API_KEY:-}
       TERMII_SENDER_ID: ${TERMII_SENDER_ID:-IFA}
 
+  # Table reads and writes from the web app, under the same row-level security rules
+  # the app was built on. Served at https://API_DOMAIN/rest/v1 through Caddy.
+  postgrest:
+    image: postgrest/postgrest:v12.2.12
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      PGRST_DB_URI: postgres://ifa_rest:${REST_DB_PASSWORD}@db:5432/ifa
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${DATA_JWT_SECRET}
+      PGRST_JWT_AUD: authenticated
+      PGRST_DB_MAX_ROWS: "1000"
+      PGRST_OPENAPI_MODE: disabled
+      PGRST_SERVER_PORT: "3000"
+      PGRST_SERVER_CORS_ALLOWED_ORIGINS: ${CORS_ORIGINS}
+      PGRST_DB_CHANNEL_ENABLED: "true"
+
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
-    depends_on: [api]
+    depends_on: [api, postgrest]
     ports: ["80:80", "443:443", "443:443/udp"]
     environment:
       API_DOMAIN: ${API_DOMAIN:?set in .env}

@@ -4,7 +4,8 @@ import { CheckCircle2, Clock, Globe2, Laptop, Loader2, MapPin, Video, XCircle } 
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Eyebrow, Logo, TickDot } from '@/components/brand';
+import { Eyebrow, TickDot } from '@/components/brand';
+import Header from '@/components/Header';
 import { ChoiceCard, StepFrame } from '@/components/flow/StepFrame';
 import { PhoneAuthFlow } from '@/components/flow/PhoneAuthFlow';
 import { countryByCode, detectCountry } from '@/lib/countries';
@@ -269,20 +270,21 @@ const BabalawoApply = () => {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid min-h-screen bg-cloth lg:grid-cols-[1fr_1.1fr]">
-      <aside className="relative hidden overflow-hidden bg-camwood text-white lg:flex lg:flex-col lg:justify-between lg:p-12">
-        <Logo tone="light" />
-        <div>
-          <Eyebrow className="text-sun">For Babalawos</Eyebrow>
-          <p className="mt-4 max-w-[14ch] font-display text-[clamp(44px,5vw,80px)] font-extrabold leading-[.9] tracking-[-0.045em]">
-            Àṣẹ, from anywhere.
-          </p>
-        </div>
-      </aside>
-      <main className="flex min-h-screen flex-col">
-        <div className="px-5 pt-5 lg:hidden"><Logo /></div>
-        <div className="mx-auto flex w-full max-w-[560px] flex-1 flex-col">{children}</div>
-      </main>
+    <div className="flex min-h-screen flex-col bg-cloth">
+      <Header variant="solid" />
+      <div className="grid flex-1 grid-cols-[minmax(0,1fr)] lg:grid-cols-[1fr_1.1fr]">
+        <aside className="relative hidden overflow-hidden bg-camwood text-white lg:flex lg:flex-col lg:justify-end lg:p-12">
+          <div>
+            <Eyebrow className="text-sun">For Babalawos</Eyebrow>
+            <p className="mt-4 max-w-[14ch] font-display text-[clamp(44px,5vw,80px)] font-extrabold leading-[.9] tracking-[-0.045em]">
+              Àṣẹ, from anywhere.
+            </p>
+          </div>
+        </aside>
+        <main className="flex flex-col">
+          <div className="mx-auto flex w-full max-w-[560px] flex-1 flex-col">{children}</div>
+        </main>
+      </div>
     </div>
   );
 }

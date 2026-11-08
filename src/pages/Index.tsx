@@ -12,7 +12,7 @@ import { OduTicker } from '@/components/brand';
 /** Homepage, following the approved VeeFriends-style preview. */
 const Index = () => (
   <div className="min-h-screen bg-cloth">
-    <Header variant="overlay" />
+    <Header variant="clear" />
     <main>
       <HeroSection />
       <FeaturedBabalawos />

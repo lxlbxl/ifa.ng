@@ -36,8 +36,8 @@ const Header = ({ variant = 'solid' }: HeaderProps) => {
         overlay ? 'absolute inset-x-0 top-0 text-white' : floating ? 'absolute inset-x-0 top-0 text-ink' : 'sticky top-0 border-b border-line bg-cloth/90 text-ink backdrop-blur-md',
       )}
     >
-      <div className={cn('wrap flex items-center gap-6', floating ? 'h-[84px]' : 'h-[72px]')}>
-        <Logo tone={overlay ? 'light' : 'dark'} />
+      <div className={cn('wrap flex items-center gap-6', floating ? 'h-[84px] lg:h-[96px]' : 'h-[76px] lg:h-[88px]')}>
+        <Logo size="header" markOnly />
 
         <nav className="ml-auto hidden items-center gap-6 text-[15px] font-semibold lg:flex" aria-label="Main">
           {links.map((l) => (
@@ -82,7 +82,7 @@ const Header = ({ variant = 'solid' }: HeaderProps) => {
             <SheetContent className="flex flex-col gap-0 border-l-0 bg-ink p-0 text-cloth">
               <SheetTitle className="sr-only">Menu</SheetTitle>
               <div className="p-6">
-                <Logo tone="light" />
+                <Logo size="header" markOnly />
               </div>
               <nav className="flex flex-col px-6" aria-label="Mobile">
                 {links.map((l) => (

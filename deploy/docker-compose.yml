@@ -59,6 +59,33 @@ services:
       WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
       TERMII_API_KEY: ${TERMII_API_KEY:-}
       TERMII_SENDER_ID: ${TERMII_SENDER_ID:-IFA}
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_BUCKET: ${S3_BUCKET:-}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
+      FILES_DIR: /data/files
+    volumes:
+      - files:/data/files
+
+  # Turns Meet recordings (or uploaded audio) into transcripts and draft notes.
+  recorder:
+    build:
+      context: ../workers/recording-processor
+    restart: unless-stopped
+    depends_on: [api]
+    environment:
+      DATABASE_URL: postgres://ifa_api:${API_DB_PASSWORD}@db:5432/ifa
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_BUCKET: ${S3_BUCKET:-}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
+      FILES_DIR: /data/files
+      GOOGLE_SERVICE_ACCOUNT_JSON: ${GOOGLE_SERVICE_ACCOUNT_JSON:-}
+      GOOGLE_ORGANIZER_EMAIL: ${GOOGLE_ORGANIZER_EMAIL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    volumes:
+      - files:/data/files
 
   # Table reads and writes from the web app, under the same row-level security rules
   # the app was built on. Served at https://API_DOMAIN/rest/v1 through Caddy.
@@ -114,5 +141,6 @@ services:
 
 volumes:
   pgdata:
+  files:
   caddy_data:
   caddy_config:

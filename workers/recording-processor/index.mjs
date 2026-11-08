@@ -1,10 +1,9 @@
 // Recording processor: polls for finished Meet sessions, pulls the recording from Drive,
 // transcribes it, runs accuracy checks, and drafts notes for the Babalawo to approve.
 // Run continuously (default) or once (--once) from cron.
-import { createClient } from "@supabase/supabase-js";
 import { spawn } from "node:child_process";
 import { createWriteStream } from "node:fs";
-import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { tmpdir } from "node:os";
@@ -13,8 +12,14 @@ import { meetGet, driveDownload } from "./lib/google.mjs";
 import { transcribeChunk, providerName } from "./lib/stt.mjs";
 import { assessTranscript, overallLanguage, normalizeLanguage } from "./lib/quality.mjs";
 import { draftNotes } from "./lib/notes.mjs";
+import { createDb, createFiles } from "./lib/store.mjs";
 
-const db = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+const db = createDb();
+const files = createFiles();
+const REC = (p) => `session-recordings/${p}`;
+// Columns the worker reads, with dates and times as plain text.
+const SESSION_COLS = `id::text, session_date::text, to_char(start_time, 'HH24:MI') start_time, to_char(end_time, 'HH24:MI') end_time,
+  user_timezone, video_provider, meet_space_name, recording_status, recording_attempts`;
 const ONCE = process.argv.includes("--once");
 const CHUNK_SECONDS = 600;
 const MAX_ATTEMPTS = 6;
@@ -43,19 +48,17 @@ function sessionEnd(s) {
 }
 
 async function retention() {
-  const { data } = await db.from("admin_settings").select("setting_value").eq("setting_key", "recording_retention_days").maybeSingle();
-  return Number(data?.setting_value) || 90;
+  const row = await db.one("select setting_value from public.admin_settings where setting_key = 'recording_retention_days'");
+  return Number(row?.setting_value) || 90;
 }
 
 async function fail(session, err, terminal = false) {
   const attempts = (session.recording_attempts || 0) + 1;
   const dead = terminal || attempts >= MAX_ATTEMPTS;
   log(`session ${session.id} ${dead ? "FAILED" : "retry"}:`, err.message || err);
-  await db.from("sessions").update({
-    recording_attempts: attempts, recording_last_error: String(err.message || err).slice(0, 500),
-    recording_status: dead ? "failed" : session.recording_status,
-    recording_next_attempt_at: new Date(Date.now() + Math.min(120, 2 ** attempts) * 60_000).toISOString(),
-  }).eq("id", session.id);
+  await db.q(`update public.sessions set recording_attempts = $2, recording_last_error = $3, recording_status = $4,
+      recording_next_attempt_at = now() + make_interval(mins => $5) where id = $1::bigint`,
+    [session.id, attempts, String(err.message || err).slice(0, 500), dead ? "failed" : session.recording_status, Math.min(120, 2 ** attempts)]);
 }
 
 /** Step 1: find ready Meet recordings for the session and register them. */
@@ -70,12 +73,10 @@ async function discoverRecordings(s) {
     for (const r of recs) {
       if (r.state === "FILE_GENERATED" && r.driveDestination?.file) {
         const days = await retention();
-        const { error } = await db.from("session_recordings").upsert({
-          session_id: s.id, source: "meet", conference_record: c.name, recording_resource: r.name,
-          drive_file_id: r.driveDestination.file, status: "ready",
-          retention_until: new Date(Date.now() + days * 86400_000).toISOString(),
-        }, { onConflict: "session_id,recording_resource", ignoreDuplicates: true });
-        if (error) throw error;
+        await db.q(`insert into public.session_recordings(session_id, source, conference_record, recording_resource, drive_file_id, status, retention_until)
+            values ($1::bigint, 'meet', $2, $3, $4, 'ready', now() + make_interval(days => $5))
+            on conflict (session_id, recording_resource) do nothing`,
+          [s.id, c.name, r.name, r.driveDestination.file, days]);
         ready++;
       } else if (r.state === "STARTED" || r.state === "ENDED") pending = true; // not downloadable yet
     }
@@ -93,17 +94,15 @@ async function transcribeRecording(s, rec, dir) {
   if (rec.source === "meet") {
     await pipeline(Readable.fromWeb(await driveDownload(rec.drive_file_id)), createWriteStream(src));
   } else {
-    const { data, error } = await db.storage.from("session-recordings").download(rec.storage_path);
-    if (error) throw error;
-    await pipeline(Readable.fromWeb(data.stream()), createWriteStream(src));
+    await writeFile(src, await files.get(REC(rec.storage_path)));
   }
   const audio = join(dir, "audio.mp3");
   await run("ffmpeg", ["-y", "-i", src, "-vn", "-ac", "1", "-ar", "16000", "-b:a", "32k", audio]);
   const duration = await ffprobeDuration(audio);
   const storagePath = `${s.id}/${rec.id}.mp3`;
-  const { error: upErr } = await db.storage.from("session-recordings").upload(storagePath, await readFile(audio), { contentType: "audio/mpeg", upsert: true });
-  if (upErr) throw upErr;
-  await db.from("session_recordings").update({ storage_path: storagePath, duration_seconds: duration, status: "processing" }).eq("id", rec.id);
+  await files.put(REC(storagePath), await readFile(audio), "audio/mpeg");
+  await db.q("update public.session_recordings set storage_path = $2, duration_seconds = $3, status = 'processing' where id = $1::uuid",
+    [rec.id, storagePath, duration]);
 
   await run("ffmpeg", ["-y", "-i", audio, "-f", "segment", "-segment_time", String(CHUNK_SECONDS), "-c", "copy", join(dir, "chunk_%03d.mp3")]);
   const chunks = (await readdir(dir)).filter((f) => f.startsWith("chunk_")).sort();
@@ -120,9 +119,7 @@ async function transcribeRecording(s, rec, dir) {
 }
 
 async function upsertDraftNotes(s, notes, language, confidence, transcriptId) {
-  const { data: existing, error: e1 } = await db.from("consultation_notes").select("id,status,source").eq("session_id", s.id).maybeSingle();
-  if (e1 && e1.code === "42P01") { log("consultation_notes table not present yet; draft kept on the transcript row"); return false; }
-  if (e1) throw e1;
+  const existing = await db.one("select id, status, source from public.consultation_notes where session_id = $1::bigint", [s.id]);
   if (existing && !(existing.status === "draft" && existing.source === "ai")) return false; // never overwrite manual/approved
   const row = {
     session_id: s.id, status: "draft", source: "ai", summary: notes.summary, action_points: notes.action_points,
@@ -131,36 +128,40 @@ async function upsertDraftNotes(s, notes, language, confidence, transcriptId) {
     language: language === "yo" || language === "en" ? language : "mixed", transcript_confidence: confidence,
     transcript_id: transcriptId, drafted_at: new Date().toISOString(),
   };
-  let { error } = await db.from("consultation_notes").upsert(row, { onConflict: "session_id" });
-  if (error && /transcript_id/.test(error.message)) { delete row.transcript_id; ({ error } = await db.from("consultation_notes").upsert(row, { onConflict: "session_id" })); }
-  if (error) throw error;
+  // Column names come from this code, never from input; values travel as one JSON parameter.
+  const cols = Object.keys(row);
+  await db.q(`insert into public.consultation_notes(${cols.join(", ")})
+      select ${cols.map((c) => `r.${c}`).join(", ")} from jsonb_populate_record(null::public.consultation_notes, $1::jsonb) r
+      on conflict (session_id) do update set ${cols.filter((c) => c !== "session_id").map((c) => `${c} = excluded.${c}`).join(", ")}`,
+    [JSON.stringify(row)]);
   return true;
 }
 
 async function processSession(s) {
   // Consent is re-checked at processing time: withdrawn consent means we do not process.
-  const { data: ok } = await db.rpc("session_has_full_consent", { p_session_id: s.id });
+  const { ok } = await db.one("select public.session_has_full_consent($1::bigint) ok", [s.id]);
   if (!ok) {
     log(`session ${s.id}: consent missing/withdrawn, not processing`);
-    await db.from("session_recordings").update({ status: "failed" }).eq("session_id", s.id).in("status", ["pending", "ready"]);
-    await db.from("sessions").update({ recording_status: "none" }).eq("id", s.id);
+    await db.q("update public.session_recordings set status = 'failed' where session_id = $1::bigint and status in ('pending', 'ready')", [s.id]);
+    await db.q("update public.sessions set recording_status = 'none' where id = $1::bigint", [s.id]);
     return;
   }
   if (s.video_provider === "google_meet" && s.meet_space_name) {
     const d = await discoverRecordings(s);
-    const { count } = await db.from("session_recordings").select("id", { count: "exact", head: true }).eq("session_id", s.id);
+    const { count } = await db.one("select count(*)::int count from public.session_recordings where session_id = $1::bigint", [s.id]);
     if (!d.ready && !count) {
       const age = Date.now() - sessionEnd(s).getTime();
       if (d.pending && age < 3 * 3600_000) throw new Error("recording not ready yet");
       // No recording will arrive (nobody pressed record / co-host joined on mobile / meeting never happened).
-      await db.from("sessions").update({ recording_status: "unavailable", recording_last_error: d.reason || "no recording produced" }).eq("id", s.id);
+      await db.q("update public.sessions set recording_status = 'unavailable', recording_last_error = $2 where id = $1::bigint",
+        [s.id, d.reason || "no recording produced"]);
       log(`session ${s.id}: no recording; marked unavailable (Babalawo can upload audio or write notes manually)`);
       return;
     }
   }
-  const { data: recs } = await db.from("session_recordings").select("*").eq("session_id", s.id).in("status", ["ready", "processing"]);
-  if (!recs?.length) return;
-  await db.from("sessions").update({ recording_status: "processing" }).eq("id", s.id);
+  const recs = await db.q("select id::text, source, drive_file_id, storage_path from public.session_recordings where session_id = $1::bigint and status in ('ready', 'processing')", [s.id]);
+  if (!recs.length) return;
+  await db.q("update public.sessions set recording_status = 'processing' where id = $1::bigint", [s.id]);
 
   for (const rec of recs) {
     const dir = await mkdtemp(join(tmpdir(), "rec-"));
@@ -168,38 +169,37 @@ async function processSession(s) {
       const t = await transcribeRecording(s, rec, dir);
       const quality = assessTranscript({ text: t.text, segments: t.segments, durationSeconds: t.duration, language: t.language,
         opts: { yorubaAlwaysReview: process.env.YORUBA_ALWAYS_REVIEW !== "false" } });
-      const { data: tr, error } = await db.from("session_transcripts").insert({
-        session_id: s.id, recording_id: rec.id, source: `stt:${providerName()}`, language: t.language, text: t.text,
-        segments: t.segments, confidence: quality.confidence ?? quality.score, quality, needs_review: quality.needs_review,
-      }).select("id").single();
-      if (error) throw error;
-      await db.from("session_recordings").update({ status: "done" }).eq("id", rec.id);
-      await db.from("sessions").update({ recording_status: "transcribed" }).eq("id", s.id);
+      const tr = await db.one(`insert into public.session_transcripts(session_id, recording_id, source, language, text, segments, confidence, quality, needs_review)
+          values ($1::bigint, $2::uuid, $3, $4, $5, $6::jsonb, $7, $8::jsonb, $9) returning id::text`,
+        [s.id, rec.id, `stt:${providerName()}`, t.language, t.text, JSON.stringify(t.segments), quality.confidence ?? quality.score,
+         JSON.stringify(quality), quality.needs_review]);
+      await db.q("update public.session_recordings set status = 'done' where id = $1::uuid", [rec.id]);
+      await db.q("update public.sessions set recording_status = 'transcribed' where id = $1::bigint", [s.id]);
 
       if (quality.flags.includes("empty_transcript")) { log(`session ${s.id}: empty transcript, skipping notes`); continue; }
       const notes = await draftNotes({ transcript: t.text, language: t.language, sessionDate: s.session_date, quality });
-      await db.from("session_transcripts").update({ quality: { ...quality, notes_draft: notes } }).eq("id", tr.id);
+      await db.q("update public.session_transcripts set quality = $2::jsonb where id = $1::uuid", [tr.id, JSON.stringify({ ...quality, notes_draft: notes })]);
       await upsertDraftNotes(s, notes, t.language, quality.confidence ?? quality.score, tr.id);
-      await db.from("sessions").update({ recording_status: "notes_drafted", recording_last_error: null }).eq("id", s.id);
+      await db.q("update public.sessions set recording_status = 'notes_drafted', recording_last_error = null where id = $1::bigint", [s.id]);
       log(`session ${s.id}: notes drafted (score ${quality.score}, review=${quality.needs_review})`);
     } finally { await rm(dir, { recursive: true, force: true }); }
   }
 }
 
 async function purgeExpired() {
-  const { data } = await db.from("session_recordings").select("id,storage_path").lt("retention_until", new Date().toISOString()).not("storage_path", "is", null).limit(50);
-  for (const r of data || []) {
-    await db.storage.from("session-recordings").remove([r.storage_path]);
-    await db.from("session_recordings").update({ storage_path: null, status: "done" }).eq("id", r.id);
+  const rows = await db.q("select id::text, storage_path from public.session_recordings where retention_until < now() and storage_path is not null limit 50");
+  for (const r of rows) {
+    await files.remove(REC(r.storage_path));
+    await db.q("update public.session_recordings set storage_path = null, status = 'done' where id = $1::uuid", [r.id]);
     log("purged expired recording", r.id);
   }
 }
 
 async function tick() {
-  const { data: due } = await db.from("sessions").select("*")
-    .in("recording_status", ["scheduled", "processing"])
-    .or(`recording_next_attempt_at.is.null,recording_next_attempt_at.lte.${new Date().toISOString()}`).limit(10);
-  for (const s of due || []) {
+  const due = await db.q(`select ${SESSION_COLS} from public.sessions
+     where recording_status in ('scheduled', 'processing')
+       and (recording_next_attempt_at is null or recording_next_attempt_at <= now()) limit 10`);
+  for (const s of due) {
     // Meet artifacts appear a few minutes after the conference ends.
     if (s.video_provider === "google_meet" && Date.now() < sessionEnd(s).getTime() + 3 * 60_000) continue;
     try { await processSession(s); } catch (e) { await fail(s, e); }
@@ -207,6 +207,6 @@ async function tick() {
   await purgeExpired().catch((e) => log("purge error", e.message));
 }
 
-if (ONCE) { await tick(); process.exit(0); }
+if (ONCE) { await tick(); await db.end(); process.exit(0); }
 log("recording processor started, stt =", providerName());
 for (;;) { await tick().catch((e) => log("tick error", e.message)); await new Promise((r) => setTimeout(r, 60_000)); }

@@ -13,7 +13,7 @@ export async function apiFetch<T = unknown>(path: string, init: RequestInit = {}
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
     credentials: "include",
-    headers: { ...(init.body ? { "Content-Type": "application/json" } : {}), ...(init.headers ?? {}) },
+    headers: { ...(typeof init.body === "string" ? { "Content-Type": "application/json" } : {}), ...(init.headers ?? {}) },
   });
   const text = await res.text();
   let body: unknown = null;

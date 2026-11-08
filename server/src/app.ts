@@ -6,6 +6,8 @@ import type { Config } from "./config.js";
 import type { Auth } from "./auth.js";
 import { HttpError } from "./services/context.js";
 import { registerV1 } from "./routes/v1.js";
+import { createFileStore, type FileStore } from "./services/storage.js";
+import type { LiveHub } from "./services/live.js";
 
 export type AppEnv = { Variables: { caller: Caller } };
 
@@ -21,6 +23,10 @@ export function createApp(deps: {
   config: Config; database: Database; auth?: Auth; resolveCaller?: ResolveCaller;
   /** Outbound HTTP to payment providers, Google, Agora, Termii. Tests pass a fake. */
   fetch?: typeof fetch;
+  /** File storage (R2 in production). Defaults to a local folder. */
+  files?: FileStore;
+  /** Live notification streams. Without it, the stream endpoint answers 503. */
+  live?: LiveHub;
 }) {
   const { config, database } = deps;
   const resolveCaller = deps.resolveCaller ?? deps.auth?.resolveCaller ?? anonymousOnly;
@@ -58,7 +64,7 @@ export function createApp(deps: {
     return c.json(row);
   });
 
-  registerV1(app, { config, database, fetch: deps.fetch ?? globalThis.fetch });
+  registerV1(app, { config, database, fetch: deps.fetch ?? globalThis.fetch, files: deps.files ?? createFileStore(config) }, deps.live);
 
   app.onError((err, c) => {
     if (err instanceof HttpError) return c.json({ error: err.message }, err.status as 400);

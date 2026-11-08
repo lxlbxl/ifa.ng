@@ -66,7 +66,8 @@ PostgREST also holds), so every row-level security policy applies unchanged.
 | create-meet-link | `POST /v1/sessions/:id/meet-link` (also called by the server after payment) |
 | generate-agora-token | `POST /v1/sessions/:id/agora-token` |
 | session-media (transcript) | `GET /v1/sessions/:id/transcript` |
-| session-media (recording, upload) | moves with file storage (phase 5) |
+| session-media (recording) | `GET /v1/sessions/:id/recording` (10 minute signed link, Babalawo/admin, logged) |
+| session-media (upload) | `POST /v1/sessions/:id/audio` (Babalawo, both consents) |
 | dispatch-notifications | runs inside the API every minute; admins can trigger `POST /v1/admin/notifications/dispatch` |
 | health-check | `GET /health` |
 | create-daily-room | dropped (Meet is the default, Agora the fallback) |
@@ -74,6 +75,18 @@ PostgREST also holds), so every row-level security policy applies unchanged.
 Provider keys come only from the server environment (`deploy/.env.example`), never from
 `admin_settings`. Tests run against real Postgres with a fake `fetch` standing in for
 Paystack, Flutterwave, Google, Termii and WhatsApp (`test/integrations.test.ts`).
+
+## Files, live updates and jobs
+
+- **Files** go to a private R2 bucket (`S3_*` settings), or to the `files` volume when those are empty.
+  Profile photos: `POST /v1/me/avatar`, served at `/files/avatars/...`. Session audio is only ever
+  reachable through a short signed link.
+- **Live notifications**: a trigger on `notifications` does `pg_notify`; the API pushes the row to
+  the owner's open `GET /v1/notifications/stream` (Server-Sent Events).
+- **Scheduled jobs** run inside the API (`src/services/jobs.ts`): WhatsApp/SMS reminders every
+  minute, expired slot holds every minute, finished sessions every 5 minutes.
+- **Recording worker** (`workers/recording-processor`, `recorder` in compose) talks to Postgres
+  and the same file store directly.
 
 ## Status
 
@@ -83,5 +96,5 @@ Paystack, Flutterwave, Google, Termii and WhatsApp (`test/integrations.test.ts`)
 - [x] Phase 2: port edge functions (payments, webhooks, Meet, notifications)
 - [x] Phase 3: login with Better Auth
 - [x] Phase 4: frontend data layer (login, data, payments, video calls)
-- [ ] Phase 5: files (R2), live notifications (SSE), jobs (pg-boss)
+- [x] Phase 5: files (R2), live notifications (SSE), scheduled jobs, recording worker
 - [ ] Phase 6: data migration and cutover

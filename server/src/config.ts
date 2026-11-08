@@ -16,6 +16,31 @@ const Env = z.object({
   SMTP_URL: z.string().optional(),
   MAIL_FROM: z.string().default("IFA.ng <no-reply@ifa.ng>"),
   NODE_ENV: z.string().default("development"),
+
+  // Payments. Keys live only in the server's environment, never in the database.
+  PAYSTACK_SECRET_KEY: z.string().optional(),
+  PAYSTACK_PUBLIC_KEY: z.string().optional(),
+  FLW_SECRET_KEY: z.string().optional(),
+  FLW_PUBLIC_KEY: z.string().optional(),
+  /** The "secret hash" set in the Flutterwave dashboard; sent back in the verif-hash header. */
+  FLW_SECRET_HASH: z.string().optional(),
+
+  // Google Meet: a service account with domain-wide delegation acting as our organizer user.
+  GOOGLE_SERVICE_ACCOUNT_JSON: z.string().optional(),
+  GOOGLE_ORGANIZER_EMAIL: z.string().optional(),
+
+  // Agora (video fallback).
+  AGORA_APP_ID: z.string().optional(),
+  AGORA_APP_CERTIFICATE: z.string().optional(),
+
+  // WhatsApp (Meta Cloud API) with SMS (Termii) fallback.
+  WHATSAPP_ACCESS_TOKEN: z.string().optional(),
+  WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
+  TERMII_API_KEY: z.string().optional(),
+  TERMII_SENDER_ID: z.string().default("IFA"),
+
+  /** Run the once-a-minute notification job inside the API process. */
+  JOBS_ENABLED: z.enum(["true", "false"]).default("true"),
 });
 
 export type Config = z.infer<typeof Env>;

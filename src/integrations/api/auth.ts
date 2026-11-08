@@ -27,7 +27,20 @@ export interface AppSession {
   user: AppUser;
 }
 
-export type AuthEvent = "INITIAL_SESSION" | "SIGNED_IN" | "SIGNED_OUT" | "TOKEN_REFRESHED";
+export type AuthEvent = "INITIAL_SESSION" | "SIGNED_IN" | "SIGNED_OUT" | "TOKEN_REFRESHED" | "USER_UPDATED";
+
+export type PhoneStartResult =
+  | { next: "pin"; phone: string; name: string | null }
+  | { next: "otp"; phone: string; channel: "sms" | "whatsapp"; purpose: "login" | "reset_pin"; isNew: boolean;
+      resend_in: number; dev_code?: string };
+
+export interface PhoneOtpResult {
+  user: { id: string; name: string };
+  is_new: boolean;
+  has_pin: boolean;
+  needs_name: boolean;
+  pin_ticket: string;
+}
 type Listener = (event: AuthEvent, session: AppSession | null) => void;
 
 export interface AuthFailure { message: string; status: number; code?: string }
@@ -36,7 +49,8 @@ interface BetterAuthUser { id: string; email: string; name: string; image?: stri
 
 const toUser = (u: BetterAuthUser): AppUser => ({
   id: u.id,
-  email: u.email,
+  // Phone-only accounts carry a placeholder address the person never typed; don't show it.
+  email: u.email?.endsWith("@phone.ifa.invalid") ? "" : u.email,
   email_confirmed_at: u.emailVerified ? u.createdAt : null,
   created_at: u.createdAt,
   user_metadata: { full_name: u.name || undefined, avatar_url: u.image ?? null },
@@ -152,6 +166,44 @@ export const apiAuth = {
       cached = null;
       emit("SIGNED_OUT");
     }
+  },
+
+  // ---- phone + PIN login (see server/src/services/phoneAuth.ts)
+
+  /** Step 1. "pin" when the number already has a PIN; otherwise a code is sent ("otp"). */
+  async phoneStart(phone: string, opts: { channel?: "sms" | "whatsapp"; forgotPin?: boolean } = {}) {
+    return apiFetch<PhoneStartResult>("/api/auth/phone/start", {
+      method: "POST", body: JSON.stringify({ phone, channel: opts.channel, forgotPin: opts.forgotPin }),
+    });
+  },
+
+  /** Step 2a. Signs the person in (creating the account on first use) and returns a ticket to set a PIN. */
+  async phoneVerifyOtp(phone: string, code: string) {
+    const r = await apiFetch<PhoneOtpResult>("/api/auth/phone/verify-otp", { method: "POST", body: JSON.stringify({ phone, code }) });
+    await loadSession();
+    emit("SIGNED_IN");
+    return r;
+  },
+
+  async phoneSetPin(pin: string, ticket: string) {
+    return apiFetch<{ ok: true }>("/api/auth/phone/set-pin", { method: "POST", body: JSON.stringify({ pin, ticket }) });
+  },
+
+  /** Returning person: phone + PIN. */
+  async phoneSignInPin(phone: string, pin: string) {
+    const r = await apiFetch<{ user: { id: string; name: string }; needs_name: boolean }>("/api/auth/phone/sign-in-pin", {
+      method: "POST", body: JSON.stringify({ phone, pin }),
+    });
+    await loadSession();
+    emit("SIGNED_IN");
+    return r;
+  },
+
+  /** Sets the account's display name (first name); the profile follows. */
+  async updateName(name: string) {
+    await apiFetch("/api/auth/update-user", { method: "POST", body: JSON.stringify({ name }) });
+    await loadSession();
+    emit("USER_UPDATED");
   },
 
   /** Sends the reset email; the link opens `redirectTo` with ?token=... */

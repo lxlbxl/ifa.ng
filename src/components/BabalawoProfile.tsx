@@ -1,21 +1,17 @@
-import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { BadgeCheck, Clock, Globe, Star, Video, Zap } from 'lucide-react';
 import { useBabalawoById } from '@/hooks/useBabalawoById';
-import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Eyebrow, PageShell, PortraitCard, StickerPanel, TickDot } from '@/components/brand';
 import { pickBlock } from '@/design/tokens';
-import BookSessionModal from './dashboard/user/BookSessionModal';
-import InstantConsultationModal from './dashboard/user/InstantConsultationModal';
+import { useConsultFlow } from './flow/ConsultFlow';
+import { useBabalawoAvailableNow } from '@/hooks/useBabalawoAvailableNow';
 
 const BabalawoProfile = () => {
   const { babalawoId } = useParams<{ babalawoId: string }>();
-  const navigate = useNavigate();
-  const { user } = useAuth();
   const { babalawo, loading, error } = useBabalawoById(babalawoId);
-  const [showBookingModal, setShowBookingModal] = useState(false);
-  const [showInstantModal, setShowInstantModal] = useState(false);
+  const { openConsult } = useConsultFlow();
+  const presence = useBabalawoAvailableNow(babalawo?.id, babalawo ?? null, !!babalawo);
 
   if (loading) {
     return (
@@ -50,23 +46,9 @@ const BabalawoProfile = () => {
   const fee = babalawo.hourly_rate ? Number(babalawo.hourly_rate) : 15000;
   const color = pickBlock(name);
   const verified = babalawo.verification_status === 'approved';
-  const online = !!babalawo.is_active;
-
-  const requireAuth = (open: () => void) => () => (user ? open() : navigate('/auth?tab=signin'));
-
-  const babalawoForModal = {
-    id: babalawo.id,
-    full_name: name,
-    avatar_url: babalawo.avatar_url,
-    title: 'Ifá priest',
-    specialties: Array.isArray(babalawo.specialties) ? babalawo.specialties : [],
-    rating: babalawo.rating ? Number(babalawo.rating) : 5,
-    reviews: babalawo.total_sessions ?? 0,
-    verified,
-    nextAvailable: 'Flexible',
-    hourly_rate: fee,
-    price: `₦${fee.toLocaleString()}/session`,
-  };
+  // "Available now" is live: online, active, and not already in a session.
+  const online = presence.availableNow;
+  const flowBabalawo = { ...babalawo, full_name: name, hourly_rate: fee };
 
   const facts = [
     babalawo.experience_years ? { k: 'Experience', v: `${babalawo.experience_years} years` } : null,
@@ -147,7 +129,7 @@ const BabalawoProfile = () => {
             <Eyebrow className="text-camwood">How a session works</Eyebrow>
             <ul className="mt-4 grid list-none gap-3.5 p-0">
               {[
-                'Pick a time and pay. Your Google Meet link arrives once payment clears.',
+                'Pick a time, confirm your phone number and pay. Your Google Meet link arrives once payment clears.',
                 'Join from your phone or laptop. No app to install.',
                 `${name.split(' ').slice(0, 2).join(' ')} approves your written notes before they reach you.`,
               ].map((t, i) => (
@@ -173,21 +155,22 @@ const BabalawoProfile = () => {
               <li className="flex items-center gap-2.5"><Globe className="h-4 w-4 text-green-700" />Notes you can keep</li>
             </ul>
             <div className="mt-6 grid gap-2.5">
-              <Button variant="sun" size="lg" onClick={requireAuth(() => setShowBookingModal(true))}>
+              <Button variant="sun" size="lg" onClick={() => openConsult(flowBabalawo, { mode: 'schedule' })} data-testid="book-session">
                 Book a session
               </Button>
-              {online && (
-                <Button variant="outline" size="lg" onClick={requireAuth(() => setShowInstantModal(true))}>
-                  <Zap /> Consult now
-                </Button>
+              <Button variant="outline" size="lg" disabled={!online} onClick={() => openConsult(flowBabalawo, { mode: 'now' })}
+                aria-describedby={online ? undefined : 'consult-now-hint'} data-testid="consult-now">
+                <Zap /> Consult now
+              </Button>
+              {!online && (
+                <p id="consult-now-hint" className="m-0 text-center text-sm text-muted-foreground">
+                  Consult now opens when {name.replace(/^(Babalawo|Bàbá|Baba|Chief|Olúwo|Oluwo)\s+/i, '').split(' ')[0]} is online. Book a time instead.
+                </p>
               )}
             </div>
           </StickerPanel>
         </aside>
       </div>
-
-      <BookSessionModal open={showBookingModal} onOpenChange={setShowBookingModal} babalawo={babalawoForModal} />
-      <InstantConsultationModal open={showInstantModal} onOpenChange={setShowInstantModal} babalawo={babalawoForModal} />
     </PageShell>
   );
 };

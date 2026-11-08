@@ -17,7 +17,8 @@ const ORIGIN = "http://localhost:8080";
 beforeAll(async () => {
   const url = await freshDatabase("ifa_test_auth");
   await migrate(url, undefined, () => {});
-  const config = loadConfig({ DATABASE_URL: url, NODE_ENV: "test", CORS_ORIGINS: ORIGIN, API_URL: "http://localhost:8787" });
+  const config = loadConfig({ DATABASE_URL: url, NODE_ENV: "test", CORS_ORIGINS: ORIGIN, API_URL: "http://localhost:8787",
+    EMAIL_SIGNUP: "true" });
   database = createDb(url);
   auth = createAuth(config, mailer);
   app = createApp({ config, database, auth });

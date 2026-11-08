@@ -43,6 +43,16 @@ const Env = z.object({
   WHATSAPP_PHONE_NUMBER_ID: z.string().optional(),
   TERMII_API_KEY: z.string().optional(),
   TERMII_SENDER_ID: z.string().default("IFA"),
+  TERMII_BASE_URL: z.string().url().default("https://api.ng.termii.com"),
+  /**
+   * Phone login codes. "auto" (default): outside production, with no Termii key, codes are not
+   * sent but returned to the app and logged, so the flow can be tried end to end. Never in production.
+   */
+  OTP_DEV_MODE: z.enum(["auto", "true", "false"]).default("auto"),
+  /** Request header carrying the visitor's country code, if the edge proxy adds one. */
+  GEO_COUNTRY_HEADER: z.string().optional(),
+  /** Email + password sign-up. Off: people sign in with phone + PIN. Kept for tests and staff tooling. */
+  EMAIL_SIGNUP: z.enum(["true", "false"]).default("false"),
 
   // File storage: a private S3-compatible bucket (Cloudflare R2). Without these, files go to FILES_DIR.
   S3_ENDPOINT: z.string().optional(),

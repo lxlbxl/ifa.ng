@@ -53,3 +53,11 @@ enable_confirmations = false
 [edge_functions]
 enabled = true
 port = 54321
+
+# Payment webhooks are called by Paystack / Flutterwave, not by signed-in users: they authenticate
+# with their own signature header instead of a Supabase JWT.
+[functions.webhook-paystack]
+verify_jwt = false
+
+[functions.webhook-flutterwave]
+verify_jwt = false

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { adminCreditWallet } from "@/utils/walletUtils";
+import { adminAdjustWallet } from "@/utils/walletUtils";
 import { Loader2, Plus, Search, RefreshCw } from "lucide-react";
 
 interface User {
@@ -106,8 +106,9 @@ const AdminWalletManagement = () => {
 
     setProcessing(true);
     try {
-      const success = await adminCreditWallet(selectedUser.id, amount, creditDescription);
-      
+      const res = await adminAdjustWallet(selectedUser.id, amount, 'credit', creditDescription);
+      const success = res.success;
+
       if (success) {
         toast({ title: "Wallet credited successfully!" });
         setSelectedUser(null);
@@ -115,7 +116,7 @@ const AdminWalletManagement = () => {
         setCreditDescription("");
         fetchUsers(); // Refresh the user list
       } else {
-        toast({ title: "Failed to credit wallet", variant: "destructive" });
+        toast({ title: "Failed to credit wallet", description: res.error, variant: "destructive" });
       }
     } catch (error) {
       console.error('Error crediting wallet:', error);

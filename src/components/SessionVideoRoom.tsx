@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSessionById } from "@/hooks/useSessionById";
 import { toast } from "@/hooks/use-toast";
 import AgoraVideoRoom from "./AgoraVideoRoom";
+import NetworkStatusBar from "./pwa/NetworkStatusBar";
 import ConsentFields, { ConsentValue } from "./session/ConsentFields";
 import { ensureMeetLink, getSessionConsents, recordSessionConsent, uploadSessionAudio, SessionConsentRow } from "@/services/videoService";
 
@@ -62,6 +63,7 @@ const SessionVideoRoom = () => {
   if (useBackup || session.video_provider === "agora") {
     return (
       <div>
+        <NetworkStatusBar audience={party === "babalawo" ? "babalawo" : "client"} context="joining" />
         {session.video_fallback_reason && !useBackup && (
           <p className="text-center text-xs text-muted-foreground p-2">Using backup video because Google Meet was unavailable.</p>
         )}
@@ -86,6 +88,7 @@ const SessionVideoRoom = () => {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-lg space-y-4 rounded-xl border bg-card p-6 shadow-sm">
         <h1 className="text-xl font-semibold flex items-center gap-2"><Video className="h-5 w-5" /> Your consultation</h1>
+        <NetworkStatusBar variant="card" audience={party === "babalawo" ? "babalawo" : "client"} context="joining" />
 
         {!mine ? (
           <>

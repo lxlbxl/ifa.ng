@@ -7,7 +7,7 @@ import AdminDashboard from "./dashboard/AdminDashboard";
 import { Loader2 } from "lucide-react";
 
 const Dashboard = () => {
-  const { userProfile, loading } = useAuth();
+  const { hasRole, loading } = useAuth();
 
   if (loading) {
     return (
@@ -17,7 +17,9 @@ const Dashboard = () => {
     );
   }
 
-  switch (userProfile?.role) {
+  // Highest privilege wins. Roles come from the user_roles table, not the profile.
+  const view = hasRole("admin") ? "admin" : hasRole("babalawo") ? "babalawo" : hasRole("user") ? "user" : null;
+  switch (view) {
     case "user":
       return <UserDashboard />;
     case "babalawo":

@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      user_roles: {
+        Row: {
+          id: string
+          user_id: string
+          role: Database["public"]["Enums"]["user_role"]
+          granted_by: string | null
+          created_at: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      admin_audit_log: {
+        Row: {
+          id: string
+          admin_id: string | null
+          action: string
+          target_type: string
+          target_id: string | null
+          details: Json
+          created_at: string
+        }
+        Insert: never
+        Update: never
+        Relationships: []
+      }
+      disputes: {
+        Row: {
+          id: string
+          session_id: number
+          raised_by: string
+          reason: string
+          status: string
+          resolution_note: string | null
+          refund_requested: boolean
+          resolved_by: string | null
+          resolved_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          session_id: number
+          raised_by: string
+          reason: string
+        }
+        Update: never
+        Relationships: []
+      }
       admin_email_settings: {
         Row: {
           created_at: string | null
@@ -169,6 +217,10 @@ export type Database = {
       }
       babalawos: {
         Row: {
+          review_status: string
+          review_notes: string | null
+          reviewed_by: string | null
+          reviewed_at: string | null
           availability: Json | null
           bio: string | null
           city: string | null
@@ -194,6 +246,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          review_status?: string
+          review_notes?: string | null
+          reviewed_by?: string | null
+          reviewed_at?: string | null
           availability?: Json | null
           bio?: string | null
           city?: string | null
@@ -219,6 +275,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          review_status?: string
+          review_notes?: string | null
+          reviewed_by?: string | null
+          reviewed_at?: string | null
           availability?: Json | null
           bio?: string | null
           city?: string | null
@@ -366,6 +426,9 @@ export type Database = {
       }
       profiles: {
         Row: {
+          is_suspended: boolean
+          suspended_reason: string | null
+          suspended_at: string | null
           avatar_url: string | null
           created_at: string | null
           email: string
@@ -376,6 +439,9 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          is_suspended?: boolean
+          suspended_reason?: string | null
+          suspended_at?: string | null
           avatar_url?: string | null
           created_at?: string | null
           email: string
@@ -386,6 +452,9 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          is_suspended?: boolean
+          suspended_reason?: string | null
+          suspended_at?: string | null
           avatar_url?: string | null
           created_at?: string | null
           email?: string
@@ -602,12 +671,12 @@ export type Database = {
           babalawo_id: string
           deadline: string | null
           end_time: string
-          id: number
+          id: string
           is_instant: boolean | null
-          items_needed: string | null
+          items_needed: Json | null
           next_appointment: string | null
           notes: string | null
-          other_odus: string | null
+          other_odus: string[] | null
           payment_reference: string | null
           payment_status: string | null
           primary_odu: string | null
@@ -628,10 +697,10 @@ export type Database = {
           end_time: string
           id?: never
           is_instant?: boolean | null
-          items_needed?: string | null
+          items_needed?: Json | null
           next_appointment?: string | null
           notes?: string | null
-          other_odus?: string | null
+          other_odus?: string[] | null
           payment_reference?: string | null
           payment_status?: string | null
           primary_odu?: string | null
@@ -652,10 +721,10 @@ export type Database = {
           end_time?: string
           id?: never
           is_instant?: boolean | null
-          items_needed?: string | null
+          items_needed?: Json | null
           next_appointment?: string | null
           notes?: string | null
-          other_odus?: string | null
+          other_odus?: string[] | null
           payment_reference?: string | null
           payment_status?: string | null
           primary_odu?: string | null
@@ -818,6 +887,42 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_role: {
+        Args: { _user_id: string; _role: Database["public"]["Enums"]["user_role"] }
+        Returns: boolean
+      }
+      get_my_roles: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["user_role"][]
+      }
+      admin_refund_session: {
+        Args: { p_session_id: number; p_reason: string }
+        Returns: unknown
+      }
+      is_suspended: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      admin_set_user_role: {
+        Args: { _user_id: string; _role: Database["public"]["Enums"]["user_role"]; _grant: boolean }
+        Returns: undefined
+      }
+      admin_set_user_suspended: {
+        Args: { _user_id: string; _suspended: boolean; _reason?: string }
+        Returns: undefined
+      }
+      admin_review_babalawo: {
+        Args: { _user_id: string; _status: string; _notes?: string }
+        Returns: undefined
+      }
+      admin_update_session_status: {
+        Args: { _session_id: number; _status: Database["public"]["Enums"]["session_status_enum"]; _reason?: string }
+        Returns: undefined
+      }
+      admin_resolve_dispute: {
+        Args: { _dispute_id: string; _status: string; _note: string; _refund?: boolean }
+        Returns: undefined
+      }
       auto_complete_sessions: {
         Args: Record<PropertyKey, never>
         Returns: undefined

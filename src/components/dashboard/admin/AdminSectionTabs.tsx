@@ -1,26 +1,29 @@
 import React from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutGrid, Users, UserCheck, Wallet, Settings, CreditCard, History, Banknote } from "lucide-react"; // Import Banknote icon
+import { LayoutGrid, Users, UserCheck, Wallet, Settings, CreditCard, History, Banknote, CalendarCheck, AlertTriangle, ScrollText } from "lucide-react"; // Import Banknote icon
 
 interface AdminSectionTabsProps {
   activeSection: string;
-  onSectionChange: (section: 'overview' | 'users' | 'babalawos' | 'finance' | 'transactions' | 'wallet-management' | 'settings' | 'withdrawal-management') => void; // Add new section type
+  onSectionChange: (section: 'overview' | 'users' | 'babalawos' | 'bookings' | 'disputes' | 'finance' | 'transactions' | 'wallet-management' | 'settings' | 'withdrawal-management' | 'activity') => void; // Add new section type
 }
 
 const tabItems = [
   { value: "overview", label: "Overview", icon: LayoutGrid },
   { value: "users", label: "Users", icon: Users },
   { value: "babalawos", label: "Babalawos", icon: UserCheck },
+  { value: "bookings", label: "Bookings", icon: CalendarCheck },
+  { value: "disputes", label: "Disputes", icon: AlertTriangle },
   { value: "finance", label: "Finance", icon: Wallet },
   { value: "transactions", label: "Transactions", icon: History },
   { value: "wallet-management", label: "Wallet Mgmt", icon: CreditCard },
   { value: "withdrawal-management", label: "Withdrawals", icon: Banknote }, // Add new tab item
+  { value: "activity", label: "Activity", icon: ScrollText },
   { value: "settings", label: "Settings", icon: Settings },
 ];
 
 const AdminSectionTabs: React.FC<AdminSectionTabsProps> = ({ activeSection, onSectionChange }) => {
   const handleTabChange = (value: string) => {
-    onSectionChange(value as 'overview' | 'users' | 'babalawos' | 'finance' | 'transactions' | 'wallet-management' | 'settings' | 'withdrawal-management');
+    onSectionChange(value as 'overview' | 'users' | 'babalawos' | 'bookings' | 'disputes' | 'finance' | 'transactions' | 'wallet-management' | 'settings' | 'withdrawal-management' | 'activity');
   };
 
   return (

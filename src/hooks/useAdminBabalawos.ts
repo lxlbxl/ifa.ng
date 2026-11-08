@@ -18,6 +18,8 @@ interface AdminBabalawoData {
   is_verified: boolean;
   is_featured: boolean;
   current_status: string;
+  review_status: string;
+  review_notes: string | null;
 }
 
 const fetchAdminBabalawos = async (): Promise<AdminBabalawoData[]> => {
@@ -38,6 +40,8 @@ const fetchAdminBabalawos = async (): Promise<AdminBabalawoData[]> => {
       is_verified,
       is_featured,
       current_status,
+      review_status,
+      review_notes,
       created_at
     `)
     .order('created_at', { ascending: false });
@@ -78,6 +82,8 @@ const fetchAdminBabalawos = async (): Promise<AdminBabalawoData[]> => {
       is_verified: babalawo.is_verified,
       is_featured: babalawo.is_featured || false,
       current_status: babalawo.current_status || 'offline',
+      review_status: babalawo.review_status,
+      review_notes: babalawo.review_notes,
     };
   }) || [];
 

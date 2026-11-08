@@ -9,6 +9,8 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import AdminWalletManagement from "./AdminWalletManagement";
 import AdminVideoSettings from "./AdminVideoSettings";
+import AdminEmailSettings from "./AdminEmailSettings";
+import AdminSMSSettings from "./AdminSMSSettings";
 
 const AdminSettingsPanel = () => {
   const [settings, setSettings] = useState<any>({});
@@ -94,9 +96,11 @@ const AdminSettingsPanel = () => {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="agora" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="agora">Video Settings</TabsTrigger>
           <TabsTrigger value="payments">Payment Gateways</TabsTrigger>
+          <TabsTrigger value="email">Email Settings</TabsTrigger>
+          <TabsTrigger value="sms">SMS Settings</TabsTrigger>
           <TabsTrigger value="wallet">Wallet Management</TabsTrigger>
         </TabsList>
         
@@ -185,7 +189,15 @@ const AdminSettingsPanel = () => {
             </div>
           </div>
         </TabsContent>
-        
+
+        <TabsContent value="email">
+          <AdminEmailSettings />
+        </TabsContent>
+
+        <TabsContent value="sms">
+          <AdminSMSSettings />
+        </TabsContent>
+
         <TabsContent value="wallet">
           <AdminWalletManagement />
         </TabsContent>

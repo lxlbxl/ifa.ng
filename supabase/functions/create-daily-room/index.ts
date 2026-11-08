@@ -5,9 +5,37 @@ const supabaseUrl = process.env.SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+
 serve(async (req) => {
   try {
+    // 1. Authenticate the caller (this function uses the service role, so it must
+    //    never act on an anonymous request).
+    const token = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "");
+    if (!token) return json({ error: "Authentication required" }, 401);
+    const { data: authData, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !authData?.user) return json({ error: "Invalid session" }, 401);
+    const callerId = authData.user.id;
+
     const { sessionId } = await req.json();
+    if (sessionId === undefined || sessionId === null || sessionId === "") {
+      return json({ error: "sessionId is required" }, 400);
+    }
+
+    // 2. Only a participant of a paid, not-cancelled session may get a room.
+    const { data: target, error: targetError } = await supabase
+      .from("sessions")
+      .select("user_id, babalawo_id, payment_status, status")
+      .eq("id", sessionId)
+      .maybeSingle();
+    if (targetError || !target) return json({ error: "Session not found" }, 404);
+    if (callerId !== target.user_id && callerId !== target.babalawo_id) {
+      return json({ error: "Not a participant of this session" }, 403);
+    }
+    if (target.payment_status !== "paid" || target.status === "cancelled") {
+      return json({ error: "Session is not paid or has been cancelled" }, 403);
+    }
 
     // Fetch Daily.co settings from admin_settings table
     const { data: settings, error } = await supabase

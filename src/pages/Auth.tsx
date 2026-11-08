@@ -2,7 +2,8 @@ import { useRef } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { Eyebrow, Logo, TickDot } from '@/components/brand';
+import { Eyebrow, TickDot } from '@/components/brand';
+import Header from '@/components/Header';
 import { PhoneAuthFlow } from '@/components/flow/PhoneAuthFlow';
 
 /**
@@ -32,51 +33,52 @@ const Auth = () => {
   if (arrivedSignedIn.current && user) return <Navigate to={from} replace />;
 
   return (
-    <div className="grid min-h-screen bg-cloth lg:grid-cols-[1.05fr_1fr]">
-      {/* Story panel */}
-      <aside className="relative isolate hidden overflow-hidden bg-ink text-white lg:block">
-        <div
-          className="absolute inset-0 -z-20 animate-drift bg-cover [background-position:center_30%]"
-          style={{ backgroundImage: 'url(/brand/hero-chant-poster.jpg)' }}
-          aria-hidden="true"
-        />
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(10,14,9,.6)_0%,rgba(10,14,9,.15)_35%,rgba(10,14,9,.92)_100%)]" />
-        <div className="flex h-full flex-col justify-between p-10 xl:p-14">
-          <Logo tone="light" />
-          <div>
-            <Eyebrow className="text-leaf">Ifá consultation, online</Eyebrow>
-            <h1 className="mt-4 max-w-[11ch] font-display text-[clamp(48px,5.6vw,92px)] font-extrabold leading-[.88] tracking-[-0.045em]">
-              Hear Ifá <span className="text-sun">speak.</span>
-            </h1>
-            <ul className="mt-8 grid max-w-md list-none gap-3 p-0 text-[15px] text-[#ece6d6]">
-              {['Your phone number and a 4-digit PIN. No password.', 'Verified Babalawos only', 'Written notes from every session'].map((t, i) => (
-                <li key={t} className="flex items-center gap-3">
-                  <TickDot>{i + 1}</TickDot>
-                  {t}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </aside>
-
-      <main className="flex flex-col">
-        <div className="flex items-center justify-between px-5 pt-5 sm:px-10 lg:justify-end">
-          <span className="lg:hidden"><Logo /></span>
-          <a href="/" className="text-sm font-semibold text-muted-foreground no-underline hover:text-ink hover:underline">← Back to IFA.ng</a>
-        </div>
-        <div className="mx-auto flex w-full max-w-[520px] flex-1 flex-col">
-          <PhoneAuthFlow
-            askName
-            phoneTitle="Sign in or join with your phone"
-            phoneSubtitle="Type your number. If you’ve been here before we’ll ask for your PIN; if not, we’ll text you a code."
-            onDone={() => navigate(from, { replace: true })}
+    <div className="flex min-h-screen flex-col bg-cloth">
+      <Header variant="solid" />
+      <div className="grid flex-1 grid-cols-[minmax(0,1fr)] lg:grid-cols-[1.05fr_1fr]">
+        {/* Story panel */}
+        <aside className="relative isolate hidden overflow-hidden bg-ink text-white lg:block">
+          <div
+            className="absolute inset-0 -z-20 animate-drift bg-cover [background-position:center_30%]"
+            style={{ backgroundImage: 'url(/brand/hero-chant-poster.jpg)' }}
+            aria-hidden="true"
           />
-          <p className="px-5 pb-8 text-center text-sm text-muted-foreground sm:px-8">
-            Are you a Babalawo? <Link to="/become-a-babalawo" className="font-bold text-ink underline underline-offset-4">Apply to join IFA.ng</Link>
-          </p>
-        </div>
-      </main>
+          <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(10,14,9,.6)_0%,rgba(10,14,9,.15)_35%,rgba(10,14,9,.92)_100%)]" />
+          <div className="flex h-full flex-col justify-end p-10 xl:p-14">
+            <div>
+              <Eyebrow className="text-leaf">Ifá consultation, online</Eyebrow>
+              <h1 className="mt-4 max-w-[11ch] font-display text-[clamp(48px,5.6vw,92px)] font-extrabold leading-[.88] tracking-[-0.045em]">
+                Hear Ifá <span className="text-sun">speak.</span>
+              </h1>
+              <ul className="mt-8 grid max-w-md list-none gap-3 p-0 text-[15px] text-[#ece6d6]">
+                {['Your phone number and a 4-digit PIN. No password.', 'Verified Babalawos only', 'Written notes from every session'].map((t, i) => (
+                  <li key={t} className="flex items-center gap-3">
+                    <TickDot>{i + 1}</TickDot>
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </aside>
+
+        <main className="flex flex-col">
+          <div className="flex items-center justify-end px-5 pt-5 sm:px-10">
+            <a href="/" className="text-sm font-semibold text-muted-foreground no-underline hover:text-ink hover:underline">← Back to IFA.ng</a>
+          </div>
+          <div className="mx-auto flex w-full max-w-[520px] flex-1 flex-col">
+            <PhoneAuthFlow
+              askName
+              phoneTitle="Sign in or join with your phone"
+              phoneSubtitle="Type your number. If you’ve been here before we’ll ask for your PIN; if not, we’ll text you a code."
+              onDone={() => navigate(from, { replace: true })}
+            />
+            <p className="px-5 pb-8 text-center text-sm text-muted-foreground sm:px-8">
+              Are you a Babalawo? <Link to="/become-a-babalawo" className="font-bold text-ink underline underline-offset-4">Apply to join IFA.ng</Link>
+            </p>
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

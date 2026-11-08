@@ -3,25 +3,32 @@ import { cors } from "hono/cors";
 import { sql } from "kysely";
 import type { Caller, Database } from "./db.js";
 import type { Config } from "./config.js";
+import type { Auth } from "./auth.js";
 
 export type AppEnv = { Variables: { caller: Caller } };
 
 /**
- * Resolves who is calling. Phase 3 plugs Better Auth in here (session cookie
- * or bearer token -> user id). Until then every request is anonymous.
+ * Resolves who is calling. In production this is Better Auth (session cookie
+ * or bearer token -> user id); tests can inject their own.
  */
 export type ResolveCaller = (req: Request) => Promise<Caller>;
 
 export const anonymousOnly: ResolveCaller = async () => ({ kind: "anon" });
 
-export function createApp(deps: { config: Config; database: Database; resolveCaller?: ResolveCaller }) {
+export function createApp(deps: { config: Config; database: Database; auth?: Auth; resolveCaller?: ResolveCaller }) {
   const { config, database } = deps;
-  const resolveCaller = deps.resolveCaller ?? anonymousOnly;
+  const resolveCaller = deps.resolveCaller ?? deps.auth?.resolveCaller ?? anonymousOnly;
   const app = new Hono<AppEnv>();
 
   app.use("*", cors({ origin: config.CORS_ORIGINS.split(",").map((s) => s.trim()), credentials: true }));
 
-  app.use("*", async (c, next) => {
+  // Login, sign-up, sessions, password reset, email verification (Better Auth).
+  if (deps.auth) {
+    const handler = deps.auth.auth.handler;
+    app.on(["GET", "POST"], "/api/auth/*", (c) => handler(c.req.raw));
+  }
+
+  app.use("/v1/*", async (c, next) => {
     c.set("caller", await resolveCaller(c.req.raw));
     await next();
   });

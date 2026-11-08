@@ -1,5 +1,5 @@
 import { BabalawoProfile } from './babalawo';
-import { Session } from '@supabase/supabase-js';
+import type { AppSession as Session } from '@/integrations/api/auth';
 
 export interface ApiResponse<T> {
   data: T | null;

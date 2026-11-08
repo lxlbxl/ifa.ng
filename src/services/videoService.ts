@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/integrations/api/config";
 
 export type VideoProvider = "google_meet" | "agora";
 
@@ -32,21 +33,24 @@ export async function getSessionConsents(sessionId: number | string): Promise<Se
  * succeeds for paid sessions. Falls back to { provider: "agora" } when Meet is unavailable.
  */
 export async function ensureMeetLink(sessionId: number | string): Promise<{ provider: VideoProvider; meet_uri?: string; reason?: string }> {
-  const { data, error } = await supabase.functions.invoke("create-meet-link", { body: { session_id: String(sessionId) } });
-  if (error) throw new Error(error.message || "Could not prepare the video room");
-  return data;
+  try {
+    return await apiFetch(`/v1/sessions/${encodeURIComponent(String(sessionId))}/meet-link`, { method: "POST", body: "{}" });
+  } catch (e) {
+    throw new Error((e as Error).message || "Could not prepare the video room");
+  }
 }
 
 export async function getMedia(sessionId: number | string, kind: "recording" | "transcript") {
-  const { data, error } = await supabase.functions.invoke("session-media", { body: { session_id: String(sessionId), kind } });
-  if (error) throw new Error(error.message);
-  return data;
+  if (kind === "recording") {
+    // Recording playback returns with file storage on our own server.
+    throw new Error("Recording playback is not available yet");
+  }
+  return apiFetch(`/v1/sessions/${encodeURIComponent(String(sessionId))}/transcript`);
 }
 
 /** Babalawo fallback when Meet produced no recording: upload audio recorded on their phone. */
 export async function uploadSessionAudio(sessionId: number | string, file: Blob) {
-  const { data, error } = await supabase.functions.invoke("session-media", { body: { session_id: String(sessionId), kind: "upload-url" } });
-  if (error) throw new Error(error.message);
-  const up = await supabase.storage.from("session-recordings").uploadToSignedUrl(data.path, data.token, file);
-  if (up.error) throw new Error(up.error.message);
+  // Audio upload returns with file storage on our own server.
+  void sessionId; void file;
+  throw new Error("Uploading session audio is not available yet");
 }

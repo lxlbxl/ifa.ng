@@ -12,3 +12,14 @@ BEGIN
     GRANT anon, authenticated, service_role TO ifa_api;
   END IF;
 END $$;
+
+-- PostgREST's login (deploy/postgres/01-api-role.sh): anon and authenticated only.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ifa_rest') THEN
+    GRANT anon, authenticated TO ifa_rest;
+  END IF;
+END $$;
+
+-- Tell a running PostgREST to reload its view of the schema after migrations.
+NOTIFY pgrst, 'reload schema';

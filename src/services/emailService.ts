@@ -167,37 +167,12 @@ async function sendViaResend(options: EmailOptions, apiKey: string): Promise<boo
  * Send email using SMTP (via Supabase Edge Function)
  * Note: Direct SMTP from browser is not possible, needs server-side function
  */
-async function sendViaSMTP(options: EmailOptions, settings: EmailSettings): Promise<boolean> {
-  try {
-    // Call Supabase Edge Function that handles SMTP
-    const { data, error } = await supabase.functions.invoke('send-email-smtp', {
-      body: {
-        to: options.to,
-        subject: options.subject,
-        html: options.html,
-        text: options.text,
-        from: options.from || `${settings.smtp_from_name} <${settings.smtp_from_email}>`,
-        replyTo: options.replyTo,
-        smtp: {
-          host: settings.smtp_host,
-          port: settings.smtp_port,
-          username: settings.smtp_username,
-          password: settings.smtp_password
-        }
-      }
-    });
-
-    if (error) {
-      console.error('SMTP error:', error);
-      return false;
-    }
-
-    console.log('✅ Email sent via SMTP to:', options.to);
-    return true;
-  } catch (error) {
-    console.error('SMTP send error:', error);
-    return false;
-  }
+async function sendViaSMTP(options: EmailOptions, _settings: EmailSettings): Promise<boolean> {
+  // The browser can't send SMTP mail, and SMTP passwords must not reach the browser.
+  // Account emails (verification, password reset) are sent by the API server; booking
+  // updates go out by WhatsApp/SMS from the server. Nothing is sent from here.
+  console.warn('SMTP email from the browser is disabled; not sent to', options.to);
+  return false;
 }
 
 /**

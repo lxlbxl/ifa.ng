@@ -1,7 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Session, AuthError, User, AuthResponse } from '@supabase/supabase-js';
+import type { AppSession as Session, AppUser as User, AuthFailure } from '@/integrations/api/auth';
+type AuthError = AuthFailure;
 import { Database } from '@/integrations/supabase/types';
 import { useToast } from '@/hooks/use-toast';
 type Profile = Database['public']['Tables']['profiles']['Row'];

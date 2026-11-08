@@ -33,35 +33,10 @@ export interface DailyError {
  * @returns Promise with room URL or error
  */
 export const createDailyRoom = async (
-  sessionId: string
+  _sessionId: string
 ): Promise<DailyTokenResponse> => {
-  try {
-    console.log("🎥 Creating Daily.co room for session:", sessionId);
-    
-    const { data, error } = await supabase.functions.invoke('create-daily-room', {
-      body: {
-        sessionId
-      }
-    });
-
-    if (error) {
-      console.error("❌ Supabase function error:", error);
-      throw new Error(error.message || "Failed to create Daily.co room");
-    }
-
-    if (!data || !data.url) {
-      console.error("❌ Invalid response from Daily.co service:", data);
-      throw new Error("Invalid response from Daily.co service");
-    }
-
-    console.log("✅ Daily.co room created successfully");
-    return {
-      roomUrl: data.url
-    };
-  } catch (error: any) {
-    console.error("💥 Error creating Daily.co room:", error);
-    throw new Error(error.message || "Failed to create Daily.co room");
-  }
+  // Daily.co was retired: sessions use Google Meet, with Agora as the fallback.
+  throw new Error("Daily.co video is no longer available. Please use the session's Meet or Agora room.");
 };
 
 /**

@@ -287,3 +287,16 @@ describe("notifications", () => {
     expect(overnight.end.getTime() - overnight.start.getTime()).toBe(3600_000);
   });
 });
+
+describe("data token for PostgREST", () => {
+  it("is issued only to signed-in people, as 'authenticated', for ten minutes", async () => {
+    const anon = await (await app.request("/v1/data-token")).json();
+    expect(anon).toEqual({ token: null, expires_at: null });
+    const res = await app.request("/v1/data-token", { headers: { "x-test-user": CLIENT } });
+    expect(res.headers.get("cache-control")).toBe("no-store");
+    const { token, expires_at } = await res.json();
+    const claims = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString());
+    expect(claims).toMatchObject({ sub: CLIENT, role: "authenticated", aud: "authenticated" });
+    expect(expires_at - claims.iat).toBe(600);
+  });
+});

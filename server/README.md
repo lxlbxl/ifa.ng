@@ -39,6 +39,7 @@ grant anon, authenticated, service_role to ifa_api;
 
 - [x] Phase 1: skeleton, compat layer, per-request identity, migration runner, CI
 - [ ] Baseline schema from the live database (waiting on a schema-only dump)
+- [x] Self-hosted deploy: docker compose (Postgres, API, Caddy, offsite backups), see deploy/README.md
 - [ ] Phase 2: port edge functions (payments, webhooks, Meet, notifications)
 - [ ] Phase 3: login with Better Auth
 - [ ] Phase 4: frontend data layer

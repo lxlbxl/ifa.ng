@@ -1,0 +1,77 @@
+# IFA.ng production stack for a single self-managed VPS.
+#   cd deploy && cp .env.example .env && (edit .env) && docker compose up -d --build
+# Postgres is never published to the internet: only Caddy listens publicly.
+name: ifa
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ifa
+      POSTGRES_USER: ifa_admin
+      POSTGRES_PASSWORD: ${DB_ADMIN_PASSWORD:?set in .env}
+      API_DB_PASSWORD: ${API_DB_PASSWORD:?set in .env}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./postgres/01-api-role.sh:/docker-entrypoint-initdb.d/01-api-role.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ifa_admin -d ifa"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    shm_size: 256mb
+
+  api:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      DATABASE_URL: postgres://ifa_api:${API_DB_PASSWORD}@db:5432/ifa
+      MIGRATE_DATABASE_URL: postgres://ifa_admin:${DB_ADMIN_PASSWORD}@db:5432/ifa
+      CORS_ORIGINS: ${CORS_ORIGINS:?set in .env}
+      PORT: "8787"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on: [api]
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      API_DOMAIN: ${API_DOMAIN:?set in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+  backup:
+    build: ./backup
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      PGHOST: db
+      PGDATABASE: ifa
+      PGUSER: ifa_admin
+      PGPASSWORD: ${DB_ADMIN_PASSWORD}
+      BACKUP_HOUR: ${BACKUP_HOUR:-2}
+      RCLONE_REMOTE: ${RCLONE_REMOTE:-}
+      RCLONE_CONFIG_R2_TYPE: s3
+      RCLONE_CONFIG_R2_PROVIDER: Cloudflare
+      RCLONE_CONFIG_R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID:-}
+      RCLONE_CONFIG_R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY:-}
+      RCLONE_CONFIG_R2_ENDPOINT: ${R2_ENDPOINT:-}
+      RCLONE_CONFIG_R2_NO_CHECK_BUCKET: "true"
+    volumes:
+      - ./backups:/backups
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

@@ -55,7 +55,9 @@ export async function migrate(connectionString: string, dbDir = DB_DIR, log = co
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("DATABASE_URL is required");
+  // Migrations create roles and schemas, so they may need a more privileged
+  // login than the API itself uses at runtime.
+  const url = process.env.MIGRATE_DATABASE_URL ?? process.env.DATABASE_URL;
+  if (!url) throw new Error("MIGRATE_DATABASE_URL or DATABASE_URL is required");
   migrate(url).then((a) => console.log(`${a.length} migration(s) applied`));
 }

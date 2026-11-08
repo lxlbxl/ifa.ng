@@ -3,3 +3,12 @@
 GRANT ALL ON ALL TABLES    IN SCHEMA public TO service_role;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO service_role;
 GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO service_role;
+
+-- The API's runtime login (created by deploy/postgres/01-api-role.sh) must be
+-- able to switch into the three request roles, and nothing more.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'ifa_api') THEN
+    GRANT anon, authenticated, service_role TO ifa_api;
+  END IF;
+END $$;

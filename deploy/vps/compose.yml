@@ -1,0 +1,76 @@
+name: ifa-production
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file: .env
+    networks: [private]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../postgres/01-api-role.sh:/docker-entrypoint-initdb.d/01-api-role.sh:ro
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U ifa_admin -d ifa']
+      interval: 5s
+      retries: 20
+    shm_size: 256mb
+  api:
+    build:
+      context: ../..
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    networks: [private, coolify]
+    depends_on:
+      db: {condition: service_healthy}
+    volumes: [files:/data/files]
+  postgrest:
+    image: postgrest/postgrest:v12.2.12
+    restart: unless-stopped
+    networks: [private]
+    depends_on:
+      api: {condition: service_healthy}
+    environment:
+      PGRST_DB_URI: postgres://ifa_rest:${REST_DB_PASSWORD}@db:5432/ifa
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${DATA_JWT_SECRET}
+      PGRST_JWT_AUD: authenticated
+      PGRST_DB_MAX_ROWS: '1000'
+      PGRST_OPENAPI_MODE: disabled
+  recorder:
+    build: ../../workers/recording-processor
+    restart: unless-stopped
+    env_file: .env
+    networks: [private, coolify]
+    depends_on:
+      api: {condition: service_healthy}
+    volumes: [files:/data/files]
+  web:
+    build:
+      context: ../..
+      dockerfile: deploy/vps/Dockerfile.web
+    restart: unless-stopped
+    networks: [private, coolify]
+    depends_on: [api, postgrest]
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=coolify
+      - traefik.http.routers.ifa-app.rule=Host(`ifa.ng`) || Host(`www.ifa.ng`)
+      - traefik.http.routers.ifa-app.priority=200
+      - traefik.http.routers.ifa-app.entrypoints=https
+      - traefik.http.routers.ifa-app.tls=true
+      - traefik.http.routers.ifa-app.tls.certresolver=letsencrypt
+      - traefik.http.services.ifa-app.loadbalancer.server.port=80
+      - traefik.http.routers.ifa-app-http.rule=Host(`ifa.ng`) || Host(`www.ifa.ng`)
+      - traefik.http.routers.ifa-app-http.priority=200
+      - traefik.http.routers.ifa-app-http.entrypoints=http
+      - traefik.http.routers.ifa-app-http.middlewares=ifa-app-https
+      - traefik.http.middlewares.ifa-app-https.redirectscheme.scheme=https
+      - traefik.http.middlewares.ifa-app-https.redirectscheme.permanent=true
+volumes:
+  pgdata:
+  files:
+networks:
+  private:
+  coolify:
+    external: true

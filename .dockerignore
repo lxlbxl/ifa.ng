@@ -2,3 +2,17 @@
 **/dist
 .git
 deploy/.env
+
+deploy/vps/.env
+deploy/vps/minio-user.env
+
+deploy/vps/demo-credentials.json
+deploy/vps/DEMO-ACCESS.md
+deploy/vps/backups/
+
+# Local deployment artifacts and generated profile media
+deploy/vps/build.log
+deploy/vps/schema-current.txt
+deploy/vps/demo-assets/
+deploy/vps/profile-portraits/
+deploy/vps/check-remaining-logins.mjs

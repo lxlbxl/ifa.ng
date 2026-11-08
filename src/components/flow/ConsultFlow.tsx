@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { format, addDays, startOfDay } from 'date-fns';
 import { BookOpen, CalendarDays, Compass, HeartHandshake, HelpCircle, Loader2, Lock, Sparkles, Zap } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { useBabalawoPresence } from '@/hooks/useBabalawoPresence';
+import { useBabalawoAvailableNow } from '@/hooks/useBabalawoAvailableNow';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -79,7 +79,7 @@ export function ConsultFlow({ babalawo, preferMode, onClose }: { babalawo: FlowB
   const [mode, setMode] = useState<Mode | null>(null);
   const [day, setDay] = useState<Date | null>(null);
   const [time, setTime] = useState<string>('');
-  const presence = useBabalawoPresence(babalawo.id, babalawo, step === 'mode' || step === 'topic' || (step === 'pay' && mode === 'now'));
+  const presence = useBabalawoAvailableNow(babalawo.id, babalawo, step === 'mode' || step === 'topic' || (step === 'pay' && mode === 'now'));
   const signedInAtStart = useRef(!!user);
   const name = babalawo.full_name || 'Babalawo';
   const short = name.replace(/^(Babalawo|Bàbá|Baba|Chief|Olúwo|Oluwo)\s+/i, '').split(' ')[0];

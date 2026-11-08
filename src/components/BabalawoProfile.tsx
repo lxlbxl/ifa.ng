@@ -5,13 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Eyebrow, PageShell, PortraitCard, StickerPanel, TickDot } from '@/components/brand';
 import { pickBlock } from '@/design/tokens';
 import { useConsultFlow } from './flow/ConsultFlow';
-import { useBabalawoPresence } from '@/hooks/useBabalawoPresence';
+import { useBabalawoAvailableNow } from '@/hooks/useBabalawoAvailableNow';
 
 const BabalawoProfile = () => {
   const { babalawoId } = useParams<{ babalawoId: string }>();
   const { babalawo, loading, error } = useBabalawoById(babalawoId);
   const { openConsult } = useConsultFlow();
-  const presence = useBabalawoPresence(babalawo?.id, babalawo ?? null, !!babalawo);
+  const presence = useBabalawoAvailableNow(babalawo?.id, babalawo ?? null, !!babalawo);
 
   if (loading) {
     return (

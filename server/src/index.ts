@@ -7,13 +7,17 @@ import { createMailer } from "./mailer.js";
 import { startJobs } from "./services/jobs.js";
 import { createLiveHub } from "./services/live.js";
 import { createFileStore } from "./services/storage.js";
+import { pushNotification } from "./services/push.js";
 
 const config = loadConfig();
 const database = createDb(config.DATABASE_URL);
 const auth = createAuth(config, createMailer(config.SMTP_URL, config.MAIL_FROM));
 const files = createFileStore(config);
 const svc = { config, database, fetch: globalThis.fetch, files };
-const live = createLiveHub(svc, config.DATABASE_URL);
+// Every new notification row is also sent as a web push (when VAPID keys are set).
+const live = createLiveHub(svc, config.DATABASE_URL, {
+  onNotification: (id) => { pushNotification(svc, id).catch((e) => console.error("push", e)); },
+});
 // Reminders, WhatsApp/SMS sends, slot-hold cleanup and session completion.
 const stopJobs = config.JOBS_ENABLED === "true" ? startJobs(svc) : () => {};
 const phoneCleanup = setInterval(() => auth.phone.cleanup().catch((e) => console.error("phone cleanup", e)), 3600_000);

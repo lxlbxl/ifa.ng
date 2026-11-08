@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/integrations/api/config";
 
 export function registerServiceWorker() {
   if (!("serviceWorker" in navigator) || import.meta.env.DEV) return;
@@ -30,24 +30,98 @@ const urlBase64ToUint8Array = (b64: string) => {
 export const pushSupported = () =>
   "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 
-/** Asks permission and stores the subscription. Sending pushes needs a server job holding the VAPID private key. */
-export async function enablePush(userId: string): Promise<"enabled" | "denied" | "unsupported" | "not-configured"> {
-  if (!pushSupported()) return "unsupported";
-  const key = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
-  if (!key) return "not-configured";
-  const perm = await Notification.requestPermission();
-  if (perm !== "granted") return "denied";
-  const reg = await navigator.serviceWorker.ready;
-  const sub =
-    (await reg.pushManager.getSubscription()) ||
-    (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(key) }));
-  const json = sub.toJSON();
-  const { error } = await (supabase as any).from("push_subscriptions").upsert(
-    { user_id: userId, endpoint: json.endpoint, p256dh: json.keys?.p256dh, auth: json.keys?.auth, user_agent: navigator.userAgent },
-    { onConflict: "endpoint" }
-  );
-  if (error) throw error;
-  return "enabled";
+export const notificationPermission = (): NotificationPermission | "unsupported" =>
+  typeof Notification === "undefined" ? "unsupported" : Notification.permission;
+
+let pushKey: Promise<string | null> | null = null;
+/** The server's VAPID public key (falls back to the build-time one). null until push is set up. */
+export function getPushPublicKey(): Promise<string | null> {
+  pushKey ??= apiFetch<{ publicKey: string | null }>("/v1/push/config")
+    .then((r) => r.publicKey || (import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined) || null)
+    .catch(() => { pushKey = null; return (import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined) || null; });
+  return pushKey;
+}
+
+const swReady = (ms = 6000) => Promise.race([
+  navigator.serviceWorker.ready,
+  new Promise<null>((r) => setTimeout(() => r(null), ms)),
+]);
+
+/** This device's push endpoint, if it has one. */
+export async function currentPushEndpoint(): Promise<string | null> {
+  if (!pushSupported()) return null;
+  const reg = await swReady(1500);
+  return (await reg?.pushManager.getSubscription())?.endpoint ?? null;
+}
+
+export type NotificationsFailure = { ok: false; reason: "denied" | "unsupported" | "ios-install" | "error"; message: string };
+export type NotificationsResult =
+  | { ok: true; push: boolean; endpoint: string | null; permission: NotificationPermission }
+  | { ok: false; reason: "denied" | "unsupported" | "ios-install" | "error"; message: string };
+
+/**
+ * Turns notifications on for this device: asks permission (call from a tap), then
+ * subscribes to web push and registers the device with the API when push is set up.
+ */
+export async function ensureNotifications(): Promise<NotificationsResult> {
+  const iosTab = isIos() && !isStandalone();
+  if (typeof Notification === "undefined") {
+    return iosTab
+      ? { ok: false, reason: "ios-install", message: "On iPhone and iPad, add IFA.ng to your Home Screen first, then open it from there." }
+      : { ok: false, reason: "unsupported", message: "This browser can't show notifications. Use Chrome, Edge or Safari." };
+  }
+  const permission = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
+  if (permission !== "granted") {
+    return { ok: false, reason: "denied", message: "Notifications are blocked for IFA.ng. Allow them in your browser or phone settings, then try again." };
+  }
+  const key = await getPushPublicKey();
+  if (!key) return { ok: true, push: false, endpoint: null, permission }; // server push not set up yet: in-app alerts only
+  if (!pushSupported()) {
+    return iosTab
+      ? { ok: false, reason: "ios-install", message: "On iPhone and iPad, add IFA.ng to your Home Screen first, then open it from there." }
+      : { ok: false, reason: "unsupported", message: "This browser can't receive alerts while closed. Use Chrome, Edge or Safari." };
+  }
+  try {
+    const reg = await swReady();
+    if (!reg) return { ok: false, reason: "error", message: "The app is still loading. Try again in a moment." };
+    const appKey = urlBase64ToUint8Array(key);
+    let sub = await reg.pushManager.getSubscription();
+    const sameKey = (s: PushSubscription) => {
+      const k = s.options?.applicationServerKey;
+      if (!k) return true;
+      const a = new Uint8Array(k);
+      return a.length === appKey.length && a.every((v, i) => v === appKey[i]);
+    };
+    if (sub && !sameKey(sub)) { await sub.unsubscribe(); sub = null; }
+    sub ??= await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: appKey });
+    await apiFetch("/v1/me/push-subscription", { method: "PUT", body: JSON.stringify(sub.toJSON()) });
+    return { ok: true, push: true, endpoint: sub.endpoint, permission };
+  } catch (e) {
+    return { ok: false, reason: "error", message: (e as Error)?.message || "Could not turn on notifications." };
+  }
+}
+
+/** Removes this device's push subscription. The API takes a Babalawo Offline if no device is left. */
+export async function disablePush(): Promise<{ went_offline?: boolean }> {
+  if (!pushSupported()) return {};
+  const reg = await swReady(1500);
+  const sub = await reg?.pushManager.getSubscription();
+  if (!sub) return {};
+  const r = await apiFetch<{ went_offline?: boolean }>("/v1/me/push-subscription", {
+    method: "DELETE", body: JSON.stringify({ endpoint: sub.endpoint }),
+  }).catch(() => ({}));
+  await sub.unsubscribe().catch(() => {});
+  return r;
+}
+
+/** Kept for the Settings screen. */
+export async function enablePush(): Promise<"enabled" | "denied" | "unsupported" | "not-configured"> {
+  const r = await ensureNotifications();
+  if (r.ok === true) return r.push ? "enabled" : "not-configured";
+  const f = r as NotificationsFailure;
+  if (f.reason === "denied") return "denied";
+  if (f.reason === "error") throw new Error(f.message);
+  return "unsupported";
 }
 
 // ---- Install button support ----

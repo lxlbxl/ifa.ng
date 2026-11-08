@@ -1,7 +1,7 @@
-import { LayoutGrid, Users, UserCheck, Wallet, Settings, CreditCard, History, Banknote, CalendarCheck, AlertTriangle, ScrollText } from 'lucide-react';
+import { ClipboardList, LayoutGrid, Users, UserCheck, Wallet, Settings, CreditCard, History, Banknote, CalendarCheck, AlertTriangle, ScrollText } from 'lucide-react';
 
 export type AdminSection =
-  | 'overview' | 'users' | 'babalawos' | 'bookings' | 'disputes' | 'finance'
+  | 'overview' | 'users' | 'babalawos' | 'applications' | 'bookings' | 'disputes' | 'finance'
   | 'transactions' | 'wallet-management' | 'settings' | 'withdrawal-management' | 'activity';
 
 /** One list of admin sections for the sidebar, the mobile drawer and the tabs. */
@@ -11,6 +11,7 @@ export const adminSections: { section: AdminSection; label: string; short: strin
   { section: 'disputes', label: 'Disputes', short: 'Disputes', icon: AlertTriangle, group: 'Run' },
   { section: 'users', label: 'Users', short: 'Users', icon: Users, group: 'People' },
   { section: 'babalawos', label: 'Babalawos', short: 'Babalawos', icon: UserCheck, group: 'People' },
+  { section: 'applications', label: 'Applications', short: 'Applications', icon: ClipboardList, group: 'People' },
   { section: 'finance', label: 'Finance', short: 'Finance', icon: Wallet, group: 'Money' },
   { section: 'transactions', label: 'Transactions', short: 'Transactions', icon: History, group: 'Money' },
   { section: 'wallet-management', label: 'Wallets', short: 'Wallets', icon: CreditCard, group: 'Money' },

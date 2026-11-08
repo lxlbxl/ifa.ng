@@ -1,13 +1,13 @@
 
 import React from 'react';
 import { Star, Calendar, CheckCircle, MapPin } from 'lucide-react';
-import BookSessionModal from "./BookSessionModal";
+import { useConsultFlow } from "@/components/flow/ConsultFlow";
 import { useBabalawos } from '@/hooks/useBabalawos';
 import { useNavigate } from 'react-router-dom';
 
 const FindBabalawo = () => {
   const { babalawos, loading, error } = useBabalawos();
-  const [bookingBabalawo, setBookingBabalawo] = React.useState(null);
+  const { openConsult } = useConsultFlow();
   const navigate = useNavigate();
 
   const handleViewProfile = (babalawoId: string) => {
@@ -104,7 +104,7 @@ const FindBabalawo = () => {
             <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
               <button
                 className="flex-1 px-3 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-xs sm:text-sm"
-                onClick={() => setBookingBabalawo(babalawo)}
+                onClick={() => openConsult(babalawo)}
                 type="button"
                 title="Book session"
               >
@@ -122,12 +122,7 @@ const FindBabalawo = () => {
           </div>
         ))}
       </div>
-      
-      <BookSessionModal
-        open={!!bookingBabalawo}
-        onOpenChange={(open) => setBookingBabalawo(open ? bookingBabalawo : null)}
-        babalawo={bookingBabalawo}
-      />
+
     </div>
   );
 };

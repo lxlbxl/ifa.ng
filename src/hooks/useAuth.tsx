@@ -25,13 +25,6 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
-  signUp: (
-    email: string,
-    password: string,
-    fullName: string,
-    role: 'user' | 'babalawo'
-  ) => Promise<AuthErrorResponse>;
-  signIn: (email: string, password: string) => Promise<AuthErrorResponse>;
   refreshSession: () => Promise<AuthErrorResponse>;
   updateProfile: (data: Partial<Profile>) => Promise<AuthErrorResponse>;
   isProfileComplete: boolean;
@@ -45,7 +38,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [userProfile, setUserProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [authError, setAuthError] = useState<AuthError | null>(null);
   const { toast } = useToast();
   const [isProfileComplete, setIsProfileComplete] = useState<boolean>(false);
 
@@ -107,7 +99,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserProfile(profile);
         
         // Check if profile is complete (has required fields)
-        const isComplete = Boolean(profile.full_name && profile.email);
+        const isComplete = Boolean(profile.full_name);
         setIsProfileComplete(isComplete);
       }
     } catch (error) {
@@ -211,84 +203,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
   
-  const signUp = async (
-    email: string,
-    password: string,
-    fullName: string,
-    role: 'user' | 'babalawo'
-  ): Promise<AuthErrorResponse> => {
-    try {
-      setLoading(true);
-      const redirectUrl = `${window.location.origin}/auth/callback`;
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: fullName, role },
-          emailRedirectTo: redirectUrl,
-        },
-      });
-      
-      if (error) {
-        return { error, message: error.message };
-      }
-      
-      // Check if email confirmation is required
-      if (data.user && data.user.identities && data.user.identities.length === 0) {
-        return { 
-          error: null, 
-          message: 'Account already exists. Please sign in instead.' 
-        };
-      }
-      
-      return { error: null, message: 'Sign up successful. Please check your email to confirm your account.' };
-    } catch (error) {
-      const err = error as Error;
-      console.error('Unexpected error during sign up:', err);
-      return { 
-        error: err, 
-        message: err.message || 'An unexpected error occurred during sign up' 
-      };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signIn = async (email: string, password: string): Promise<AuthErrorResponse> => {
-    try {
-      setLoading(true);
-      setAuthError(null);
-      
-      const { data, error } = await supabase.auth.signInWithPassword({ 
-        email, 
-        password 
-      });
-      
-      if (error) {
-        setAuthError(error);
-        return { error, message: error.message };
-      }
-      
-      // Success, update local state
-      if (data.session) {
-        setSession(data.session);
-        setUser(data.session.user);
-      }
-      
-      return { error: null, message: 'Signed in successfully' };
-    } catch (error) {
-      const err = error as Error;
-      console.error('Unexpected error during sign in:', err);
-      return { 
-        error: err, 
-        message: err.message || 'An unexpected error occurred during sign in' 
-      };
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const updateProfile = async (data: Partial<Profile>): Promise<AuthErrorResponse> => {
     try {
       setLoading(true);
@@ -369,8 +283,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         loading,
         signOut,
         refreshProfile,
-        signUp,
-        signIn,
         refreshSession,
         updateProfile,
         isProfileComplete,

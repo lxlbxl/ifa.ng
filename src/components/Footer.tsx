@@ -14,7 +14,7 @@ const cols = [
   {
     title: 'Babalawos',
     links: [
-      { to: '/auth?tab=signup', label: 'Apply to join' },
+      { to: '/become-a-babalawo', label: 'Apply to join' },
       { to: '/dashboard', label: 'Babalawo dashboard' },
     ],
   },

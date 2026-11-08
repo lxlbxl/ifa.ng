@@ -41,16 +41,13 @@ export async function ensureMeetLink(sessionId: number | string): Promise<{ prov
 }
 
 export async function getMedia(sessionId: number | string, kind: "recording" | "transcript") {
-  if (kind === "recording") {
-    // Recording playback returns with file storage on our own server.
-    throw new Error("Recording playback is not available yet");
-  }
+  if (kind === "recording") return apiFetch(`/v1/sessions/${encodeURIComponent(String(sessionId))}/recording`);
   return apiFetch(`/v1/sessions/${encodeURIComponent(String(sessionId))}/transcript`);
 }
 
 /** Babalawo fallback when Meet produced no recording: upload audio recorded on their phone. */
 export async function uploadSessionAudio(sessionId: number | string, file: Blob) {
-  // Audio upload returns with file storage on our own server.
-  void sessionId; void file;
-  throw new Error("Uploading session audio is not available yet");
+  const form = new FormData();
+  form.set("file", file instanceof File ? file : new File([file], "session-audio.webm", { type: file.type || "audio/webm" }));
+  await apiFetch(`/v1/sessions/${encodeURIComponent(String(sessionId))}/audio`, { method: "POST", body: form });
 }

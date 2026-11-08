@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { API_URL } from '@/integrations/api/config';
 import { useAuth } from '@/hooks/useAuth';
 
 type NotificationType = 'info' | 'warning' | 'success' | 'appointment';
@@ -124,29 +125,19 @@ const Notifications: React.FC = () => {
     
     fetchNotifications();
     
-    // Set up subscription for real-time notifications
-    const subscription = supabase
-      .channel('notifications')
-      .on('postgres_changes', 
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}` 
-        }, 
-        (payload) => {
-          setNotifications(prev => [payload.new as unknown as Notification, ...prev]);
-          
-          toast({
-            title: "New notification",
-            description: (payload.new as any).title || "You have a new notification",
-          });
-        }
-      )
-      .subscribe();
-      
+    // Live updates from our API (Server-Sent Events). The browser reconnects on its own.
+    const stream = new EventSource(`${API_URL}/v1/notifications/stream`, { withCredentials: true });
+    stream.addEventListener('notification', (e) => {
+      const row = JSON.parse((e as MessageEvent).data);
+      setNotifications(prev => (prev.some(n => n.id === row.id) ? prev : [row as Notification, ...prev]));
+      toast({
+        title: "New notification",
+        description: row.title || "You have a new notification",
+      });
+    });
+
     return () => {
-      subscription.unsubscribe();
+      stream.close();
     };
   }, [user?.id, toast]);
   

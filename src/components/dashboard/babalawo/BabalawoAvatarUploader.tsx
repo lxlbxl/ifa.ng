@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Camera } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/integrations/api/config";
 
 interface Props {
   userId: string;
@@ -12,20 +12,12 @@ interface Props {
   onAvatarUploaded: (url: string) => Promise<void>;
 }
 
-async function uploadAvatarToSupabase(file: File, userId: string): Promise<string> {
-  const ext = file.name.split('.').pop();
-  const filePath = `avatars/${userId}.${ext}`;
-  // Remove existing
-  await supabase.storage.from("avatars").remove([`avatars/${userId}.png`, `avatars/${userId}.jpg`, `avatars/${userId}.jpeg`, `avatars/${userId}.webp`]);
-  // Upload new
-  const { data, error } = await supabase.storage
-    .from("avatars")
-    .upload(filePath, file, { upsert: true, cacheControl: "3600" });
-  if (error) throw error;
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from("avatars").getPublicUrl(filePath);
-  return publicUrl;
+/** Uploads to our API, which checks the image and saves it as this person's photo. */
+async function uploadAvatar(file: File): Promise<string> {
+  const form = new FormData();
+  form.set("file", file);
+  const { url } = await apiFetch<{ url: string }>("/v1/me/avatar", { method: "POST", body: form });
+  return url;
 }
 
 const BabalawoAvatarUploader: React.FC<Props> = ({ userId, fullName, avatarUrl, onAvatarUploaded }) => {
@@ -38,7 +30,7 @@ const BabalawoAvatarUploader: React.FC<Props> = ({ userId, fullName, avatarUrl, 
     if (!file) return;
     setUploading(true);
     try {
-      const url = await uploadAvatarToSupabase(file, userId);
+      const url = await uploadAvatar(file);
       await onAvatarUploaded(url);
     } catch (err) {
       alert("Error uploading image");

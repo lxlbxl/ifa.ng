@@ -44,6 +44,13 @@ const Env = z.object({
   TERMII_API_KEY: z.string().optional(),
   TERMII_SENDER_ID: z.string().default("IFA"),
 
+  // File storage: a private S3-compatible bucket (Cloudflare R2). Without these, files go to FILES_DIR.
+  S3_ENDPOINT: z.string().optional(),
+  S3_BUCKET: z.string().optional(),
+  S3_ACCESS_KEY_ID: z.string().optional(),
+  S3_SECRET_ACCESS_KEY: z.string().optional(),
+  FILES_DIR: z.string().default("./data/files"),
+
   /** Run the once-a-minute notification job inside the API process. */
   JOBS_ENABLED: z.enum(["true", "false"]).default("true"),
 });

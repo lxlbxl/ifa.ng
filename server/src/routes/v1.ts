@@ -6,9 +6,13 @@ import { notificationTick } from "../services/notify.js";
 import { handleFlutterwaveWebhook, handlePaystackWebhook, initPayment, verifyForUser } from "../services/payments.js";
 import { agoraToken, sessionTranscript } from "../services/video.js";
 import { signDataToken } from "../services/dataToken.js";
+import { AUDIO_MAX, readAvatar, readSignedFile, recordingLink, uploadAvatar, uploadSessionAudio } from "../services/files.js";
+import type { LiveHub } from "../services/live.js";
+import { streamSSE } from "hono/streaming";
+import { bodyLimit } from "hono/body-limit";
 
 /** The work the old Supabase edge functions did, now inside the API. */
-export function registerV1(app: Hono<AppEnv>, svc: Services) {
+export function registerV1(app: Hono<AppEnv>, svc: Services, live?: LiveHub) {
   const body = async (req: Request) => (await req.json().catch(() => ({}))) as Record<string, unknown>;
 
   // Short-lived token for PostgREST (/rest/v1). Anonymous callers get none and read as 'anon'.
@@ -43,6 +47,46 @@ export function registerV1(app: Hono<AppEnv>, svc: Services) {
   app.post("/v1/sessions/:id/meet-link", async (c) => c.json(await createMeetLink(svc, c.get("caller"), c.req.param("id"))));
   app.post("/v1/sessions/:id/agora-token", async (c) => c.json(await agoraToken(svc, c.get("caller"), c.req.param("id"))));
   app.get("/v1/sessions/:id/transcript", async (c) => c.json(await sessionTranscript(svc, c.get("caller"), c.req.param("id"))));
+
+  // Files (was Supabase Storage).
+  const tooBig = bodyLimit({ maxSize: AUDIO_MAX + 1024 * 1024, onError: (c) => c.json({ error: "File too large" }, 413) });
+  const fileFrom = async (req: Request) => (await req.formData().catch(() => null))?.get("file") as File | undefined;
+  app.post("/v1/me/avatar", bodyLimit({ maxSize: 6 * 1024 * 1024, onError: (c) => c.json({ error: "Images must be 5 MB or smaller" }, 413) }),
+    async (c) => c.json(await uploadAvatar(svc, c.get("caller"), await fileFrom(c.req.raw))));
+  app.get("/files/avatars/:name", async (c) => {
+    const f = await readAvatar(svc, c.req.param("name"));
+    if (!f) return c.json({ error: "Not found" }, 404);
+    return c.body(Buffer.from(f.body), 200, { "Content-Type": f.contentType, "Cache-Control": "public, max-age=86400",
+      "X-Content-Type-Options": "nosniff" });
+  });
+  app.get("/v1/sessions/:id/recording", async (c) => c.json(await recordingLink(svc, c.get("caller"), c.req.param("id"))));
+  app.get("/files/signed/:token", async (c) => {
+    const f = await readSignedFile(svc, c.req.param("token"));
+    if (!f) return c.json({ error: "This link has expired" }, 404);
+    return c.body(Buffer.from(f.body), 200, { "Content-Type": f.contentType, "Cache-Control": "private, no-store",
+      "X-Content-Type-Options": "nosniff", "Content-Disposition": "inline" });
+  });
+  app.post("/v1/sessions/:id/audio", tooBig,
+    async (c) => c.json(await uploadSessionAudio(svc, c.get("caller"), c.req.param("id"), await fileFrom(c.req.raw))));
+
+  // Live notifications (was Supabase Realtime): Server-Sent Events for the signed-in person.
+  app.get("/v1/notifications/stream", async (c) => {
+    const user = requireUser(c.get("caller"));
+    if (!live) throw new HttpError(503, "Live updates are not available");
+    return streamSSE(c, async (stream) => {
+      const unsubscribe = live.subscribe(user.userId, (row) => {
+        stream.writeSSE({ event: "notification", data: JSON.stringify(row), id: String(row.id) }).catch(() => {});
+      });
+      stream.onAbort(unsubscribe);
+      await stream.writeSSE({ event: "ready", data: "{}" });
+      // Keep proxies from closing an idle stream.
+      while (!stream.aborted && !stream.closed) {
+        await stream.sleep(25_000);
+        await stream.writeSSE({ event: "ping", data: "{}" }).catch(() => {});
+      }
+      unsubscribe();
+    });
+  });
 
   // Admin: run the notification job now (it also runs every minute on its own).
   app.post("/v1/admin/notifications/dispatch", async (c) => {

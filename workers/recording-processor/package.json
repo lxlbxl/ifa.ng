@@ -3,8 +3,10 @@
   "private": true,
   "type": "module",
   "version": "1.0.0",
-  "description": "Fetches Google Meet recordings, transcribes (English/Yoruba), checks accuracy and drafts consultation notes",
-  "engines": { "node": ">=20" },
+  "description": "Fetches Google Meet recordings, transcribes (English/Yoruba), checks accuracy and drafts consultation notes. Runs against our own Postgres and R2.",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node index.mjs",
     "once": "node index.mjs --once",
@@ -12,6 +14,7 @@
     "test": "node --test test/lib.test.mjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.50.0"
+    "aws4fetch": "1.0.20",
+    "pg": "8.16.3"
   }
 }

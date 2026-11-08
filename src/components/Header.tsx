@@ -16,23 +16,27 @@ const links = [
 ];
 
 interface HeaderProps {
-  /** "overlay" floats white over a dark hero; "solid" is a sticky cloth bar for inner pages. */
-  variant?: 'overlay' | 'solid';
+  /**
+   * "overlay" floats white over a dark hero; "clear" floats ink over a light
+   * hero (the homepage chant video); "solid" is a sticky cloth bar for inner pages.
+   */
+  variant?: 'overlay' | 'clear' | 'solid';
 }
 
 /** Public site header shared by the homepage and every public page. */
 const Header = ({ variant = 'solid' }: HeaderProps) => {
   const { user } = useAuth();
   const overlay = variant === 'overlay';
+  const floating = overlay || variant === 'clear';
 
   return (
     <header
       className={cn(
         'z-40 w-full',
-        overlay ? 'absolute inset-x-0 top-0 text-white' : 'sticky top-0 border-b border-line bg-cloth/90 text-ink backdrop-blur-md',
+        overlay ? 'absolute inset-x-0 top-0 text-white' : floating ? 'absolute inset-x-0 top-0 text-ink' : 'sticky top-0 border-b border-line bg-cloth/90 text-ink backdrop-blur-md',
       )}
     >
-      <div className={cn('wrap flex items-center gap-6', overlay ? 'h-[84px]' : 'h-[72px]')}>
+      <div className={cn('wrap flex items-center gap-6', floating ? 'h-[84px]' : 'h-[72px]')}>
         <Logo tone={overlay ? 'light' : 'dark'} />
 
         <nav className="ml-auto hidden items-center gap-6 text-[15px] font-semibold lg:flex" aria-label="Main">

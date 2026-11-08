@@ -35,13 +35,24 @@ create role ifa_api login password '...';
 grant anon, authenticated, service_role to ifa_api;
 ```
 
+## Login
+
+Better Auth runs inside the API at `/api/auth/*` and stores its sessions, password
+hashes and verification tokens in the `auth` schema (see
+`db/migrations/20261109000000_auth_login_tables.sql`). People keep the same
+`auth.users` ids, so every policy and foreign key still works. Browsers get an
+httpOnly cookie; the PWA can send `Authorization: Bearer <token>` instead (the token
+comes back in the `set-auth-token` header on sign-in). Signup accepts
+`signupRole: "user" | "babalawo"` only; admin is never granted at signup.
+Emails go through `SMTP_URL`, or are printed to the log when it is unset.
+
 ## Status
 
 - [x] Phase 1: skeleton, compat layer, per-request identity, migration runner, CI
 - [ ] Baseline schema from the live database (waiting on a schema-only dump)
 - [x] Self-hosted deploy: docker compose (Postgres, API, Caddy, offsite backups), see deploy/README.md
 - [ ] Phase 2: port edge functions (payments, webhooks, Meet, notifications)
-- [ ] Phase 3: login with Better Auth
+- [x] Phase 3: login with Better Auth
 - [ ] Phase 4: frontend data layer
 - [ ] Phase 5: files (R2), live notifications (SSE), jobs (pg-boss)
 - [ ] Phase 6: data migration and cutover

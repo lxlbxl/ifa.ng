@@ -12,6 +12,7 @@ import { freshDatabase } from "./helpers.js";
 const BABA = "00000000-0000-0000-0000-00000000000b";
 const CLIENT = "00000000-0000-0000-0000-00000000000a";
 let admin: pg.Client;
+let dbUrl = "";
 let dayN = 3;
 
 const lagosDate = (offsetDays: number) => {
@@ -21,7 +22,7 @@ const lagosDate = (offsetDays: number) => {
 const dow = (ymd: string) => new Date(`${ymd}T12:00:00Z`).getUTCDay();
 
 async function book(date: string, time: string) {
-  const c = new pg.Client({ ...(admin as any).connectionParameters });
+  const c = new pg.Client({ connectionString: dbUrl });
   await c.connect();
   try {
     await c.query("set role authenticated");
@@ -37,6 +38,7 @@ async function book(date: string, time: string) {
 
 beforeAll(async () => {
   const url = await freshDatabase("ifa_test_booking_rules");
+  dbUrl = url;
   await migrate(url, undefined, () => {});
   admin = new pg.Client({ connectionString: url });
   await admin.connect();
@@ -112,7 +114,7 @@ describe("server-side booking rules", () => {
   });
 
   it("refuses a direct insert into sessions that skips the rules", async () => {
-    const c = new pg.Client({ ...(admin as any).connectionParameters });
+    const c = new pg.Client({ connectionString: dbUrl });
     await c.connect();
     try {
       await c.query("set role authenticated");

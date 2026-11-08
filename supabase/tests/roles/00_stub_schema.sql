@@ -20,3 +20,15 @@ grant usage on schema public, auth to authenticated, anon;
 grant all on all tables in schema public to authenticated;
 grant all on all sequences in schema public to authenticated;
 grant execute on function auth.uid() to authenticated, anon;
+
+-- Mimics the live update_babalawo_rating trigger: system-maintained aggregates are
+-- recomputed under the *caller's* privileges when a session completes.
+create function public.update_babalawo_stats() returns trigger language plpgsql as $$
+begin
+  if new.status = 'completed' and old.status is distinct from 'completed' then
+    update public.babalawos set total_sessions = total_sessions + 1, rating = 4.5 where user_id = new.babalawo_id;
+  end if;
+  return new;
+end $$;
+create trigger trg_sessions_update_babalawo_stats after update on sessions
+  for each row execute function public.update_babalawo_stats();

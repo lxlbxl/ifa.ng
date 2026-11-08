@@ -4,6 +4,8 @@ import { sql } from "kysely";
 import type { Caller, Database } from "./db.js";
 import type { Config } from "./config.js";
 import type { Auth } from "./auth.js";
+import { HttpError } from "./services/context.js";
+import { registerV1 } from "./routes/v1.js";
 
 export type AppEnv = { Variables: { caller: Caller } };
 
@@ -15,7 +17,11 @@ export type ResolveCaller = (req: Request) => Promise<Caller>;
 
 export const anonymousOnly: ResolveCaller = async () => ({ kind: "anon" });
 
-export function createApp(deps: { config: Config; database: Database; auth?: Auth; resolveCaller?: ResolveCaller }) {
+export function createApp(deps: {
+  config: Config; database: Database; auth?: Auth; resolveCaller?: ResolveCaller;
+  /** Outbound HTTP to payment providers, Google, Agora, Termii. Tests pass a fake. */
+  fetch?: typeof fetch;
+}) {
   const { config, database } = deps;
   const resolveCaller = deps.resolveCaller ?? deps.auth?.resolveCaller ?? anonymousOnly;
   const app = new Hono<AppEnv>();
@@ -52,7 +58,10 @@ export function createApp(deps: { config: Config; database: Database; auth?: Aut
     return c.json(row);
   });
 
+  registerV1(app, { config, database, fetch: deps.fetch ?? globalThis.fetch });
+
   app.onError((err, c) => {
+    if (err instanceof HttpError) return c.json({ error: err.message }, err.status as 400);
     console.error(err);
     return c.json({ error: "internal_error" }, 500);
   });

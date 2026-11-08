@@ -46,12 +46,32 @@ comes back in the `set-auth-token` header on sign-in). Signup accepts
 `signupRole: "user" | "babalawo"` only; admin is never granted at signup.
 Emails go through `SMTP_URL`, or are printed to the log when it is unset.
 
+## What replaced the edge functions
+
+| Old Supabase function | Now |
+| --- | --- |
+| payment-init | `POST /v1/payments/init` |
+| payment-verify | `POST /v1/payments/verify` |
+| webhook-paystack | `POST /webhooks/paystack` |
+| webhook-flutterwave | `POST /webhooks/flutterwave` |
+| create-meet-link | `POST /v1/sessions/:id/meet-link` (also called by the server after payment) |
+| generate-agora-token | `POST /v1/sessions/:id/agora-token` |
+| session-media (transcript) | `GET /v1/sessions/:id/transcript` |
+| session-media (recording, upload) | moves with file storage (phase 5) |
+| dispatch-notifications | runs inside the API every minute; admins can trigger `POST /v1/admin/notifications/dispatch` |
+| health-check | `GET /health` |
+| create-daily-room | dropped (Meet is the default, Agora the fallback) |
+
+Provider keys come only from the server environment (`deploy/.env.example`), never from
+`admin_settings`. Tests run against real Postgres with a fake `fetch` standing in for
+Paystack, Flutterwave, Google, Termii and WhatsApp (`test/integrations.test.ts`).
+
 ## Status
 
 - [x] Phase 1: skeleton, compat layer, per-request identity, migration runner, CI
 - [ ] Baseline schema from the live database (waiting on a schema-only dump)
 - [x] Self-hosted deploy: docker compose (Postgres, API, Caddy, offsite backups), see deploy/README.md
-- [ ] Phase 2: port edge functions (payments, webhooks, Meet, notifications)
+- [x] Phase 2: port edge functions (payments, webhooks, Meet, notifications)
 - [x] Phase 3: login with Better Auth
 - [ ] Phase 4: frontend data layer
 - [ ] Phase 5: files (R2), live notifications (SSE), jobs (pg-boss)

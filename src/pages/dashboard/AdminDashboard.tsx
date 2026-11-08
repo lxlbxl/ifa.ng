@@ -10,6 +10,7 @@ import AdminTransactionHistory from "@/components/dashboard/admin/AdminTransacti
 import AdminWalletManagement from "@/components/dashboard/admin/AdminWalletManagement";
 import UserManagement from "@/components/dashboard/admin/UserManagement";
 import BabalawoManagement from "@/components/dashboard/admin/BabalawoManagement";
+import BabalawoApplications from "@/components/dashboard/admin/BabalawoApplications";
 import PaymentsFinancePanel from "@/components/dashboard/admin/PaymentsFinancePanel";
 import AdminSettingsPanel from "@/components/dashboard/admin/AdminSettingsPanel";
 import AdminWithdrawalManagement from "@/components/dashboard/admin/AdminWithdrawalManagement"; // Import the new component
@@ -37,6 +38,8 @@ const AdminDashboard = () => {
         return <UserManagement />;
       case 'babalawos':
         return <BabalawoManagement />;
+      case 'applications':
+        return <BabalawoApplications />;
       case 'bookings':
         return <AdminBookings />;
       case 'disputes':

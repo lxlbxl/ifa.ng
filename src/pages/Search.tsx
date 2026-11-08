@@ -5,7 +5,7 @@ import { useBabalawoSearch } from '@/hooks/useBabalawoSearch';
 import BabalawoGrid from '@/components/babalawo/BabalawoGrid';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { BabalawoProfile, BabalawoSearchFilters } from '@/types/babalawo';
-import InstantConsultationModal from '@/components/dashboard/user/InstantConsultationModal';
+import { useConsultFlow } from '@/components/flow/ConsultFlow';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -39,8 +39,7 @@ const SearchPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedBabalawo, setSelectedBabalawo] = useState<BabalawoProfile | null>(null);
+  const { openConsult } = useConsultFlow();
   const { babalawos, loading, error, updateFilter, availableSpecialties } = useBabalawoSearch();
 
   const handleFilterChange = (filter: keyof BabalawoSearchFilters, value: string | string[] | number | undefined) =>
@@ -122,19 +121,12 @@ const SearchPage = () => {
           ) : (
             <BabalawoGrid
               babalawos={babalawos}
-              onBookSession={(b) => {
-                setSelectedBabalawo(b);
-                setIsModalOpen(true);
-              }}
+              onBookSession={(b) => openConsult(b)}
               onViewProfile={(id) => navigate(`/babalawo/${id}`)}
             />
           )}
         </section>
         <OduTicker />
-
-        {selectedBabalawo && (
-          <InstantConsultationModal open={isModalOpen} onOpenChange={setIsModalOpen} babalawo={selectedBabalawo} />
-        )}
       </PageShell>
     </ErrorBoundary>
   );

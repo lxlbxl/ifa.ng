@@ -15,7 +15,7 @@ const CTASection = () => (
           </p>
         </div>
         <Button asChild size="lg">
-          <Link to="/auth?tab=signup&role=babalawo">Apply to join →</Link>
+          <Link to="/become-a-babalawo">Apply to join →</Link>
         </Button>
       </div>
     </div>

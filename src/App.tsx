@@ -9,6 +9,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PwaPrompts from "./components/pwa/PwaPrompts";
 import BrowserAdviceBanner from "./components/pwa/BrowserAdviceBanner";
+import { ConsultFlowProvider } from "./components/flow/ConsultFlow";
 
 // Lazy-loaded components
 const Index = lazy(() => import("./pages/Index"));
@@ -19,6 +20,7 @@ const SessionVideoRoom = lazy(() => import("./components/SessionVideoRoom"));
 const BabalawoProfile = lazy(() => import("./components/BabalawoProfile"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const SearchPage = lazy(() => import("./pages/Search"));
+const BabalawoApply = lazy(() => import("./pages/BabalawoApply"));
 
 const LoadingFallback = () => (
   <div className="flex items-center justify-center h-screen">
@@ -37,6 +39,7 @@ const App = () => (
         <PwaPrompts />
         <BrowserAdviceBanner />
         <BrowserRouter>
+          <ConsultFlowProvider>
           <Suspense fallback={<LoadingFallback />}>
             <Routes>
               <Route path="/" element={<Index />} />
@@ -60,9 +63,11 @@ const App = () => (
                 }
               />
               <Route path="/search" element={<SearchPage />} />
+              <Route path="/become-a-babalawo" element={<BabalawoApply />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
+          </ConsultFlowProvider>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

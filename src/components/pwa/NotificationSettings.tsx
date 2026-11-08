@@ -14,10 +14,10 @@ const NotificationSettings: React.FC = () => {
     if (!user) return;
     setBusy(true);
     try {
-      const r = await enablePush(user.id);
+      const r = await enablePush();
       toast(r === "enabled" ? { title: "Push notifications on" }
         : r === "denied" ? { title: "Notifications blocked", description: "Allow them in your browser or phone settings.", variant: "destructive" }
-        : r === "not-configured" ? { title: "Push is not configured yet", variant: "destructive" }
+        : r === "not-configured" ? { title: "Notifications on", description: "Alerts play while the app is open. Alerts with the app closed start once push is set up on the server." }
         : { title: "Not supported here", description: "On iPhone, install the app to your Home Screen first.", variant: "destructive" });
     } catch (e: any) { toast({ title: "Could not enable", description: e.message, variant: "destructive" }); }
     setBusy(false);

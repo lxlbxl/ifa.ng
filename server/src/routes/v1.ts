@@ -9,6 +9,10 @@ import { signDataToken } from "../services/dataToken.js";
 import { AUDIO_MAX, readAvatar, readSignedFile, recordingLink, uploadAvatar, uploadSessionAudio } from "../services/files.js";
 import type { LiveHub } from "../services/live.js";
 import { streamSSE } from "hono/streaming";
+import { getPresence, heartbeat, offlineIfUnreachable, sendTestAlert, setMyPresence } from "../services/presence.js";
+import { saveSubscription } from "../services/push.js";
+import { asService } from "../services/context.js";
+import { sql } from "kysely";
 import { bodyLimit } from "hono/body-limit";
 
 /** The work the old Supabase edge functions did, now inside the API. */
@@ -19,6 +23,18 @@ export function registerV1(app: Hono<AppEnv>, svc: Services, live?: LiveHub) {
   app.get("/v1/data-token", (c) => {
     c.header("Cache-Control", "no-store");
     return c.json(signDataToken(svc.config.DATA_JWT_SECRET, c.get("caller")) ?? { token: null, expires_at: null });
+  });
+
+  // Best guess of the visitor's country (ISO 3166 alpha-2) for the phone number's country code.
+  // Read from a header the edge sets (Cloudflare's CF-IPCountry, or GEO_COUNTRY_HEADER behind Caddy).
+  app.get("/v1/geo", (c) => {
+    c.header("Cache-Control", "private, max-age=3600");
+    const names = [svc.config.GEO_COUNTRY_HEADER, "cf-ipcountry", "x-vercel-ip-country", "x-country-code"].filter(Boolean) as string[];
+    for (const n of names) {
+      const v = c.req.header(n)?.trim().toUpperCase();
+      if (v && /^[A-Z]{2}$/.test(v) && v !== "XX" && v !== "T1") return c.json({ country: v });
+    }
+    return c.json({ country: null });
   });
 
   // Payments (was payment-init and payment-verify).
@@ -87,6 +103,30 @@ export function registerV1(app: Hono<AppEnv>, svc: Services, live?: LiveHub) {
       unsubscribe();
     });
   });
+
+  // Babalawo presence (Online / Offline). Consult Now reads the public check.
+  app.get("/v1/babalawos/:id/presence", async (c) => {
+    c.header("Cache-Control", "no-store");
+    return c.json(await getPresence(svc, c.req.param("id")));
+  });
+  app.post("/v1/me/presence", async (c) => c.json(await setMyPresence(svc, c.get("caller"), await body(c.req.raw))));
+  app.post("/v1/me/presence/heartbeat", async (c) => c.json(await heartbeat(svc, c.get("caller"))));
+
+  // Web push subscriptions for this device.
+  app.get("/v1/push/config", (c) => c.json({ publicKey: svc.config.VAPID_PUBLIC_KEY ?? null }));
+  app.put("/v1/me/push-subscription", async (c) => {
+    const user = requireUser(c.get("caller"));
+    return c.json(await saveSubscription(svc, user.userId, await body(c.req.raw), c.req.header("user-agent") ?? null));
+  });
+  app.delete("/v1/me/push-subscription", async (c) => {
+    const user = requireUser(c.get("caller"));
+    const endpoint = (await body(c.req.raw)).endpoint;
+    if (typeof endpoint !== "string") throw new HttpError(400, "endpoint is required");
+    await asService(svc, (trx) => sql`delete from public.push_subscriptions
+      where user_id = ${user.userId}::uuid and endpoint = ${endpoint}`.execute(trx));
+    return c.json({ ok: true, went_offline: await offlineIfUnreachable(svc, user.userId) });
+  });
+  app.post("/v1/me/push-test", async (c) => c.json(await sendTestAlert(svc, c.get("caller"))));
 
   // Admin: run the notification job now (it also runs every minute on its own).
   app.post("/v1/admin/notifications/dispatch", async (c) => {

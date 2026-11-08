@@ -26,6 +26,8 @@ import Settings from "@/components/dashboard/user/Settings";
 import Support from "@/components/dashboard/user/Support";
 import Notifications from "@/components/dashboard/user/Notifications";
 import { MobileBottomNav } from "@/components/shared/MobileBottomNav";
+import { PresencePill } from "@/components/dashboard/babalawo/PresenceToggle";
+import BabalawoLiveAlerts from "@/components/dashboard/babalawo/BabalawoLiveAlerts";
 
 // Create a new Reminders component
 const Reminders = () => {
@@ -167,7 +169,7 @@ const BabalawoDashboardHeader = ({ activeSection, onSectionChange }: { activeSec
           </SheetContent>
         </Sheet>
 
-        <h1 className="text-xl font-semibold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+        <h1 className="hidden sm:block text-xl font-semibold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
           {activeSection.charAt(0).toUpperCase() + activeSection.slice(1) || 'Dashboard'}
         </h1>
       </div>
@@ -178,8 +180,9 @@ const BabalawoDashboardHeader = ({ activeSection, onSectionChange }: { activeSec
         </h1>
       </div>
 
-      <div className="flex items-center gap-3">
-        <InstallButton label="Install app" />
+      <div className="flex items-center gap-2 sm:gap-3">
+        <PresencePill />
+        <span className="hidden sm:inline-flex"><InstallButton label="Install app" /></span>
         <Button
           variant="ghost"
           size="icon"
@@ -251,6 +254,9 @@ const BabalawoDashboard = () => {
 
       {/* Mobile Bottom Navigation - only visible on mobile for logged in babalawos */}
       <MobileBottomNav userType="babalawo" />
+
+      {/* Consult Now and booking alerts: chime, vibration, and a ringing dialog */}
+      <BabalawoLiveAlerts />
 
       {/* Modals */}
       <WithdrawalRequestModal

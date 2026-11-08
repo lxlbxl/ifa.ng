@@ -51,6 +51,12 @@ const Env = z.object({
   S3_SECRET_ACCESS_KEY: z.string().optional(),
   FILES_DIR: z.string().default("./data/files"),
 
+  // Web push (VAPID). Generate once with `npx web-push generate-vapid-keys`.
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  /** Contact for push services, a mailto: or https: URL. */
+  VAPID_SUBJECT: z.string().default("mailto:support@ifa.ng"),
+
   /** Run the once-a-minute notification job inside the API process. */
   JOBS_ENABLED: z.enum(["true", "false"]).default("true"),
 });

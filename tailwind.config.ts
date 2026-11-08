@@ -2,6 +2,9 @@
 import type { Config } from "tailwindcss";
 import { brand, scales, fonts, radii, shadows } from "./src/design/tokens";
 
+/** A brand scale whose bare name (bg-coral, text-sun) is the brand colour itself. */
+const withDefault = (key: keyof typeof scales & keyof typeof brand) => ({ ...scales[key], DEFAULT: brand[key] });
+
 export default {
 	darkMode: ["class"],
 	content: [
@@ -27,19 +30,19 @@ export default {
 				paper: brand.paper,
 				line: brand.line,
 				meet: brand.meet,
-				green: scales.green,
-				leaf: scales.leaf,
-				sun: scales.sun,
-				yellow: scales.sun,
-				coral: scales.coral,
-				red: scales.coral,
-				indigo: scales.indigo,
-				blue: scales.indigo,
-				camwood: scales.camwood,
-				orange: scales.camwood,
-				amber: scales.sun,
-				teal: scales.teal,
-				emerald: scales.green,
+				green: withDefault('green'),
+				leaf: withDefault('leaf'),
+				sun: withDefault('sun'),
+				yellow: withDefault('sun'),
+				coral: withDefault('coral'),
+				red: withDefault('coral'),
+				indigo: withDefault('indigo'),
+				blue: withDefault('indigo'),
+				camwood: withDefault('camwood'),
+				orange: withDefault('camwood'),
+				amber: withDefault('sun'),
+				teal: withDefault('teal'),
+				emerald: withDefault('green'),
 				/* Legacy Lovable palettes folded into the brand so older screens match */
 				purple: scales.green,
 				violet: scales.green,

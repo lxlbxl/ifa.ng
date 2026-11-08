@@ -16,6 +16,8 @@ export interface PortraitCardProps {
   /** Tilt alternates -2° / +2° like trading cards. Off for grids. */
   tilt?: 'left' | 'right' | 'none';
   size?: 'md' | 'sm';
+  /** Fill the parent's width (grids) instead of the fixed trading-card size. */
+  fluid?: boolean;
   tabIndex?: number;
   className?: string;
   children?: React.ReactNode;
@@ -38,6 +40,7 @@ export const PortraitCard = ({
   onClick,
   tilt = 'none',
   size = 'md',
+  fluid,
   tabIndex,
   className,
   children,
@@ -102,7 +105,7 @@ export const PortraitCard = ({
     'group relative block flex-none overflow-hidden rounded-card text-white no-underline shadow-lift',
     'transition-transform duration-300 [transition-timing-function:cubic-bezier(.2,.8,.2,1)]',
     'hover:-translate-y-2.5 hover:rotate-0 hover:scale-[1.04] focus-visible:-translate-y-2.5',
-    size === 'sm' ? 'h-[300px] w-[220px]' : 'h-[300px] w-[220px] sm:h-[360px] sm:w-[268px]',
+    fluid ? 'aspect-[4/5] w-full' : size === 'sm' ? 'h-[300px] w-[220px]' : 'h-[300px] w-[220px] sm:h-[360px] sm:w-[268px]',
     tilt === 'left' && '-rotate-2',
     tilt === 'right' && 'translate-y-2.5 rotate-2',
     className,

@@ -44,7 +44,7 @@ export const ColorBlock = ({
   children?: React.ReactNode;
 }) => (
   <div
-    className={cn('flex min-h-[220px] flex-col gap-3 rounded-[28px] p-6 text-ink', className)}
+    className={cn('flex flex-col gap-3 rounded-[28px] p-6 text-ink sm:min-h-[220px]', className)}
     style={{ backgroundColor: color ?? pastelBlocks[index % pastelBlocks.length] }}
   >
     {number !== undefined && (

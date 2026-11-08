@@ -227,12 +227,12 @@ const AdminEmailSettings = () => {
           <html>
             <head>
               <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #121611; }
                 .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-                .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+                .header { background: #121611; color: #f2c230; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+                .content { background: #f6f1e4; padding: 30px; border-radius: 0 0 8px 8px; }
                 .success-icon { font-size: 48px; text-align: center; margin: 20px 0; }
-                .footer { text-align: center; color: #6b7280; font-size: 14px; margin-top: 30px; }
+                .footer { text-align: center; color: #5d6457; font-size: 14px; margin-top: 30px; }
               </style>
             </head>
             <body>

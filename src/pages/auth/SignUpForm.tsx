@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Loader2 } from 'lucide-react';
 
-const SignUpForm = () => {
+const SignUpForm = ({ defaultRole = 'user' }: { defaultRole?: 'user' | 'babalawo' }) => {
   const { signUp } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -52,7 +52,7 @@ const SignUpForm = () => {
   return (
     <form onSubmit={handleSignUp} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="signup-name">Full Name</Label>
+        <Label htmlFor="signup-name">Full name</Label>
         <Input
           id="signup-name"
           name="fullName"
@@ -80,28 +80,30 @@ const SignUpForm = () => {
           placeholder="Create a password"
         />
       </div>
-      <div className="space-y-3">
-        <Label>I want to join as:</Label>
-        <RadioGroup name="role" defaultValue="user" className="grid grid-cols-1 gap-4">
-          <div className="flex items-center space-x-3 border rounded-lg p-3">
-            <RadioGroupItem value="user" id="user" />
-            <Label htmlFor="user" className="flex-1 cursor-pointer">
-              <div className="font-medium">Seeker</div>
-              <div className="text-sm text-gray-600">Looking for spiritual guidance</div>
+      <fieldset className="space-y-3">
+        <legend className="mb-3 text-sm font-semibold">I'm joining as</legend>
+        <RadioGroup name="role" defaultValue={defaultRole} className="grid grid-cols-2 gap-3">
+          {[
+            { value: 'user', title: 'Seeker', body: 'Looking for guidance', color: 'has-[[data-state=checked]]:bg-leaf' },
+            { value: 'babalawo', title: 'Babalawo', body: 'Giving guidance', color: 'has-[[data-state=checked]]:bg-sun' },
+          ].map((o) => (
+            <Label
+              key={o.value}
+              htmlFor={`role-${o.value}`}
+              className={`flex cursor-pointer flex-col gap-1 rounded-panel border-2 border-line bg-paper p-4 transition-colors has-[[data-state=checked]]:border-ink ${o.color}`}
+            >
+              <span className="flex items-center justify-between">
+                <span className="font-display text-lg font-extrabold">{o.title}</span>
+                <RadioGroupItem value={o.value} id={`role-${o.value}`} />
+              </span>
+              <span className="text-sm font-normal text-muted-foreground">{o.body}</span>
             </Label>
-          </div>
-          <div className="flex items-center space-x-3 border rounded-lg p-3">
-            <RadioGroupItem value="babalawo" id="babalawo" />
-            <Label htmlFor="babalawo" className="flex-1 cursor-pointer">
-              <div className="font-medium">Babalawo</div>
-              <div className="text-sm text-gray-600">Providing spiritual guidance</div>
-            </Label>
-          </div>
+          ))}
         </RadioGroup>
-      </div>
-      <Button type="submit" className="w-full" disabled={isLoading}>
+      </fieldset>
+      <Button type="submit" variant="sun" size="lg" className="w-full" disabled={isLoading}>
         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        Create Account
+        Create account
       </Button>
     </form>
   );

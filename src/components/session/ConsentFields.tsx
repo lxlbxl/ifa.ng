@@ -9,8 +9,8 @@ export interface ConsentValue { recording: boolean; ai: boolean }
  * client and the Babalawo tick both boxes; otherwise the consultation is not recorded.
  */
 const ConsentFields: React.FC<{ value: ConsentValue; onChange: (v: ConsentValue) => void; role: "client" | "babalawo" }> = ({ value, onChange, role }) => (
-  <fieldset className="rounded-md border p-3 space-y-3 text-sm">
-    <legend className="px-1 font-medium">Recording &amp; AI notes (optional)</legend>
+  <fieldset className="space-y-3 rounded-field border-[1.5px] border-line bg-cloth p-4 text-sm">
+    <legend className="px-1 font-bold">Recording &amp; AI notes (optional)</legend>
     <p className="text-muted-foreground text-xs">
       Your consultation is private. If both you and {role === "client" ? "your Babalawo" : "your client"} agree, Google Meet records the
       session and our AI turns it into draft notes in English or Yorùbá. The Babalawo reviews and approves the notes before

@@ -1,3 +1,4 @@
+import { pickBlock } from '@/design/tokens';
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -196,29 +197,29 @@ const InstantConsultationModal: React.FC<InstantConsultationModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl">Start Instant Consultation</DialogTitle>
+          <DialogTitle>Consult now</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleInstantConsultation} className="space-y-4">
-          <div className="text-center sm:text-left">
-            <div className="font-semibold text-base sm:text-lg">{babalawo.full_name || babalawo.name || "Babalawo"}</div>
-            <div className="text-sm text-gray-500">{babalawo.title || "Ifa Priest & Spiritual Guide"}</div>
-            <div className="mt-2">
-              <span className="text-primary font-bold text-xl sm:text-2xl">
-                ₦{amount.toLocaleString()}
-              </span>
-              <span className="text-sm text-gray-500 ml-1">per session</span>
+        <form onSubmit={handleInstantConsultation} className="space-y-5">
+          <div className="flex items-center gap-4 rounded-panel bg-cloth p-3">
+            <span
+              className="relative h-16 w-14 flex-none overflow-hidden rounded-[16px]"
+              style={{ backgroundColor: pickBlock(babalawo.full_name || babalawo.name || 'Babalawo') }}
+            >
+              {babalawo.avatar_url && <img src={babalawo.avatar_url} alt="" className="h-full w-full object-cover" />}
+              <span className="absolute bottom-1 right-1 h-3 w-3 rounded-full border-2 border-paper bg-leaf" aria-hidden="true" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="truncate font-display text-lg font-extrabold leading-tight">{babalawo.full_name || babalawo.name || "Babalawo"}</div>
+              <div className="text-sm text-muted-foreground">Online now</div>
             </div>
+            <span className="font-display text-2xl font-extrabold tracking-[-0.02em]">₦{amount.toLocaleString()}</span>
           </div>
-          
-          <div className="bg-green-50 p-4 rounded-md">
-            <h3 className="font-medium text-green-800 mb-1">Instant Consultation</h3>
-            <p className="text-sm text-green-700">
-              This Babalawo is currently online and available for an immediate consultation.
-              You will be connected right after payment is confirmed.
-            </p>
-          </div>
+
+          <p className="m-0 rounded-field bg-leaf/50 p-3 text-sm">
+            This Babalawo is online and can start straight away. You'll join the session as soon as your payment is confirmed.
+          </p>
 
           <PaymentMethodSelector
             selectedMethod={paymentMethod}
@@ -232,13 +233,13 @@ const InstantConsultationModal: React.FC<InstantConsultationModalProps> = ({
             paymentMethod={paymentMethod}
           />
 
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
-              {isLoading ? "Processing..." : "Pay & Start Consultation"}
-            </Button>
+          <DialogFooter className="flex flex-col-reverse gap-2 sm:flex-row">
             <DialogClose asChild>
-              <Button variant="secondary" type="button" disabled={isLoading} className="w-full sm:w-auto">Cancel</Button>
+              <Button variant="outline" type="button" disabled={isLoading} className="w-full sm:w-auto">Cancel</Button>
             </DialogClose>
+            <Button type="submit" variant="sun" size="lg" disabled={isLoading} className="w-full sm:flex-1">
+              {isLoading ? "Processing…" : `Pay ₦${amount.toLocaleString()} and start`}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -1,5 +1,5 @@
-
 import React, { useState, useEffect } from "react";
+import { pickBlock } from '@/design/tokens';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -215,21 +215,25 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto mx-4 sm:mx-auto">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl">Book Session</DialogTitle>
+          <DialogTitle>Book a session</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleBookAndPay} className="space-y-4">
-          <div className="text-center sm:text-left">
-            <div className="font-semibold text-base sm:text-lg">{babalawo.full_name || babalawo.name || "Babalawo"}</div>
-            <div className="text-sm text-gray-500">{babalawo.title || "Ifa Priest & Spiritual Guide"}</div>
-            <div className="mt-2">
-              <span className="text-primary font-bold text-xl sm:text-2xl">
-                ₦{amount.toLocaleString()}
-              </span>
+        <form onSubmit={handleBookAndPay} className="space-y-5">
+          <div className="flex items-center gap-4 rounded-panel bg-cloth p-3">
+            <span
+              className="relative h-16 w-14 flex-none overflow-hidden rounded-[16px]"
+              style={{ backgroundColor: pickBlock(babalawo.full_name || babalawo.name || 'Babalawo') }}
+            >
+              {babalawo.avatar_url && <img src={babalawo.avatar_url} alt="" className="h-full w-full object-cover" />}
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="truncate font-display text-lg font-extrabold leading-tight">{babalawo.full_name || babalawo.name || "Babalawo"}</div>
+              <div className="text-sm text-muted-foreground">One-to-one on Google Meet</div>
             </div>
+            <span className="font-display text-2xl font-extrabold tracking-[-0.02em]">₦{amount.toLocaleString()}</span>
           </div>
-          
+
           <DateTimeSelector
             date={date}
             setDate={setDate}
@@ -240,14 +244,14 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
           />
 
           {slotLockId && lockExpiresAt && (
-            <div className="bg-green-50 border border-green-200 rounded-md p-3">
-              <div className="flex items-center gap-2 text-sm text-green-800">
+            <div className="rounded-field bg-leaf/50 p-3">
+              <div className="flex items-center gap-2 text-sm text-ink">
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
-                <span className="font-medium">Slot Reserved</span>
+                <span className="font-bold">Slot held for you</span>
               </div>
-              <p className="text-xs text-green-700 mt-1">
+              <p className="text-xs text-ink/75 mt-1">
                 This time slot is temporarily reserved for you. Complete payment within 5 minutes to confirm.
               </p>
             </div>
@@ -267,13 +271,13 @@ const BookSessionModal: React.FC<BookSessionModalProps> = ({ open, onOpenChange,
 
           <ConsentFields value={consent} onChange={setConsent} role="client" />
 
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            <Button type="submit" disabled={isLoading || !date || !selectedTime} className="w-full sm:w-auto">
-              {isLoading ? "Processing..." : "Confirm & Pay"}
-            </Button>
+          <DialogFooter className="flex flex-col-reverse gap-2 sm:flex-row">
             <DialogClose asChild>
-              <Button variant="secondary" type="button" disabled={isLoading} className="w-full sm:w-auto">Cancel</Button>
+              <Button variant="outline" type="button" disabled={isLoading} className="w-full sm:w-auto">Cancel</Button>
             </DialogClose>
+            <Button type="submit" variant="sun" size="lg" disabled={isLoading || !date || !selectedTime} className="w-full sm:flex-1">
+              {isLoading ? "Processing…" : `Confirm and pay ₦${amount.toLocaleString()}`}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

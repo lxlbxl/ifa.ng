@@ -1,5 +1,4 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAdminRevenueStats } from "@/hooks/useAdminRevenueStats";
 import { Loader2 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -15,28 +14,23 @@ const RevenueChart = () => {
     const dateFormatter = (str: string) => format(new Date(str), 'MMM d');
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Revenue (Last 30 Days)</CardTitle>
-            </CardHeader>
-            <CardContent>
+        <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height={300}>
                     <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                         <defs>
                             <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-                                <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+                                <stop offset="5%" stopColor="#1f6e3c" stopOpacity={0.22}/>
+                                <stop offset="95%" stopColor="#1f6e3c" stopOpacity={0}/>
                             </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="date" tickFormatter={dateFormatter} />
-                        <YAxis tickFormatter={currencyFormatter} />
-                        <Tooltip formatter={(value) => currencyFormatter(value as number)} />
-                        <Area type="monotone" dataKey="revenue" stroke="#8884d8" fillOpacity={1} fill="url(#colorRevenue)" />
+                        <CartesianGrid vertical={false} stroke="#e3dccb" />
+                        <XAxis dataKey="date" tickFormatter={dateFormatter} tick={{ fill: "#5d6457", fontSize: 12 }} axisLine={false} tickLine={false} />
+                        <YAxis tickFormatter={currencyFormatter} tick={{ fill: "#5d6457", fontSize: 12 }} axisLine={false} tickLine={false} width={72} />
+                        <Tooltip formatter={(value) => currencyFormatter(value as number)} contentStyle={{ background: "#fffdf7", border: "2px solid #121611", borderRadius: 14 }} />
+                        <Area type="monotone" dataKey="revenue" stroke="#1f6e3c" strokeWidth={2.5} fillOpacity={1} fill="url(#colorRevenue)" />
                     </AreaChart>
                 </ResponsiveContainer>
-            </CardContent>
-        </Card>
+            </div>
     );
 };
 

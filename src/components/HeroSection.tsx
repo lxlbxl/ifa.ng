@@ -1,217 +1,104 @@
-import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
-import { Star, Shield, Video, ArrowRight, Play } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import InstallButton from "@/components/pwa/InstallButton";
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Volume2, VolumeX } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Eyebrow, SoundWave } from '@/components/brand';
+import InstallButton from '@/components/pwa/InstallButton';
 
-const testimonials = [
-  {
-    name: "Adunni Olatunji",
-    text: "The guidance I received was profound and life-changing. Baba Ifasegun helped me understand my path clearly. I've had three sessions and each one brought new insights.",
-    rating: 5,
-    location: "Lagos, Nigeria",
-    image: "/testimonials/testimonial-1.jpg"
-  },
-  {
-    name: "Michael Thompson",
-    text: "Professional, authentic, and deeply insightful. I finally found the spiritual guidance I was seeking after trying many other options. The video quality was excellent.",
-    rating: 4.5,
-    location: "New York, USA",
-    image: "/testimonials/testimonial-2.jpg"
-  },
-  {
-    name: "Fatima Al-Rashid",
-    text: "The consultation was exactly what I needed. The Babalawo was patient and provided clear direction. While I was skeptical at first, I'm now a regular client.",
-    rating: 4,
-    location: "Dubai, UAE",
-    image: "/testimonials/testimonial-3.jpg"
-  },
-  {
-    name: "Carlos Mendoza",
-    text: "I appreciate how the platform connected me with a Babalawo who understood my cultural background. The spiritual insights have helped me navigate a difficult transition in my life.",
-    rating: 5,
-    location: "Mexico City, Mexico",
-    image: "/testimonials/testimonial-4.jpg"
-  }
-];
+/**
+ * Full-bleed chant hero. Plays VITE_HERO_VIDEO_URL (an MP4 the team owns) muted
+ * and looped, with the poster drifting behind it while it loads. Without a
+ * video it shows the poster with a slow zoom.
+ */
+const HERO_VIDEO = import.meta.env.VITE_HERO_VIDEO_URL as string | undefined;
+const POSTER = '/brand/hero-chant-poster.jpg';
 
 const HeroSection = () => {
-  const [currentTestimonial, setCurrentTestimonial] = useState(0);
-  const navigate = useNavigate();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [muted, setMuted] = useState(true);
+  const [reduced, setReduced] = useState(false);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
-    }, 4000);
-    return () => clearInterval(interval);
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setReduced(mq.matches);
   }, []);
 
+  const toggleSound = () => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = !v.muted;
+    setMuted(v.muted);
+    if (v.paused) void v.play();
+  };
+
   return (
-    <section id="home" className="relative overflow-hidden bg-gradient-hero min-h-screen flex items-center">
-      {/* Background decoration */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-20 left-10 w-32 h-32 rounded-full bg-white animate-float"></div>
-        <div className="absolute bottom-20 right-10 w-24 h-24 rounded-full bg-white animate-float" style={{animationDelay: '1s'}}></div>
-        <div className="absolute top-1/2 left-1/4 w-16 h-16 rounded-full bg-white animate-float" style={{animationDelay: '2s'}}></div>
-      </div>
+    <section
+      id="top"
+      aria-label="Featured chant"
+      className="relative isolate h-[clamp(600px,92vh,900px)] overflow-hidden bg-ink text-white"
+    >
+      <div
+        role="img"
+        aria-label="A Babalawo in white lace agbada and ìlẹ̀kẹ̀ beads chanting"
+        className="absolute inset-0 -z-20 animate-drift bg-cover bg-no-repeat [background-position:center_30%]"
+        style={{ backgroundImage: `url(${POSTER})` }}
+      />
+      {HERO_VIDEO && !reduced && (
+        <video
+          ref={videoRef}
+          className="absolute inset-0 -z-20 h-full w-full object-cover [object-position:center_30%]"
+          src={HERO_VIDEO}
+          poster={POSTER}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+        />
+      )}
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(10,14,9,.55)_0%,rgba(10,14,9,.05)_28%,rgba(10,14,9,.25)_55%,rgba(10,14,9,.92)_100%)]" />
 
-      <div className="container mx-auto px-4 py-20 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left Column - Hero Content */}
-          <motion.div
-            className="text-center lg:text-left"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium text-gray-900 mb-6 border-2 border-gray-900 shadow-lg"
-            >
-              <span className="flex w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              50+ Verified Babalawos Online Now
-            </motion.div>
+      {/* Now playing chip */}
+      <button
+        type="button"
+        onClick={HERO_VIDEO ? toggleSound : undefined}
+        aria-label={HERO_VIDEO ? (muted ? 'Play chant with sound' : 'Mute chant') : undefined}
+        tabIndex={HERO_VIDEO ? 0 : -1}
+        className="absolute left-1/2 top-[124px] flex -translate-x-1/2 sm:-translate-y-1/2 items-center gap-3.5 whitespace-nowrap rounded-pill border border-white/25 bg-ink/70 py-2.5 pl-2.5 pr-5 text-[13px] font-semibold text-white backdrop-blur-md sm:top-1/2 sm:text-sm"
+      >
+        <span className="grid h-11 w-11 place-items-center rounded-full bg-sun text-ink">
+          {HERO_VIDEO && !muted ? <Volume2 className="h-[18px] w-[18px]" /> : HERO_VIDEO ? <VolumeX className="h-[18px] w-[18px]" /> : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10-6.5z" /></svg>
+          )}
+        </span>
+        <span className="text-left">
+          Ìwúre · morning prayer
+          <small className="block text-xs font-medium opacity-75">
+            {HERO_VIDEO ? (muted ? 'Tap to hear the chant' : 'Playing with sound') : 'Chant from one of our Babalawos'}
+          </small>
+        </span>
+        <SoundWave />
+      </button>
 
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-              Connect with Authentic{" "}
-              <span className="text-gray-900 bg-yellow-400 px-2 py-1 rounded-lg shadow-lg inline-block transform hover:scale-105 transition-transform">
-                Spiritual Guides
-              </span>
-              {" "}Anytime, Anywhere
-            </h1>
-
-            <p className="text-xl md:text-2xl text-gray-900 font-semibold mb-8 max-w-2xl bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-lg">
-              Experience life-changing consultations with verified Babalawos through secure HD video sessions. Your journey to clarity begins here.
+      <div className="absolute inset-x-0 bottom-0 pb-[clamp(36px,6vh,72px)]">
+        <div className="wrap">
+          <Eyebrow className="text-leaf">Ifá consultation, online</Eyebrow>
+          <h1 className="mt-3.5 max-w-[12ch] font-display text-display-xl font-extrabold">
+            Hear Ifá <span className="text-sun">speak.</span>
+          </h1>
+          <div className="mt-6 flex flex-wrap items-end justify-between gap-6">
+            <p className="m-0 max-w-[480px] text-base text-[#ece6d6] sm:text-lg">
+              Sit with a verified Babalawo over Google Meet, wherever you are. Every session ends with written notes you can keep.
             </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  size="lg"
-                  className="bg-gray-900 text-white hover:bg-gray-800 font-semibold px-8 py-4 text-lg shadow-xl border-2 border-gray-900 inline-flex items-center gap-2"
-                  onClick={() => navigate('/auth?tab=signup')}
-                >
-                  Get Started Free
-                  <ArrowRight className="w-5 h-5" />
-                </Button>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  size="lg"
-                  className="bg-white text-gray-900 hover:bg-gray-100 font-semibold px-8 py-4 text-lg shadow-xl border-2 border-gray-900 transition-all duration-300 inline-flex items-center gap-2"
-                  onClick={() => navigate('/search')}
-                >
-                  <Play className="w-5 h-5" />
-                  Watch Demo
-                </Button>
-              </motion.div>
-              <InstallButton variant="hero" label="Download the app" className="bg-yellow-400 text-gray-900 hover:bg-yellow-300 border-2 border-gray-900" />
-            </div>
-
-            {/* Trust Indicators */}
-            <div className="flex flex-wrap justify-center lg:justify-start gap-6">
-              <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 border-2 border-gray-900 shadow-lg">
-                <Shield className="w-5 h-5 text-gray-900" />
-                <span className="text-sm font-bold text-gray-900">100% Verified</span>
-              </div>
-              <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 border-2 border-gray-900 shadow-lg">
-                <Video className="w-5 h-5 text-gray-900" />
-                <span className="text-sm font-bold text-gray-900">Secure Sessions</span>
-              </div>
-              <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-4 py-2 border-2 border-gray-900 shadow-lg">
-                <Star className="w-5 h-5 fill-current text-gray-900" />
-                <span className="text-sm font-bold text-gray-900">5.0 Average Rating</span>
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Right Column - Testimonial Carousel */}
-          <div className="relative animate-fade-in" style={{animationDelay: '0.3s'}}>
-            <div className="bg-white rounded-3xl p-8 shadow-2xl border border-gray-200">
-              <div className="text-center">
-                <div className="flex justify-center mb-4">
-                  {/* Dynamic star rating that shows partial stars */}
-                  {[1, 2, 3, 4, 5].map((star) => {
-                    const rating = testimonials[currentTestimonial].rating;
-                    return (
-                      <div key={star} className="relative">
-                        {/* Empty star background */}
-                        <Star className="w-6 h-6 text-gray-300" />
-                        
-                        {/* Filled star overlay with clip based on rating */}
-                        <div 
-                          className="absolute top-0 left-0 overflow-hidden"
-                          style={{ 
-                            width: `${Math.min(100, Math.max(0, (rating - (star - 1)) * 100))}%` 
-                          }}
-                        >
-                          <Star className="w-6 h-6 text-accent fill-current" />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-                
-                <blockquote className="text-lg text-gray-800 mb-6 leading-relaxed">
-                  "{testimonials[currentTestimonial].text}"
-                </blockquote>
-                
-                <div className="border-t border-gray-200 pt-4">
-                  <div className="flex items-center justify-center gap-3">
-                    <div className="w-10 h-10 rounded-full overflow-hidden">
-                      {testimonials[currentTestimonial].image ? (
-                        <img 
-                          src={testimonials[currentTestimonial].image} 
-                          alt={testimonials[currentTestimonial].name}
-                          className="w-full h-full object-cover"
-                          width={40}
-                          height={40}
-                          loading="lazy"
-                          onError={(e) => {
-                            // Replace with fallback avatar on error
-                            const target = e.currentTarget;
-                            const parent = target.parentElement;
-                            if (parent) {
-                              parent.innerHTML = `<div class="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center text-white font-semibold">
-                                ${testimonials[currentTestimonial].name.charAt(0)}
-                              </div>`;
-                            }
-                          }}
-                        />
-                      ) : (
-                        // Fallback avatar if no image provided
-                        <div className="w-10 h-10 rounded-full bg-gradient-primary flex items-center justify-center text-white font-semibold">
-                          {testimonials[currentTestimonial].name.charAt(0)}
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">
-                        {testimonials[currentTestimonial].name}
-                      </p>
-                      <p className="text-gray-600 text-sm">
-                        {testimonials[currentTestimonial].location}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Testimonial Indicators */}
-            <div className="flex justify-center mt-6 space-x-2">
-              {testimonials.map((_, index) => (
-                <button
-                  key={index}
-                  className={`w-3 h-3 rounded-full transition-all ${
-                    index === currentTestimonial ? 'bg-gray-800 shadow-lg' : 'bg-gray-400'
-                  }`}
-                  onClick={() => setCurrentTestimonial(index)}
-                />
-              ))}
+            <div className="flex flex-wrap gap-3">
+              <Button asChild variant="sun" size="lg">
+                <Link to="/search">Meet the Babalawos →</Link>
+              </Button>
+              <Button asChild variant="glass" size="lg" className="hidden sm:inline-flex">
+                <a href="#sessions">How sessions work</a>
+              </Button>
+              <InstallButton variant="hero" label="Download the app" buttonVariant="glass" />
             </div>
           </div>
         </div>

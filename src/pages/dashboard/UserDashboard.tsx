@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import NetworkStatusBar from "@/components/pwa/NetworkStatusBar";
 import { motion, AnimatePresence } from 'framer-motion';
 import Sidebar from '@/components/dashboard/user/Sidebar';
 import DashboardHeader from '@/components/dashboard/user/DashboardHeader';
@@ -102,7 +103,10 @@ const UserDashboard = () => {
         <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
       </div>
       <div className="flex-1 flex flex-col min-w-0">
-        <DashboardHeader activeSection={activeSection} onSectionChange={setActiveSection} />
+        <div className="sticky top-0 z-40">
+          <NetworkStatusBar audience="client" />
+          <DashboardHeader activeSection={activeSection} onSectionChange={setActiveSection} />
+        </div>
         <main className="flex-grow p-3 sm:p-6 lg:p-8 xl:p-10 space-y-4 sm:space-y-6 lg:space-y-8 overflow-y-auto pb-20 lg:pb-8">
           <div className="w-full max-w-none">
             <AnimatePresence mode="wait">

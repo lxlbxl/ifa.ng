@@ -673,10 +673,10 @@ export type Database = {
           end_time: string
           id: string
           is_instant: boolean | null
-          items_needed: string | null
+          items_needed: Json | null
           next_appointment: string | null
           notes: string | null
-          other_odus: string | null
+          other_odus: string[] | null
           payment_reference: string | null
           payment_status: string | null
           primary_odu: string | null
@@ -687,6 +687,7 @@ export type Database = {
           status: Database["public"]["Enums"]["session_status_enum"]
           user_id: string
           user_timezone: string | null
+          warning: string | null
         }
         Insert: {
           agora_channel_name?: string | null
@@ -696,10 +697,10 @@ export type Database = {
           end_time: string
           id?: never
           is_instant?: boolean | null
-          items_needed?: string | null
+          items_needed?: Json | null
           next_appointment?: string | null
           notes?: string | null
-          other_odus?: string | null
+          other_odus?: string[] | null
           payment_reference?: string | null
           payment_status?: string | null
           primary_odu?: string | null
@@ -710,6 +711,7 @@ export type Database = {
           status: Database["public"]["Enums"]["session_status_enum"]
           user_id: string
           user_timezone?: string | null
+          warning?: string | null
         }
         Update: {
           agora_channel_name?: string | null
@@ -719,10 +721,10 @@ export type Database = {
           end_time?: string
           id?: never
           is_instant?: boolean | null
-          items_needed?: string | null
+          items_needed?: Json | null
           next_appointment?: string | null
           notes?: string | null
-          other_odus?: string | null
+          other_odus?: string[] | null
           payment_reference?: string | null
           payment_status?: string | null
           primary_odu?: string | null
@@ -733,6 +735,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["session_status_enum"]
           user_id?: string
           user_timezone?: string | null
+          warning?: string | null
         }
         Relationships: []
       }

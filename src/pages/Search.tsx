@@ -61,8 +61,8 @@ const SearchPage = () => {
           </div>
 
           {/* Filters */}
-          <div className="mt-8 grid gap-3 rounded-panel border border-line bg-paper p-3 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr_1fr]">
-            <div className="relative">
+          <div className="mt-8 grid grid-cols-3 gap-2 rounded-panel border border-line bg-paper p-2 sm:gap-3 sm:p-3 lg:grid-cols-[1.6fr_1fr_1fr_1fr] [&_button[role=combobox]]:max-sm:h-11 [&_button[role=combobox]]:max-sm:px-3 [&_button[role=combobox]]:max-sm:text-[13px]">
+            <div className="relative col-span-3 lg:col-span-1">
               <Label htmlFor="search-term" className="sr-only">Search by name</Label>
               <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
               <Input

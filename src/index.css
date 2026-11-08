@@ -189,5 +189,8 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  .marquee-track { flex-wrap: wrap; width: auto !important; }
+  /* Marquees become a swipeable row with no duplicate items. */
+  .marquee { overflow-x: auto; }
+  .marquee-track { animation: none !important; }
+  .marquee-clone { display: none !important; }
 }

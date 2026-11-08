@@ -47,7 +47,7 @@ const BabalawoCard: React.FC<BabalawoCardProps> = ({ babalawo, onBookSession, on
         </span>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <Button variant="sun" onClick={() => onBookSession(babalawo)} aria-label={`Book a session with ${name}`}>
+        <Button onClick={() => onBookSession(babalawo)} aria-label={`Book a session with ${name}`}>
           Book
         </Button>
         <Button variant="outline" onClick={() => onViewProfile(babalawo.id)} aria-label={`View profile of ${name}`}>

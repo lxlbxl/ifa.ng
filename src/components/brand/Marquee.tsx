@@ -40,7 +40,7 @@ export function Marquee<T>({
       >
         {items.map((item, i) => renderItem(item, i, false))}
         {items.map((item, i) => (
-          <div key={`clone-${i}`} aria-hidden="true" className="contents">
+          <div key={`clone-${i}`} aria-hidden="true" className="marquee-clone contents">
             {renderItem(item, i, true)}
           </div>
         ))}

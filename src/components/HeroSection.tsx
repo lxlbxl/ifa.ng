@@ -65,7 +65,7 @@ const HeroSection = () => {
         onClick={HERO_VIDEO ? toggleSound : undefined}
         aria-label={HERO_VIDEO ? (muted ? 'Play chant with sound' : 'Mute chant') : undefined}
         tabIndex={HERO_VIDEO ? 0 : -1}
-        className="absolute left-1/2 top-[42%] flex -translate-x-1/2 -translate-y-1/2 items-center gap-3.5 whitespace-nowrap rounded-pill border border-white/25 bg-ink/70 py-2.5 pl-2.5 pr-5 text-[13px] font-semibold text-white backdrop-blur-md sm:top-1/2 sm:text-sm"
+        className="absolute left-1/2 top-[124px] flex -translate-x-1/2 sm:-translate-y-1/2 items-center gap-3.5 whitespace-nowrap rounded-pill border border-white/25 bg-ink/70 py-2.5 pl-2.5 pr-5 text-[13px] font-semibold text-white backdrop-blur-md sm:top-1/2 sm:text-sm"
       >
         <span className="grid h-11 w-11 place-items-center rounded-full bg-sun text-ink">
           {HERO_VIDEO && !muted ? <Volume2 className="h-[18px] w-[18px]" /> : HERO_VIDEO ? <VolumeX className="h-[18px] w-[18px]" /> : (
@@ -95,7 +95,7 @@ const HeroSection = () => {
               <Button asChild variant="sun" size="lg">
                 <Link to="/search">Meet the Babalawos →</Link>
               </Button>
-              <Button asChild variant="glass" size="lg">
+              <Button asChild variant="glass" size="lg" className="hidden sm:inline-flex">
                 <a href="#sessions">How sessions work</a>
               </Button>
               <InstallButton variant="hero" label="Download the app" buttonVariant="glass" />

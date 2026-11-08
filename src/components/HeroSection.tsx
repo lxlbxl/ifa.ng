@@ -115,27 +115,21 @@ const HeroSection = () => {
       {/* Cream wash: keeps the header and the ink headline readable over the white video. */}
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(253,252,248,.7)_0%,rgba(253,252,248,0)_18%)] [@media(min-aspect-ratio:1/1)]:bg-[linear-gradient(180deg,rgba(253,252,248,.7)_0%,rgba(253,252,248,0)_22%,rgba(253,252,248,0)_50%,rgba(253,252,248,.85)_80%,rgba(253,252,248,.97)_100%)]" />
 
-      {/* Now playing chip */}
-      <button
-        type="button"
-        onClick={videoAllowed ? toggleSound : undefined}
-        aria-label={videoAllowed ? (muted ? 'Play chant with sound' : 'Mute chant') : undefined}
-        tabIndex={videoAllowed ? 0 : -1}
-        className="absolute left-1/2 top-[calc(56%-118px)] flex -translate-x-1/2 items-center gap-3.5 whitespace-nowrap rounded-pill border border-white/25 bg-ink/70 py-2.5 pl-2.5 pr-5 text-[13px] font-semibold text-white backdrop-blur-md sm:text-sm [@media(min-aspect-ratio:1/1)]:top-1/2 [@media(min-aspect-ratio:1/1)]:-translate-y-1/2"
-      >
-        <span className="grid h-11 w-11 place-items-center rounded-full bg-sun text-ink">
-          {videoAllowed && !muted ? <Volume2 className="h-[18px] w-[18px]" /> : videoAllowed ? <VolumeX className="h-[18px] w-[18px]" /> : (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10-6.5z" /></svg>
-          )}
-        </span>
-        <span className="text-left">
-          Ìwúre · morning prayer
-          <small className="block text-xs font-medium opacity-75">
-            {videoAllowed ? (muted ? 'Tap to hear the chant' : 'Playing with sound') : 'Chant from one of our Babalawos'}
-          </small>
-        </span>
-        <SoundWave />
-      </button>
+      {/* Sound toggle: mute/unmute and a sound wave, nothing else */}
+      {videoAllowed && (
+        <button
+          type="button"
+          onClick={toggleSound}
+          aria-label={muted ? 'Unmute chant' : 'Mute chant'}
+          aria-pressed={!muted}
+          className="absolute right-5 top-[100px] flex items-center [@media(min-aspect-ratio:1/1)]:right-auto [@media(min-aspect-ratio:1/1)]:left-1/2 [@media(min-aspect-ratio:1/1)]:-translate-x-1/2 gap-3 rounded-pill border border-white/25 bg-ink/70 py-2 pl-2 pr-4 text-white backdrop-blur-md [@media(min-aspect-ratio:1/1)]:top-1/2 [@media(min-aspect-ratio:1/1)]:-translate-y-1/2"
+        >
+          <span className="grid h-11 w-11 place-items-center rounded-full bg-sun text-ink">
+            {muted ? <VolumeX className="h-[18px] w-[18px]" /> : <Volume2 className="h-[18px] w-[18px]" />}
+          </span>
+          <SoundWave />
+        </button>
+      )}
 
       <div className="absolute inset-x-0 bottom-0 pb-[clamp(36px,6vh,72px)]">
         <div className="wrap">

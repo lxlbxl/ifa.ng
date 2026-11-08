@@ -209,6 +209,12 @@ BEGIN
   IF auth.uid() IS NULL OR public.is_admin() THEN
     RETURN NEW;
   END IF;
+  -- Updates fired by another trigger are system maintenance (e.g. the rating /
+  -- total_sessions recompute when a session completes or a review is approved);
+  -- they run as the caller but never copy user input into these fields.
+  IF pg_trigger_depth() > 1 THEN
+    RETURN NEW;
+  END IF;
   IF TG_OP = 'INSERT' THEN
     NEW.is_verified := false;
     NEW.is_featured := false;

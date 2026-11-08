@@ -51,21 +51,19 @@ const fetchWithdrawalRequests = async (filters: any): Promise<WithdrawalRequest[
   return (data || []) as WithdrawalRequest[];
 };
 
-const updateWithdrawalStatus = async ({ id, status, rejection_reason }: { id: string; status: string; rejection_reason?: string }) => {
-  const { data, error } = await supabase
-    .from('withdrawal_requests')
-    .update({ 
-      status,
-      reason: rejection_reason || null,
-    })
-    .eq('id', id)
-    .select()
-    .single();
-
+// All balance movements happen in the database (admin_process_withdrawal); the browser can no longer edit these rows.
+const updateWithdrawalStatus = async ({ id, status, rejection_reason, reference }: { id: string; status: string; rejection_reason?: string; reference?: string }) => {
+  const action = status === 'approved' ? 'approve' : status === 'rejected' ? 'reject' : 'mark_paid';
+  const { error } = await supabase.rpc('admin_process_withdrawal' as any, {
+    p_id: id,
+    p_action: action,
+    p_reference: reference || null,
+    p_note: rejection_reason || null,
+  });
   if (error) {
     throw errorService.handleError(error, 'UPDATE_WITHDRAWAL_STATUS');
   }
-  return data;
+  return { id, status };
 };
 
 const AdminWithdrawalManagement: React.FC = () => {
@@ -118,7 +116,7 @@ const AdminWithdrawalManagement: React.FC = () => {
 
   const confirmProcess = () => {
     if (currentRequestId) {
-      mutation.mutate({ id: currentRequestId, status: 'completed' });
+      mutation.mutate({ id: currentRequestId, status: 'completed', reference: processRef });
     }
   };
 

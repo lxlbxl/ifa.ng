@@ -19,13 +19,16 @@ import AdminDisputes from "@/components/dashboard/admin/AdminDisputes";
 import AdminActivityLog from "@/components/dashboard/admin/AdminActivityLog";
 import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
-import { adminSections } from "@/components/dashboard/admin/adminSections";
+import { adminSections, type AdminSection } from "@/components/dashboard/admin/adminSections";
+import AdminEbo from "@/components/dashboard/admin/AdminEbo";
 import { MobileBottomNav } from "@/components/shared/MobileBottomNav";
 
 const AdminDashboard = () => {
-  const [activeSection, setActiveSection] = useState<
-    'overview' | 'users' | 'babalawos' | 'bookings' | 'disputes' | 'finance' | 'transactions' | 'wallet-management' | 'settings' | 'withdrawal-management' | 'activity' // Add new section type
-  >('overview');
+  // Notifications can link straight to a section, e.g. /admin?section=ebo
+  const [activeSection, setActiveSection] = useState<AdminSection>(() => {
+    const s = new URLSearchParams(window.location.search).get('section');
+    return (adminSections.find((x) => x.section === s)?.section ?? 'overview');
+  });
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isAdmin, loading } = useAuth();
   if (!loading && !isAdmin) return <Navigate to="/dashboard" replace />;
@@ -44,6 +47,8 @@ const AdminDashboard = () => {
         return <AdminBookings />;
       case 'disputes':
         return <AdminDisputes />;
+      case 'ebo':
+        return <AdminEbo />;
       case 'activity':
         return <AdminActivityLog />;
       case 'finance':

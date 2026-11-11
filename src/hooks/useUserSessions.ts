@@ -28,7 +28,8 @@ const fetchUserSessions = async (userId: string | undefined): Promise<SessionWit
                 items_needed,
                 deadline,
                 next_appointment,
-                is_instant
+                is_instant,
+                session_type
             `)
             .eq('user_id', userId)
             .order('session_date', { ascending: false });
@@ -86,6 +87,7 @@ const fetchUserSessions = async (userId: string | undefined): Promise<SessionWit
                 babalawo_name: babalawoName, // Standardized field with consistent naming
                 babalawo_avatar: profile?.avatar_url || null,
                 babalawo_specialties: babalawoData?.specialties || [],
+                session_type: (session as { session_type?: string }).session_type ?? 'consultation',
                 primary_odu: session.primary_odu,
                 other_odus: session.other_odus || [],
                 ritual_recommendations: session.ritual_recommendations,

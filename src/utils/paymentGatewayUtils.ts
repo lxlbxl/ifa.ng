@@ -42,15 +42,17 @@ export interface PaymentIntentInfo {
 }
 
 export type SettleResult =
-  | { status: 'settled' | 'already_settled'; kind: 'session' | 'wallet_topup'; session_id?: number | null }
-  | { status: 'slot_taken_credited_to_wallet' }
+  | { status: 'settled' | 'already_settled'; kind: 'session' | 'wallet_topup' | 'ebo'; session_id?: number | null; ebo_id?: string | null }
+  | { status: 'slot_taken_credited_to_wallet' | 'ebo_unavailable_credited_to_wallet' }
   | { status: 'pending' | 'failed' | 'amount_mismatch' | 'unknown_reference'; reason?: string };
 
 /** Ask the server to create a payment. The server picks the amount; we never send one for a session. */
 export const createPaymentIntent = async (body: {
-  kind: 'session' | 'wallet_topup';
+  kind: 'session' | 'wallet_topup' | 'ebo';
   gateway: PaymentGateway;
   amount?: number; // only honoured for wallet top-ups
+  ebo_id?: string;
+  attendance?: 'present' | 'absent';
   babalawo_user_id?: string;
   session_date?: string;
   start_time?: string;

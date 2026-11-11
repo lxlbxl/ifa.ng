@@ -103,7 +103,9 @@ const MySessions = () => {
                         {session.babalawo_name}
                       </h3>
                       <p className="text-sm text-gray-500">
-                        {session.babalawo_specialties?.join(', ') || 'General consultation'}
+                        {session.session_type === 'ebo_ritual'
+                          ? 'Ebo ritual (already paid)'
+                          : session.babalawo_specialties?.join(', ') || 'General consultation'}
                       </p>
                     </div>
                   </div>

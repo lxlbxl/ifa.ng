@@ -740,7 +740,7 @@ BEGIN
   PERFORM _ebo_log(p_id, 'disputed', jsonb_build_object('reason', p_reason, 'from', e.status));
   PERFORM create_notification(e.babalawo_id, 'ebo_disputed', 'A client reported a problem with an Ebo',
           e.title || '. The money stays held while IFA reviews it.', jsonb_build_object('ebo_id', p_id, 'action_url', '/dashboard'), 'high');
-  PERFORM _ebo_notify_admins('Ebo dispute', e.title || ' · ' || _ebo_money(e.amount_due), jsonb_build_object('ebo_id', p_id, 'action_url', '/admin?section=ebo'));
+  PERFORM _ebo_notify_admins('Ebo dispute', e.title || ' · ' || _ebo_money(e.amount_due), jsonb_build_object('ebo_id', p_id, 'action_url', '/dashboard?section=ebo'));
   RETURN v_d;
 END $$;
 

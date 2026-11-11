@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import EboBabalawoPanel from "@/components/ebo/EboBabalawoPanel";
 
 const db = supabase as any;
 
@@ -115,55 +116,6 @@ const NotesTab: React.FC<{ session: WrapUpSession; onDone: () => void }> = ({ se
   );
 };
 
-const EboTab: React.FC<{ session: WrapUpSession }> = ({ session }) => {
-  const qc = useQueryClient();
-  const { user } = useAuth();
-  const { data: items = [] } = useQuery({
-    queryKey: ["ebo", session.id],
-    queryFn: async () => (await db.from("ebo_prescriptions").select("*").eq("session_id", session.id).order("created_at")).data ?? [],
-  }) as any;
-  const blank = { kind: "ebo", title: "", description: "", items: "", estimated_cost: "", due_date: "" };
-  const [f, setF] = useState(blank);
-  const add = async () => {
-    if (!f.title.trim()) return toast({ title: "Give the Ebo a title", variant: "destructive" });
-    const { error } = await db.from("ebo_prescriptions").insert({
-      session_id: session.id, babalawo_id: user!.id, client_id: session.user_id, kind: f.kind, title: f.title.trim(),
-      description: f.description || null, items: f.items || null, estimated_cost: f.estimated_cost === "" ? null : Number(f.estimated_cost), due_date: f.due_date || null,
-    });
-    if (error) return toast({ title: "Could not add", description: error.message, variant: "destructive" });
-    setF(blank); qc.invalidateQueries({ queryKey: ["ebo", session.id] }); toast({ title: "Added. The client can see it now." });
-  };
-  const cancel = async (id: string) => { await db.from("ebo_prescriptions").update({ status: "cancelled", updated_at: new Date().toISOString() }).eq("id", id); qc.invalidateQueries({ queryKey: ["ebo", session.id] }); };
-  return (
-    <div className="space-y-4">
-      <p className="text-sm text-gray-500">Ebo and Etutu you prescribe appear in the client's account straight away, with their progress.</p>
-      {items.map((e: any) => (
-        <div key={e.id} className="border rounded-xl p-3 flex justify-between gap-3">
-          <div className="text-sm">
-            <p className="font-medium">{e.title} <Badge variant="outline" className="ml-1">{e.kind}</Badge> <Badge className={e.status === "completed" ? "bg-green-100 text-green-800" : e.status === "cancelled" ? "bg-gray-100 text-gray-600" : "bg-amber-100 text-amber-800"}>{e.status.replace("_", " ")}</Badge></p>
-            {e.description && <p className="text-gray-600">{e.description}</p>}
-            {e.items && <p className="text-gray-600">Items: {e.items}</p>}
-            <p className="text-gray-500">{e.estimated_cost != null ? `Est. ₦${Number(e.estimated_cost).toLocaleString()}` : ""}{e.due_date ? ` · due ${e.due_date}` : ""}</p>
-          </div>
-          {e.status !== "cancelled" && e.status !== "completed" && <Button size="sm" variant="ghost" onClick={() => cancel(e.id)}>Cancel</Button>}
-        </div>))}
-      <div className="border rounded-xl p-3 space-y-3 bg-gray-50">
-        <div className="grid sm:grid-cols-3 gap-2">
-          <div className="sm:col-span-2"><Label>Title</Label><Input value={f.title} onChange={e => setF({ ...f, title: e.target.value })} placeholder="e.g. Ebo Riru at the crossroads" /></div>
-          <div><Label>Type</Label><select className="w-full border rounded-md h-10 px-2" value={f.kind} onChange={e => setF({ ...f, kind: e.target.value })}><option value="ebo">Ebo</option><option value="etutu">Etutu</option><option value="other">Other</option></select></div>
-        </div>
-        <div><Label>Instructions</Label><Textarea rows={2} value={f.description} onChange={e => setF({ ...f, description: e.target.value })} /></div>
-        <div><Label>Items needed</Label><Textarea rows={2} value={f.items} onChange={e => setF({ ...f, items: e.target.value })} /></div>
-        <div className="grid grid-cols-2 gap-2">
-          <div><Label>Estimated cost (₦)</Label><Input type="number" min={0} value={f.estimated_cost} onChange={e => setF({ ...f, estimated_cost: e.target.value })} /></div>
-          <div><Label>Complete by</Label><Input type="date" value={f.due_date} onChange={e => setF({ ...f, due_date: e.target.value })} /></div>
-        </div>
-        <Button onClick={add}><Plus className="h-4 w-4 mr-1" />Add to client</Button>
-      </div>
-    </div>
-  );
-};
-
 const ConsultationWrapUp: React.FC<{ session: WrapUpSession | null; onClose: () => void; initialTab?: "notes" | "ebo" }> = ({ session, onClose, initialTab = "notes" }) => (
   <Dialog open={!!session} onOpenChange={o => !o && onClose()}>
     <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
@@ -172,7 +124,7 @@ const ConsultationWrapUp: React.FC<{ session: WrapUpSession | null; onClose: () 
         <Tabs defaultValue={initialTab}>
           <TabsList className="grid grid-cols-2 w-full"><TabsTrigger value="notes">Notes</TabsTrigger><TabsTrigger value="ebo">Ebo & Etutu</TabsTrigger></TabsList>
           <TabsContent value="notes"><NotesTab session={session} onDone={onClose} /></TabsContent>
-          <TabsContent value="ebo"><EboTab session={session} /></TabsContent>
+          <TabsContent value="ebo"><EboBabalawoPanel session={session} /></TabsContent>
         </Tabs>)}
     </DialogContent>
   </Dialog>

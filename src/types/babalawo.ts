@@ -17,6 +17,8 @@ export interface BabalawoProfile {
 }
 
 export interface SessionWithBabalawo {
+  /** consultation, or the live ritual of a paid Ebo (never billed separately) */
+  session_type?: string;
   id: string;
   session_date: string;
   start_time: string;

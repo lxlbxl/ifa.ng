@@ -3,6 +3,7 @@ import { asService, type Services } from "./context.js";
 import { notificationTick } from "./notify.js";
 import { expireStalePresence } from "./presence.js";
 import { pushPending } from "./push.js";
+import { eboTick } from "./ebo.js";
 
 /**
  * Scheduled work that pg_cron / Supabase schedules used to run. One API
@@ -14,6 +15,7 @@ export const JOBS: { name: string; everySeconds: number; run: (svc: Services) =>
   { name: "switch off stale Online", everySeconds: 60, run: expireStalePresence },
   { name: "release expired slot holds", everySeconds: 60,
     run: (svc) => asService(svc, (trx) => sql`select public.cleanup_expired_slot_locks()`.execute(trx)) },
+  { name: "Ebo: expire quotes and release after proof", everySeconds: 300, run: eboTick },
   { name: "complete finished sessions", everySeconds: 300,
     run: (svc) => asService(svc, (trx) => sql`select public.auto_complete_sessions()`.execute(trx)) },
 ];

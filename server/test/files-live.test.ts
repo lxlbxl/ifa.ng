@@ -155,3 +155,32 @@ describe("scheduled jobs", () => {
     for (const job of JOBS) await expect(job.run({ config, database, fetch, files })).resolves.not.toThrow();
   });
 });
+
+describe("Ebo proof uploads", () => {
+  it("lets only the Babalawo upload once paid, queues videos for compression, and shows links to the client", async () => {
+    const e = (await service(sql`insert into ebo_prescriptions(session_id, babalawo_id, client_id, title, status, performed_by, owo_ifa)
+      values (${sessionId}::bigint, ${BABA}, ${CLIENT}, 'Ebo test', 'sent', 'babalawo', 1000) returning id::text`)).rows[0].id;
+    const video = form(new Uint8Array([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70]), "video/mp4", "ritual.mp4");
+    expect((await app.request(`/v1/ebo/${e}/proofs`, as(BABA, { method: "POST", body: video }))).status).toBe(409); // not paid yet
+    await service(sql`update ebo_prescriptions set status = 'paid' where id = ${e}::uuid`);
+    expect((await app.request(`/v1/ebo/${e}/proofs`, as(CLIENT, { method: "POST", body: form(PNG, "image/png") }))).status).toBe(403);
+    expect((await app.request(`/v1/ebo/${e}/proofs`, as(BABA, { method: "POST", body: form(PNG, "application/pdf") }))).status).toBe(415);
+
+    const up = await app.request(`/v1/ebo/${e}/proofs`, as(BABA, { method: "POST", body: video }));
+    expect(up.status).toBe(200);
+    expect(await up.json()).toMatchObject({ kind: "video", status: "processing" });
+    const photo = await app.request(`/v1/ebo/${e}/proofs`, as(BABA, { method: "POST", body: form(PNG, "image/png") }));
+    expect(await photo.json()).toMatchObject({ kind: "photo", status: "ready" });
+
+    const list = await app.request(`/v1/ebo/${e}/proofs`, as(CLIENT));
+    expect(list.status).toBe(200);
+    const proofs = await list.json();
+    expect(proofs).toHaveLength(2);
+    expect(proofs[0]).toMatchObject({ kind: "video", status: "processing", url: null });
+    expect(proofs[1].url).toMatch(/^http:\/\/api\.test\/files\/signed\//);
+    const served = await app.request(new URL(proofs[1].url).pathname);
+    expect(served.status).toBe(200);
+    expect((await app.request(`/v1/ebo/${e}/proofs`, as(OTHER))).status).toBe(403);
+    expect((await app.request(`/v1/ebo/${e}/proofs`, as(ADMIN))).status).toBe(200);
+  });
+});

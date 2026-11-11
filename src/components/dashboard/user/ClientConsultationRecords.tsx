@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import EboClientList from "@/components/ebo/EboClientList";
+import { eboApi, type Ebo } from "@/lib/ebo";
 
 const db = supabase as any;
 
@@ -22,32 +24,29 @@ const ClientConsultationRecords: React.FC = () => {
       // RLS only returns approved/shared notes to the client
       const [notes, ebo] = await Promise.all([
         db.from("consultation_notes").select("*, sessions!inner(session_date, start_time, babalawo_id)").order("approved_at", { ascending: false }),
-        db.from("ebo_prescriptions").select("*").eq("client_id", user!.id).neq("status", "cancelled").order("created_at", { ascending: false }),
+        eboApi.listForClient(user!.id),
       ]);
       if (notes.error) throw notes.error;
-      if (ebo.error) throw ebo.error;
-      const ids = [...new Set<string>((notes.data ?? []).map((n: any) => n.sessions?.babalawo_id).concat((ebo.data ?? []).map((e: any) => e.babalawo_id)).filter(Boolean))];
+      const ids = [...new Set<string>((notes.data ?? []).map((n: any) => n.sessions?.babalawo_id).concat(ebo.map((e) => e.babalawo_id)).filter(Boolean))];
       const names: Record<string, string> = {};
       if (ids.length) (await db.from("profiles").select("id, full_name").in("id", ids)).data?.forEach((p: any) => (names[p.id] = p.full_name));
-      return { notes: notes.data ?? [], ebo: ebo.data ?? [], names };
+      return { notes: notes.data ?? [], ebo, names };
     },
   }) as any;
 
-  const setStatus = async (id: string, status: "in_progress" | "completed") => {
-    const { error } = await db.rpc("set_ebo_status", { p_id: id, p_status: status });
-    if (error) return toast({ title: "Could not update", description: error.message, variant: "destructive" });
-    qc.invalidateQueries({ queryKey: ["client-records", user?.id] });
-  };
+  const refresh = () => qc.invalidateQueries({ queryKey: ["client-records", user?.id] });
 
   if (isLoading) return <Loader2 className="h-6 w-6 animate-spin" />;
   if (isError) return <p className="text-red-600">Could not load your records.</p>;
   const { notes, ebo, names } = data;
-  const open = ebo.filter((e: any) => e.status !== "completed");
+  const open = ebo.filter((e: Ebo) => !["completed", "declined", "expired", "refunded"].includes(e.status));
+  // An Ebo waiting for the client opens on the Ebo tab.
+  const needsMe = ebo.some((e: Ebo) => (e.status === "sent" && e.performed_by === "babalawo") || e.status === "performed");
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3"><div className="p-3 bg-primary/10 rounded-xl"><BookOpen className="h-6 w-6 text-primary" /></div><h2 className="text-2xl font-semibold text-gray-800">My notes & Ebo</h2></div>
-      <Tabs defaultValue="notes">
+      <Tabs defaultValue={needsMe ? "ebo" : "notes"}>
         <TabsList><TabsTrigger value="notes">Consultation notes ({notes.length})</TabsTrigger><TabsTrigger value="ebo">Ebo & Etutu ({open.length} open)</TabsTrigger></TabsList>
         <TabsContent value="notes" className="space-y-3">
           {notes.length === 0 && <p className="text-gray-500 py-6 text-center">Notes appear here once your Babalawo has reviewed and shared them after your session.</p>}
@@ -66,22 +65,7 @@ const ClientConsultationRecords: React.FC = () => {
             </Card>))}
         </TabsContent>
         <TabsContent value="ebo" className="space-y-3">
-          {ebo.length === 0 && <p className="text-gray-500 py-6 text-center">No Ebo or Etutu prescribed yet.</p>}
-          {ebo.map((e: any) => (
-            <Card key={e.id}><CardContent className="p-4 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-              <div className="text-sm space-y-1">
-                <p className="font-medium text-base">{e.title} <Badge variant="outline">{e.kind}</Badge></p>
-                <p className="text-gray-500">From {names[e.babalawo_id] || "your Babalawo"}{e.due_date ? ` · complete by ${e.due_date}` : ""}{e.estimated_cost != null ? ` · est. ₦${Number(e.estimated_cost).toLocaleString()}` : ""}</p>
-                {e.description && <p>{e.description}</p>}
-                {e.items && <p><span className="font-medium">Items:</span> {e.items}</p>}
-              </div>
-              {e.status === "completed"
-                ? <Badge className="bg-green-100 text-green-800 self-start"><CheckCircle2 className="h-3 w-3 mr-1" />Done</Badge>
-                : <div className="flex gap-2">
-                    {e.status === "prescribed" && <Button size="sm" variant="outline" onClick={() => setStatus(e.id, "in_progress")}><Circle className="h-3 w-3 mr-1" />Started</Button>}
-                    <Button size="sm" onClick={() => setStatus(e.id, "completed")}>Mark done</Button>
-                  </div>}
-            </CardContent></Card>))}
+          <EboClientList ebo={ebo} names={names} refresh={refresh} />
         </TabsContent>
       </Tabs>
     </div>

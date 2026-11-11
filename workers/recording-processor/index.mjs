@@ -13,6 +13,7 @@ import { transcribeChunk, providerName } from "./lib/stt.mjs";
 import { assessTranscript, overallLanguage, normalizeLanguage } from "./lib/quality.mjs";
 import { draftNotes } from "./lib/notes.mjs";
 import { createDb, createFiles } from "./lib/store.mjs";
+import { checkProof, compressArgs } from "./lib/proof.mjs";
 
 const db = createDb();
 const files = createFiles();
@@ -179,7 +180,12 @@ async function processSession(s) {
       if (quality.flags.includes("empty_transcript")) { log(`session ${s.id}: empty transcript, skipping notes`); continue; }
       const notes = await draftNotes({ transcript: t.text, language: t.language, sessionDate: s.session_date, quality });
       await db.q("update public.session_transcripts set quality = $2::jsonb where id = $1::uuid", [tr.id, JSON.stringify({ ...quality, notes_draft: notes })]);
-      await upsertDraftNotes(s, notes, t.language, quality.confidence ?? quality.score, tr.id);
+      const drafted = await upsertDraftNotes(s, notes, t.language, quality.confidence ?? quality.score, tr.id);
+      // Ebo heard in the session become unpriced drafts for the Babalawo (never overwrites their own).
+      if (drafted && notes.ebo?.length) {
+        await db.q("select public.ebo_ai_draft($1::bigint, $2::jsonb)", [s.id, JSON.stringify(notes.ebo)])
+          .catch((e) => log(`session ${s.id}: ebo drafts failed`, e.message));
+      }
       await db.q("update public.sessions set recording_status = 'notes_drafted', recording_last_error = null where id = $1::bigint", [s.id]);
       log(`session ${s.id}: notes drafted (score ${quality.score}, review=${quality.needs_review})`);
     } finally { await rm(dir, { recursive: true, force: true }); }
@@ -195,6 +201,55 @@ async function purgeExpired() {
   }
 }
 
+/** Ebo proof videos: compress for storage and playback, then listen for the client's name and the items. */
+async function processProofs() {
+  const due = await db.q(`select p.id::text, p.prescription_id::text ebo_id, p.storage_path, p.attempts, e.babalawo_id::text, e.title
+      from public.ebo_proofs p join public.ebo_prescriptions e on e.id = p.prescription_id
+     where p.status = 'processing' order by p.created_at limit 3`);
+  for (const p of due) {
+    const dir = await mkdtemp(join(tmpdir(), "ebo-proof-"));
+    try {
+      const src = join(dir, "original.bin"), out = join(dir, "proof.mp4");
+      await writeFile(src, await files.get(p.storage_path));
+      await run("ffmpeg", compressArgs(src, out));
+      const body = await readFile(out);
+      const duration = await ffprobeDuration(out);
+      const key = `ebo-proofs/${p.ebo_id}/${p.id}.mp4`;
+      await files.put(key, body, "video/mp4");
+      await db.q(`update public.ebo_proofs set status = 'ready', storage_path = $2, content_type = 'video/mp4', size_bytes = $3,
+          duration_seconds = $4, processed_at = now(), last_error = null where id = $1::uuid`, [p.id, key, body.length, duration]);
+      if (key !== p.storage_path) await files.remove(p.storage_path).catch(() => {});
+      log(`ebo proof ${p.id}: compressed to ${Math.round(body.length / 1024)} KB, ${duration}s`);
+
+      // The check is best effort: a video is valid proof even if speech-to-text is down.
+      try {
+        const audio = join(dir, "audio.mp3");
+        await run("ffmpeg", ["-y", "-i", out, "-vn", "-ac", "1", "-ar", "16000", "-b:a", "32k", "-t", "1800", audio]);
+        const t = await transcribeChunk(audio);
+        const who = await db.one(`select pr.full_name from public.ebo_prescriptions e join public.profiles pr on pr.id = e.client_id
+           where e.id = $1::uuid`, [p.ebo_id]);
+        const items = await db.q(`select i.name, c.english_name from public.ebo_items i
+           left join public.ebo_catalog_items c on c.id = i.catalog_item_id where i.prescription_id = $1::uuid order by i.position`, [p.ebo_id]);
+        const check = { ...checkProof(t.text, who?.full_name, items), language: t.language || null };
+        await db.q("update public.ebo_proofs set check_result = $2::jsonb where id = $1::uuid", [p.id, JSON.stringify(check)]);
+      } catch (e) {
+        await db.q("update public.ebo_proofs set check_result = $2::jsonb where id = $1::uuid", [p.id, JSON.stringify({ skipped: String(e.message || e).slice(0, 200) })]);
+      }
+    } catch (e) {
+      const attempts = (p.attempts || 0) + 1;
+      const dead = attempts >= 3;
+      log(`ebo proof ${p.id} ${dead ? "FAILED" : "retry"}:`, e.message || e);
+      await db.q("update public.ebo_proofs set attempts = $2, last_error = $3, status = $4 where id = $1::uuid",
+        [p.id, attempts, String(e.message || e).slice(0, 500), dead ? "failed" : "processing"]);
+      if (dead) {
+        await db.q(`select public.create_notification($1::uuid, 'ebo_proof_failed', 'Ebo video could not be processed',
+            $2, jsonb_build_object('ebo_id', $3::text, 'action_url', '/dashboard'), 'high')`,
+          [p.babalawo_id, `${p.title}: please upload the video again.`, p.ebo_id]).catch(() => {});
+      }
+    } finally { await rm(dir, { recursive: true, force: true }); }
+  }
+}
+
 async function tick() {
   const due = await db.q(`select ${SESSION_COLS} from public.sessions
      where recording_status in ('scheduled', 'processing')
@@ -204,6 +259,7 @@ async function tick() {
     if (s.video_provider === "google_meet" && Date.now() < sessionEnd(s).getTime() + 3 * 60_000) continue;
     try { await processSession(s); } catch (e) { await fail(s, e); }
   }
+  await processProofs().catch((e) => log("proof error", e.message));
   await purgeExpired().catch((e) => log("purge error", e.message));
 }
 

@@ -81,7 +81,9 @@ const SECTION_MAP: { [key: string]: React.ReactNode } = {
 };
 
 const UserDashboard = () => {
-  const [activeSection, setActiveSection] = useState('dashboard');
+  // Notifications link to /dashboard?tab=records for notes and Ebo.
+  const [activeSection, setActiveSection] = useState(() =>
+    new URLSearchParams(window.location.search).get('tab') === 'records' ? 'spiritual-journey' : 'dashboard');
 
   // Page transition variants
   const pageVariants = {

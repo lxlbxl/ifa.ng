@@ -11,6 +11,7 @@ import type { LiveHub } from "../services/live.js";
 import { streamSSE } from "hono/streaming";
 import { getPresence, heartbeat, offlineIfUnreachable, sendTestAlert, setMyPresence } from "../services/presence.js";
 import { saveSubscription } from "../services/push.js";
+import { EBO_VIDEO_MAX, listEboProofs, uploadEboProof } from "../services/ebo.js";
 import { asService } from "../services/context.js";
 import { sql } from "kysely";
 import { bodyLimit } from "hono/body-limit";
@@ -84,6 +85,15 @@ export function registerV1(app: Hono<AppEnv>, svc: Services, live?: LiveHub) {
   });
   app.post("/v1/sessions/:id/audio", tooBig,
     async (c) => c.json(await uploadSessionAudio(svc, c.get("caller"), c.req.param("id"), await fileFrom(c.req.raw))));
+
+  // Ebo proof: the ritual video (compressed by the worker) and optional photos.
+  app.post("/v1/ebo/:id/proofs",
+    bodyLimit({ maxSize: EBO_VIDEO_MAX + 1024 * 1024, onError: (c) => c.json({ error: "Videos must be 300 MB or smaller" }, 413) }),
+    async (c) => c.json(await uploadEboProof(svc, c.get("caller"), c.req.param("id"), await fileFrom(c.req.raw))));
+  app.get("/v1/ebo/:id/proofs", async (c) => {
+    c.header("Cache-Control", "no-store");
+    return c.json(await listEboProofs(svc, c.get("caller"), c.req.param("id")));
+  });
 
   // Live notifications (was Supabase Realtime): Server-Sent Events for the signed-in person.
   app.get("/v1/notifications/stream", async (c) => {

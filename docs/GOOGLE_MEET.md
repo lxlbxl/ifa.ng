@@ -58,7 +58,7 @@ that the service account can download the recording. The script prints PASS/FAIL
 | Meet admin policy | Admin console → Apps → Google Meet | Recording allowed for that OU; external/unsigned guests allowed |
 | `AGORA_APP_ID`, `AGORA_APP_CERTIFICATE` | Supabase secrets (or admin settings) | Fallback video |
 | `TERMII_API_KEY`, `TERMII_SENDER_ID` | Supabase secrets | SMS (already used) |
-| `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` | Supabase secrets | WhatsApp Cloud API. Register 7 approved templates named `ifa_meet_link`, `ifa_reminder_24h`, `ifa_reminder_1h`, `ifa_rescheduled`, `ifa_completed`, `ifa_notes_ready`, `ifa_fallback_video`, each with 4 body variables: `{{1}}` name, `{{2}}` other party, `{{3}}` date/time, `{{4}}` link |
+| `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` | Supabase secrets | WhatsApp Cloud API. Register 10 approved templates named `ifa_meet_link`, `ifa_reminder_24h`, `ifa_reminder_1h`, `ifa_rescheduled`, `ifa_completed`, `ifa_notes_ready`, `ifa_fallback_video`, `ifa_ebo_sent`, `ifa_ebo_paid`, `ifa_ebo_performed` (see EBO.md), each with 4 body variables: `{{1}}` name, `{{2}}` other party, `{{3}}` date/time, `{{4}}` link |
 | `OPENAI_API_KEY` (or `STT_HTTP_URL`/`STT_HTTP_TOKEN`) | worker | Speech to text |
 | `ANTHROPIC_API_KEY` | worker | Notes drafting |
 | `SUPABASE_SERVICE_ROLE_KEY` | worker | Worker database access |

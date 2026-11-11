@@ -95,3 +95,39 @@ describe("PostgREST with API-signed tokens", () => {
     expect(r.ok).toBe(false);
   });
 });
+
+describe("Ebo through PostgREST (the web app's calls)", () => {
+  it("Babalawo drafts and sends; the client sees the itemised quote, pays from the wallet and nobody else sees it", async () => {
+    const s = await db.query(`insert into sessions(user_id, babalawo_id, session_date, start_time, end_time, status, payment_status, amount)
+      values ($1, $2, current_date, '09:00', '10:00', 'completed', 'paid', 10000) returning id`, [ALICE, BABA]);
+    await db.query(`insert into wallets(user_id, balance) values ($1, 100000) on conflict (user_id) do update set balance = 100000`, [ALICE]);
+    const rpc = (fn: string, body: unknown, tok: string) => send("POST", `/rpc/${fn}`, body, tok);
+
+    const fee = await get("/admin_settings?select=setting_value&setting_key=eq.ebo_platform_fee_percent", token(ALICE));
+    expect((await fee.json())[0]?.setting_value).toBe("10");
+
+    const saved = await rpc("ebo_save_draft", {
+      p_id: null, p_session_id: s.rows[0].id, p_kind: "ebo", p_title: "Ebo for open roads", p_description: "", p_performed_by: "babalawo",
+      p_due_date: null, p_owo_ifa: 5000, p_items: [{ name: "Ẹyẹlé", quantity: 2, unit_price: 2500 }],
+      p_ritual_at: new Date(Date.now() + 3 * 864e5).toISOString(), p_ritual_minutes: 60,
+    }, token(BABA));
+    expect(saved.status).toBe(200);
+    const id = await saved.json();
+    expect((await (await get(`/ebo_prescriptions?id=eq.${id}`, token(ALICE))).json())).toHaveLength(0); // draft is private
+    expect((await rpc("ebo_send", { p_id: id }, token(BABA))).status).toBe(204);
+
+    const mine = await (await get(`/ebo_prescriptions?select=*,ebo_items(*)&id=eq.${id}`, token(ALICE))).json();
+    expect(mine[0]).toMatchObject({ total: 10000, platform_fee: 1000, amount_due: 11000 });
+    expect(mine[0].ebo_items).toHaveLength(1);
+    expect((await (await get(`/ebo_prescriptions?id=eq.${id}`, token(BOB))).json())).toHaveLength(0);
+    expect((await send("PATCH", `/ebo_prescriptions?id=eq.${id}`, { owo_ifa: 1 }, token(BABA))).status).toBeGreaterThanOrEqual(400);
+
+    expect((await rpc("pay_ebo_with_wallet", { p_id: id, p_attendance: "present" }, token(BOB))).status).toBeGreaterThanOrEqual(400);
+    expect((await rpc("pay_ebo_with_wallet", { p_id: id, p_attendance: "present" }, token(ALICE))).status).toBe(204);
+    const after = await (await get(`/ebo_prescriptions?select=status,attendance,ritual_session_id&id=eq.${id}`, token(ALICE))).json();
+    expect(after[0]).toMatchObject({ status: "paid", attendance: "present" });
+    const ritual = await (await get(`/sessions?select=session_type,amount&id=eq.${after[0].ritual_session_id}`, token(ALICE))).json();
+    expect(ritual[0]).toMatchObject({ session_type: "ebo_ritual" });
+    expect(Number(ritual[0].amount)).toBe(0);
+  });
+});

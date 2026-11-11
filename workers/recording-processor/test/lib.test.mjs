@@ -53,3 +53,30 @@ test("notes JSON parsing is defensive", () => {
   assert.equal(n.next_appointment, "2026-12-10T10:00:00.000Z");
   assert.throws(() => parseNotesJson("no json"));
 });
+
+import { checkProof, compressArgs, plain } from "../lib/proof.mjs";
+
+test("Ebo proof check hears the client's name and items, ignoring tone marks", () => {
+  assert.equal(plain("Ẹyẹlé"), "eyele");
+  const r = checkProof("Olodumare, a gbe ebo yi fun Adebayo Ogunleye: eyele meji, obi abata merin", "Adébáyọ̀ Ògúnlèyé",
+    [{ name: "Ẹyẹlé" }, { name: "Obì àbàtà", english_name: "Kola nut" }, { name: "Àkùkọ adìyẹ", english_name: "Cockerel" }]);
+  assert.equal(r.name_heard, true);
+  assert.deepEqual(r.items_heard, ["Ẹyẹlé", "Obì àbàtà"]);
+  assert.deepEqual(r.items_missing, ["Àkùkọ adìyẹ"]);
+  const silent = checkProof("", "Tunde", [{ name: "Oyin" }]);
+  assert.equal(silent.name_heard, false);
+  assert.equal(silent.has_speech, false);
+});
+
+test("proof compression streams from the start", () => {
+  const a = compressArgs("in.mov", "out.mp4");
+  assert.ok(a.includes("+faststart"));
+  assert.equal(a.at(-1), "out.mp4");
+});
+
+test("notes keep prescribed Ebo items but never invent prices", () => {
+  const n = parseNotesJson(JSON.stringify({ summary: "s", ebo: [{ title: "Ebo for travel", kind: "ebo",
+    items: [{ name: "Ẹyẹlé", quantity: 2, unit_price: null }, { name: "Oyin", quantity: "x", unit_price: 3000 }] }, { title: "" }] }));
+  assert.equal(n.ebo.length, 1);
+  assert.deepEqual(n.ebo[0].items.map((i) => [i.name, i.quantity, i.unit_price]), [["Ẹyẹlé", 2, null], ["Oyin", 1, 3000]]);
+});

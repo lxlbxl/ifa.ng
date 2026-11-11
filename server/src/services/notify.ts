@@ -6,7 +6,15 @@ import { asService, sessionWindow, type Services, type SessionRow } from "./cont
  * Queue-driven: rows in notification_outbox are sent with retries, once each.
  */
 
-export type Kind = "meet_link" | "reminder_24h" | "reminder_1h" | "rescheduled" | "completed" | "notes_ready" | "fallback_video";
+export type Kind = "meet_link" | "reminder_24h" | "reminder_1h" | "rescheduled" | "completed" | "notes_ready" | "fallback_video"
+  | "ebo_sent" | "ebo_paid" | "ebo_performed";
+
+/** Who gets each message. Session messages go to both people unless listed here. */
+const ONLY: Partial<Record<Kind, "client" | "babalawo">> = {
+  notes_ready: "client", ebo_sent: "client", ebo_performed: "client", ebo_paid: "babalawo",
+};
+const isEbo = (k: Kind) => k === "ebo_sent" || k === "ebo_paid" || k === "ebo_performed";
+const naira = (n: number) => `₦${Math.round(n).toLocaleString("en-NG")}`;
 
 const MAX_ATTEMPTS = 5;
 
@@ -70,17 +78,21 @@ export function smsText(kind: Kind, name: string, other: string, at: string, lin
     case "completed": return `IFA.ng: ${name}, your consultation with ${other} has ended. Notes will appear in your dashboard once approved: ${link}`;
     case "notes_ready": return `IFA.ng: ${name}, your consultation notes from ${other} are ready: ${link}`;
     case "fallback_video": return `IFA.ng: ${name}, please join your consultation with ${other} (${at}) using this link: ${link}`;
+    // For Ebo messages, "at" carries the Ebo's title (and amount).
+    case "ebo_sent": return `IFA.ng: ${name}, ${other} has prescribed an Ebo: ${at}. See the items and ritual time, then pay or reply: ${link}`;
+    case "ebo_paid": return `IFA.ng: ${name}, ${other} has paid for the Ebo: ${at}. Details: ${link}`;
+    case "ebo_performed": return `IFA.ng: ${name}, ${other} has performed your Ebo: ${at}. Watch the proof and confirm: ${link}`;
   }
 }
 
 interface Person { id: string; full_name: string | null; phone: string | null; whatsapp_opt_in: boolean; sms_opt_in: boolean; timezone: string | null }
 
-async function deliver(svc: Services, kind: Kind, s: SessionRow, me: Person, other: Person, link: string, waEnabled: boolean) {
+async function deliver(svc: Services, kind: Kind, s: SessionRow, me: Person, other: Person, link: string, waEnabled: boolean, atText?: string) {
   const to = toE164(me.phone);
   if (!to) return { channel: "none", skipped: "no phone number" };
   const name = me.full_name?.split(" ")[0] || "there";
   const otherName = other.full_name || "your Babalawo";
-  const at = when(s, me.timezone);
+  const at = atText ?? when(s, me.timezone);
   let waError: string | null = null;
   if (me.whatsapp_opt_in && waEnabled && svc.config.WHATSAPP_ACCESS_TOKEN) {
     try { await sendWhatsApp(svc, kind, to, [name, otherName, at, link]); return { channel: "whatsapp" }; }
@@ -93,11 +105,11 @@ async function deliver(svc: Services, kind: Kind, s: SessionRow, me: Person, oth
   return { channel: "none", skipped: "opted out" };
 }
 
-interface OutboxRow { id: string; session_id: string; kind: Kind; attempts: number }
+interface OutboxRow { id: string; session_id: string; kind: Kind; attempts: number; ebo_id: string | null }
 
 export async function dispatchDue(svc: Services, limit = 25) {
   const rows = (await asService(svc, (trx) => sql<OutboxRow>`
-    select id, session_id::text, kind, attempts from public.notification_outbox
+    select id, session_id::text, kind, attempts, ebo_id::text from public.notification_outbox
      where status = 'pending' and next_attempt_at <= now() order by next_attempt_at limit ${limit}`.execute(trx))).rows;
   const appUrl = svc.config.APP_URL.replace(/\/$/, "");
   const waEnabled = rows.length ? (await setting(svc, "whatsapp_notifications_enabled")) !== "false" : false;
@@ -114,7 +126,10 @@ export async function dispatchDue(svc: Services, limit = 25) {
                to_char(end_time, 'HH24:MI') end_time, status::text, payment_status, user_timezone, video_provider,
                meet_uri, meet_code, meet_space_name, recording_status, agora_channel_name
           from public.sessions where id = ${row.session_id}::bigint`.execute(trx))).rows[0];
-      if (!s || (s.status === "cancelled" && row.kind !== "rescheduled")) {
+      const ebo = row.ebo_id ? (await asService(svc, (trx) => sql<{ title: string; total: string; amount_due: string; status: string; performed_by: string }>`
+        select title, total::text, amount_due::text, status, performed_by from public.ebo_prescriptions where id = ${row.ebo_id}::uuid`.execute(trx))).rows[0] : null;
+      const eboGone = isEbo(row.kind) && (!ebo || ["cancelled", "declined", "expired", "refunded"].includes(ebo.status));
+      if (!s || eboGone || (s.status === "cancelled" && row.kind !== "rescheduled" && !isEbo(row.kind))) {
         await asService(svc, (trx) => sql`update public.notification_outbox set status = 'skipped' where id = ${row.id}::uuid`.execute(trx));
         continue;
       }
@@ -127,10 +142,15 @@ export async function dispatchDue(svc: Services, limit = 25) {
       if (!client || !bab) throw new Error("profiles missing");
       client.timezone = s.user_timezone;
       const joinLink = s.video_provider === "google_meet" && s.meet_uri ? s.meet_uri : `${appUrl}/session/${s.id}`;
-      const link = row.kind === "completed" || row.kind === "notes_ready" ? `${appUrl}/dashboard` : joinLink;
+      const link = isEbo(row.kind) ? `${appUrl}/dashboard${row.kind === "ebo_paid" ? "" : "?tab=records"}`
+        : row.kind === "completed" || row.kind === "notes_ready" ? `${appUrl}/dashboard` : joinLink;
+      const atText = ebo
+        ? (ebo.performed_by === "babalawo" && row.kind !== "ebo_performed" ? `${ebo.title} (${naira(Number(row.kind === "ebo_paid" ? ebo.total : ebo.amount_due))})` : ebo.title)
+        : undefined;
       const result: Record<string, unknown> = {};
-      result.client = await deliver(svc, row.kind, s, client, bab, link, waEnabled);
-      if (row.kind !== "notes_ready") result.babalawo = await deliver(svc, row.kind, s, bab, client, link, waEnabled);
+      const only = ONLY[row.kind];
+      if (only !== "babalawo") result.client = await deliver(svc, row.kind, s, client, bab, link, waEnabled, atText);
+      if (only !== "client") result.babalawo = await deliver(svc, row.kind, s, bab, client, link, waEnabled, atText);
       await asService(svc, (trx) => sql`update public.notification_outbox
         set status = 'sent', sent_at = now(), result = ${JSON.stringify(result)}::jsonb where id = ${row.id}::uuid`.execute(trx));
       sent++;

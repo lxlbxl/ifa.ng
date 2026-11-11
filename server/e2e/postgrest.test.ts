@@ -114,7 +114,7 @@ describe("Ebo through PostgREST (the web app's calls)", () => {
     expect(saved.status).toBe(200);
     const id = await saved.json();
     expect((await (await get(`/ebo_prescriptions?id=eq.${id}`, token(ALICE))).json())).toHaveLength(0); // draft is private
-    expect((await rpc("ebo_send", { p_id: id }, token(BABA))).status).toBe(200);
+    expect((await rpc("ebo_send", { p_id: id }, token(BABA))).status).toBe(204);
 
     const mine = await (await get(`/ebo_prescriptions?select=*,ebo_items(*)&id=eq.${id}`, token(ALICE))).json();
     expect(mine[0]).toMatchObject({ total: 10000, platform_fee: 1000, amount_due: 11000 });
@@ -123,7 +123,7 @@ describe("Ebo through PostgREST (the web app's calls)", () => {
     expect((await send("PATCH", `/ebo_prescriptions?id=eq.${id}`, { owo_ifa: 1 }, token(BABA))).status).toBeGreaterThanOrEqual(400);
 
     expect((await rpc("pay_ebo_with_wallet", { p_id: id, p_attendance: "present" }, token(BOB))).status).toBeGreaterThanOrEqual(400);
-    expect((await rpc("pay_ebo_with_wallet", { p_id: id, p_attendance: "present" }, token(ALICE))).status).toBe(200);
+    expect((await rpc("pay_ebo_with_wallet", { p_id: id, p_attendance: "present" }, token(ALICE))).status).toBe(204);
     const after = await (await get(`/ebo_prescriptions?select=status,attendance,ritual_session_id&id=eq.${id}`, token(ALICE))).json();
     expect(after[0]).toMatchObject({ status: "paid", attendance: "present" });
     const ritual = await (await get(`/sessions?select=session_type,amount&id=eq.${after[0].ritual_session_id}`, token(ALICE))).json();

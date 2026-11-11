@@ -28,8 +28,11 @@ export const hmacSha512Hex = (secret: string, body: string) => createHmac("sha51
 
 export interface InitRequest {
   gateway: Gateway;
-  kind: "session" | "wallet_topup";
+  kind: "session" | "wallet_topup" | "ebo";
   amount?: number;
+  ebo_id?: string;
+  /** Ebo only: will the client join the ritual live ('present') or not ('absent'). */
+  attendance?: "present" | "absent";
   babalawo_user_id?: string;
   session_date?: string;
   start_time?: string;
@@ -38,12 +41,16 @@ export interface InitRequest {
 
 export async function initPayment(svc: Services, userId: string, b: Partial<InitRequest>) {
   if (b.gateway !== "paystack" && b.gateway !== "flutterwave") throw new HttpError(400, "Unsupported gateway");
-  if (b.kind !== "session" && b.kind !== "wallet_topup") throw new HttpError(400, "Bad kind");
+  if (b.kind !== "session" && b.kind !== "wallet_topup" && b.kind !== "ebo") throw new HttpError(400, "Bad kind");
   const publicKey = b.gateway === "paystack" ? svc.config.PAYSTACK_PUBLIC_KEY : svc.config.FLW_PUBLIC_KEY;
   if (!publicKey) throw new HttpError(503, `${b.gateway} is not configured`);
   const uuid = /^[0-9a-f-]{36}$/i;
   if (b.kind === "session" && (typeof b.babalawo_user_id !== "string" || !uuid.test(b.babalawo_user_id))) {
     throw new HttpError(400, "Choose a Babalawo");
+  }
+  if (b.kind === "ebo") {
+    if (typeof b.ebo_id !== "string" || !uuid.test(b.ebo_id)) throw new HttpError(400, "Choose an Ebo");
+    if (b.attendance !== "present" && b.attendance !== "absent") throw new HttpError(400, "Choose whether you will join the ritual");
   }
 
   try {
@@ -53,7 +60,8 @@ export async function initPayment(svc: Services, userId: string, b: Partial<Init
           ${userId}::uuid, ${b.kind}, ${b.gateway},
           ${b.kind === "wallet_topup" ? Number(b.amount) : null}::numeric,
           ${b.babalawo_user_id ?? null}::uuid, ${b.session_date ?? null}::date,
-          ${b.start_time ?? null}::text, ${!!b.is_instant})`.execute(trx);
+          ${b.start_time ?? null}::text, ${!!b.is_instant},
+          ${b.kind === "ebo" ? b.ebo_id! : null}::uuid, ${b.kind === "ebo" ? b.attendance! : null}::text)`.execute(trx);
       const who = await sql<{ email: string; full_name: string | null }>`
         select u.email, p.full_name from auth.users u left join public.profiles p on p.id = u.id
          where u.id = ${userId}::uuid`.execute(trx);
@@ -103,7 +111,9 @@ export async function verifyWithProvider(svc: Services, gateway: Gateway, refere
   return { state: "pending" };
 }
 
-export type SettleResult = { status: string; kind?: string; session_id?: number | string | null; user_id?: string; reason?: string };
+export type SettleResult = {
+  status: string; kind?: string; session_id?: number | string | null; ebo_id?: string | null; user_id?: string; reason?: string;
+};
 
 /** Verify with the provider, then settle in the database. Safe to call any number of times. */
 export async function confirmAndSettle(svc: Services, reference: string): Promise<SettleResult> {
@@ -122,7 +132,8 @@ export async function confirmAndSettle(svc: Services, reference: string): Promis
   }
   const settled = (await asService(svc, (trx) => sql<{ r: SettleResult }>`
     select public.settle_payment_intent(${reference}, ${v.amount}, ${v.currency}, ${v.txId}) r`.execute(trx))).rows[0].r;
-  if (settled.status === "settled" && settled.kind === "session" && settled.session_id) {
+  // A paid session, or the live ritual session of a paid Ebo, gets its Meet link now.
+  if (settled.status === "settled" && (settled.kind === "session" || settled.kind === "ebo") && settled.session_id) {
     // Best effort: the client can retry from the session page if Google is slow.
     await createMeetLink(svc, { kind: "service" }, String(settled.session_id))
       .catch((e) => console.warn(`meet link for session ${settled.session_id} failed:`, (e as Error).message));

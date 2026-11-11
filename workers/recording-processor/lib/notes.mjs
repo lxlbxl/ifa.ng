@@ -7,6 +7,7 @@ Rules:
 - Keep Yorùbá terms (Odù names, ẹbọ, ẹtù) with their original diacritics when you are confident; otherwise copy the transcript spelling.
 - Write the summary and action points in clear English (add the Yorùbá term in brackets when helpful).
 - Action points are things AGREED in the session, each with an owner ("client" or "babalawo") and a due_date (YYYY-MM-DD) only if one was stated.
+- "ebo" lists each Ebo, Etutu or offering the Babalawo prescribed, with its items exactly as named. Give a quantity only if one was said (else 1) and a unit_price in Naira only if a price for that item was said (else null). Never estimate prices.
 - List anything you are unsure about, or that looks like a transcription error, in "uncertain".
 - Reply with a single JSON object and nothing else.`;
 
@@ -16,6 +17,8 @@ const SCHEMA = `{
  "primary_odu": string|null, "other_odus": string|null,
  "ritual_recommendations": string|null, "items_needed": string|null,
  "warning": string|null, "deadline": "YYYY-MM-DD"|null, "next_appointment": "ISO-8601"|null,
+ "ebo": [{"title": string, "kind": "ebo"|"etutu"|"other", "instructions": string|null,
+          "items": [{"name": string, "quantity": number, "unit": string|null, "unit_price": number|null}]}],
  "uncertain": [string]
 }`;
 
@@ -35,6 +38,14 @@ export function parseNotesJson(raw) {
     warning: str(j.warning), deadline: date(j.deadline),
     next_appointment: typeof j.next_appointment === "string" && !isNaN(Date.parse(j.next_appointment)) ? new Date(j.next_appointment).toISOString() : null,
     uncertain: (Array.isArray(j.uncertain) ? j.uncertain : []).map(str).filter(Boolean),
+    ebo: (Array.isArray(j.ebo) ? j.ebo : []).filter((e) => e && str(e.title)).slice(0, 10).map((e) => ({
+      title: str(e.title), kind: ["ebo", "etutu", "other"].includes(e.kind) ? e.kind : "ebo", instructions: str(e.instructions),
+      items: (Array.isArray(e.items) ? e.items : []).filter((i) => i && str(i.name)).slice(0, 40).map((i) => ({
+        name: str(i.name).slice(0, 120), unit: str(i.unit),
+        quantity: Number(i.quantity) > 0 && Number(i.quantity) <= 1000 ? Number(i.quantity) : 1,
+        unit_price: Number(i.unit_price) > 0 ? Number(i.unit_price) : null,
+      })),
+    })),
   };
 }
 

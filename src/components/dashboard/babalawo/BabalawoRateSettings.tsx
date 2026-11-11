@@ -116,7 +116,7 @@ const BabalawoRateSettings: React.FC = () => {
               placeholder="Enter hourly rate"
               className="max-w-md"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               The amount you charge per hour for consultations
             </p>
           </div>
@@ -124,31 +124,31 @@ const BabalawoRateSettings: React.FC = () => {
           <div className="pt-4 border-t">
             <h4 className="text-sm font-semibold mb-3">Commission Structure (Read-only)</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-gray-50 p-4 rounded-md">
+              <div className="bg-cloth p-4 rounded-md">
                 <label className="block text-sm font-medium mb-2">
                   Platform Commission
                 </label>
-                <div className="text-2xl font-bold text-violet-600">
+                <div className="text-2xl font-bold text-green-700">
                   {platformPercent}%
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Commission retained by the platform
                 </p>
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-md">
+              <div className="bg-cloth p-4 rounded-md">
                 <label className="block text-sm font-medium mb-2">
                   Your Earnings
                 </label>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-2xl font-bold text-green-700">
                   {babalawoPercent}%
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Your share after platform commission
                 </p>
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-3">
+            <p className="text-xs text-muted-foreground mt-3">
               Commission rates are set by the administrator. Contact support if you need adjustments.
             </p>
           </div>

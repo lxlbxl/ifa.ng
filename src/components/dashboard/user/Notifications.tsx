@@ -35,20 +35,20 @@ const NotificationItem: React.FC<{
       case 'success':
         return <Check className="h-5 w-5 text-green-500" />;
       case 'appointment':
-        return <Calendar className="h-5 w-5 text-purple-500" />;
+        return <Calendar className="h-5 w-5 text-green-700" />;
       default:
-        return <Bell className="h-5 w-5 text-gray-500" />;
+        return <Bell className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
   return (
-    <Card className={`mb-3 ${notification.read ? 'bg-gray-50' : 'bg-white border-l-4 border-l-primary'}`}>
+    <Card className={`mb-3 ${notification.read ? 'bg-cloth' : 'bg-paper border-l-4 border-l-primary'}`}>
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <div className="mt-1">{getIcon()}</div>
           <div className="flex-1">
             <div className="flex items-center justify-between">
-              <h4 className="font-medium text-gray-900">{notification.title}</h4>
+              <h4 className="font-medium text-ink">{notification.title}</h4>
               <div className="flex items-center gap-1">
                 {!notification.read && (
                   <Button 
@@ -64,7 +64,7 @@ const NotificationItem: React.FC<{
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="h-6 w-6 p-0 text-gray-500 hover:text-red-500" 
+                  className="h-6 w-6 p-0 text-muted-foreground hover:text-coral" 
                   onClick={() => onDismiss(notification.id)}
                 >
                   <X className="h-4 w-4" />
@@ -72,9 +72,9 @@ const NotificationItem: React.FC<{
                 </Button>
               </div>
             </div>
-            <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+            <p className="text-sm text-muted-foreground mt-1">{notification.message}</p>
             <div className="flex justify-between items-center mt-2">
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-muted-foreground">
                 {new Date(notification.created_at).toLocaleDateString()}
               </span>
               {notification.action_url && (
@@ -226,7 +226,7 @@ const Notifications: React.FC = () => {
     return (
       <div className="animate-pulse space-y-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-20 bg-gray-100 rounded-lg"></div>
+          <div key={i} className="h-20 bg-cloth rounded-lg"></div>
         ))}
       </div>
     );
@@ -236,7 +236,7 @@ const Notifications: React.FC = () => {
     return (
       <div className="text-center py-8">
         <AlertTriangle className="h-8 w-8 text-amber-500 mx-auto mb-2" />
-        <p className="text-gray-700">Failed to load notifications</p>
+        <p className="text-ink">Failed to load notifications</p>
         <Button 
           variant="outline" 
           size="sm" 
@@ -252,8 +252,8 @@ const Notifications: React.FC = () => {
   if (notifications.length === 0) {
     return (
       <div className="text-center py-8 border border-dashed rounded-lg">
-        <Bell className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-        <p className="text-gray-600">No notifications at this time</p>
+        <Bell className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+        <p className="text-muted-foreground">No notifications at this time</p>
       </div>
     );
   }
@@ -263,12 +263,9 @@ const Notifications: React.FC = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold">Notifications</h3>
-          {unreadCount > 0 && (
-            <Badge variant="secondary">{unreadCount} new</Badge>
-          )}
-        </div>
+        <p className="text-sm font-semibold text-muted-foreground">
+          {unreadCount > 0 ? <Badge variant="sun">{unreadCount} new</Badge> : "All caught up"}
+        </p>
         
         {unreadCount > 0 && (
           <Button variant="ghost" size="sm" onClick={markAllAsRead}>

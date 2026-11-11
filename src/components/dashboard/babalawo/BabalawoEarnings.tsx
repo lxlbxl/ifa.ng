@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useBabalawoEarningsStats } from "@/hooks/useBabalawoEarningsStats";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Banknote } from "lucide-react";
+import { Eyebrow, StatTile } from "@/components/brand";
+import { EmptyState, Panel, PanelHeader } from "@/components/dashboard/shell/Panel";
 import WithdrawalRequestModal from "./WithdrawalRequestModal";
 import BankDetailsModal from "./BankDetailsModal";
 import { Button } from "@/components/ui/button";
@@ -11,128 +13,88 @@ const BabalawoEarnings = () => {
   const [bankDetailsModalOpen, setBankDetailsModalOpen] = useState(false);
 
   if (isLoading) {
-    return <div>Loading earnings data...</div>;
+    return (
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {[0, 1, 2, 3].map((i) => <div key={i} className="h-[120px] animate-pulse rounded-panel bg-paper" />)}
+      </div>
+    );
   }
 
   if (isError || !data) {
-    return <div>Error loading earnings data.</div>;
+    return <EmptyState icon={<Banknote />} title="We couldn't load your earnings">Check your connection and open this page again.</EmptyState>;
   }
 
   const {
-    allTimeEarnings,
-    availableBalance,
-    pendingPayouts,
-    withdrawalRequests,
-    payoutHistory,
+    allTimeEarnings = 0,
+    availableBalance = 0,
+    pendingPayouts = 0,
+    withdrawalRequests = [],
+    payoutHistory = [],
     commissionRates,
   } = data;
+  const n = (v: number) => `₦${Number(v ?? 0).toLocaleString()}`;
+  const STATUS: Record<string, string> = { pending: "bg-sun-200", approved: "bg-indigo-100", completed: "bg-leaf", paid: "bg-leaf", rejected: "bg-coral-100" };
 
   return (
-    <div className="space-y-8 px-4 sm:px-6 md:px-8">
-      <h2 className="text-3xl font-bold text-violet-700">Earnings & Withdrawals</h2>
-
-      <section>
-        <h3 className="text-xl font-semibold mb-4">Total Earnings</h3>
-        <div className="grid grid-cols-1 gap-6">
-          <Card className="shadow-lg border-l-4 border-violet-600 w-full max-w-full">
-            <CardHeader>
-              <CardTitle>All Time</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">₦{allTimeEarnings.toLocaleString()}</div>
-            </CardContent>
-          </Card>
-          {/* Placeholder for monthly and weekly earnings if needed */}
+    <div className="space-y-6 lg:space-y-8">
+      <section className="grid gap-4 rounded-card bg-ink p-6 text-cloth sm:p-8 lg:grid-cols-[1fr_auto] lg:items-end">
+        <div>
+          <Eyebrow className="text-sun">Ready to withdraw</Eyebrow>
+          <p className="mt-2 font-display text-[clamp(44px,6vw,72px)] font-extrabold leading-none tracking-[-0.045em]">{n(availableBalance)}</p>
+          <p className="mt-3 text-cloth/70">Withdrawals go to your bank account, usually within one working day.</p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Button variant="sun" size="lg" onClick={() => setWithdrawalModalOpen(true)}>Withdraw</Button>
+          <Button variant="glass" size="lg" onClick={() => setBankDetailsModalOpen(true)}>Bank details</Button>
         </div>
       </section>
 
-      <section>
-        <h3 className="text-xl font-semibold mb-4">Balance</h3>
-        <Card className="shadow-lg border-l-4 border-green-600 p-4 w-full max-w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <p className="text-lg font-medium">Available Balance: ₦{availableBalance.toLocaleString()}</p>
-            <p className="text-lg font-medium">Pending Payouts: ₦{pendingPayouts.toLocaleString()}</p>
-          </div>
-          <div className="flex gap-4">
-            <Button onClick={() => setWithdrawalModalOpen(true)}>Request Withdrawal</Button>
-            <Button variant="outline" onClick={() => setBankDetailsModalOpen(true)}>Set / Update Bank Details</Button>
-          </div>
-        </Card>
-      </section>
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+        <StatTile tone="leaf" label="Earned, all time" value={n(allTimeEarnings)} />
+        <StatTile tone="paper" label="Being paid out" value={n(pendingPayouts)} hint="Withdrawals in progress" />
+        {commissionRates && (
+          <StatTile tone="indigo" label="Your share" value={`${commissionRates.babalawoPercent}%`} hint={`Platform keeps ${commissionRates.platformPercent}% of consultations`} className="col-span-2 lg:col-span-1" />
+        )}
+      </div>
 
-      <section>
-        <h3 className="text-xl font-semibold mb-4">Withdrawal Requests</h3>
-        <Card className="shadow-lg border-l-4 border-yellow-600 p-4 overflow-x-auto w-full max-w-full">
-          <table className="w-full text-left">
-            <thead>
-              <tr>
-                <th className="px-4 py-2">Amount</th>
-                <th className="px-4 py-2">Status</th>
-                <th className="px-4 py-2">Requested At</th>
-              </tr>
-            </thead>
-            <tbody>
-              {withdrawalRequests.length > 0 ? (
-                withdrawalRequests.map((req: any) => (
-                  <tr key={req.id} className="border-t border-gray-200">
-                    <td className="px-4 py-2">₦{req.amount.toLocaleString()}</td>
-                    <td className="px-4 py-2">{req.status}</td>
-                    <td className="px-4 py-2">{new Date(req.created_at).toLocaleDateString()}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={3} className="px-4 py-2 text-center text-gray-500">
-                    No withdrawal requests.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </Card>
-      </section>
-
-      <section>
-        <h3 className="text-xl font-semibold mb-4">Payout History</h3>
-        <Card className="shadow-lg border-l-4 border-blue-600 p-4 overflow-x-auto w-full max-w-full">
-          <table className="w-full text-left">
-            <thead>
-              <tr>
-                <th className="px-4 py-2">Amount</th>
-                <th className="px-4 py-2">Method</th>
-                <th className="px-4 py-2">Reference</th>
-                <th className="px-4 py-2">Paid At</th>
-              </tr>
-            </thead>
-            <tbody>
-              {payoutHistory.length > 0 ? (
-                payoutHistory.map((payout: any) => (
-                  <tr key={payout.id} className="border-t border-gray-200">
-                    <td className="px-4 py-2">₦{payout.amount.toLocaleString()}</td>
-                    <td className="px-4 py-2">{payout.method}</td>
-                    <td className="px-4 py-2">{payout.reference}</td>
-                    <td className="px-4 py-2">{new Date(payout.created_at).toLocaleDateString()}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={4} className="px-4 py-2 text-center text-gray-500">
-                    No payout history.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </Card>
-      </section>
-
-      <section>
-        <h3 className="text-xl font-semibold mb-4">Commission Rate Breakdown</h3>
-        <Card className="shadow-lg border-l-4 border-purple-600 p-4">
-          <p>Platform: {commissionRates.platformPercent}%</p>
-          <p>Babalawo: {commissionRates.babalawoPercent}%</p>
-        </Card>
-      </section>
+      <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
+        <Panel>
+          <PanelHeader eyebrow="Requests" title="Withdrawals" />
+          {withdrawalRequests.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No withdrawal requests yet.</p>
+          ) : (
+            <ul className="divide-y divide-line">
+              {withdrawalRequests.map((req: any) => (
+                <li key={req.id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                  <div>
+                    <p className="font-display text-lg font-extrabold tracking-[-0.02em]">{n(req.amount)}</p>
+                    <p className="text-sm text-muted-foreground">{new Date(req.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</p>
+                  </div>
+                  <span className={`rounded-pill px-3 py-1 text-xs font-bold capitalize text-ink ${STATUS[req.status] ?? "bg-cloth"}`}>{req.status}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+        <Panel>
+          <PanelHeader eyebrow="Paid to your bank" title="Payouts" />
+          {payoutHistory.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No payouts yet.</p>
+          ) : (
+            <ul className="divide-y divide-line">
+              {payoutHistory.map((p: any) => (
+                <li key={p.id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                  <div className="min-w-0">
+                    <p className="font-display text-lg font-extrabold tracking-[-0.02em]">{n(p.amount)}</p>
+                    <p className="truncate text-sm text-muted-foreground">{[p.method, p.reference].filter(Boolean).join(" · ")}</p>
+                  </div>
+                  <p className="shrink-0 text-sm text-muted-foreground">{new Date(p.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+      </div>
 
       <WithdrawalRequestModal
         open={withdrawalModalOpen}

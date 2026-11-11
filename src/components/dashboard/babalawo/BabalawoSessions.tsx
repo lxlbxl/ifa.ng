@@ -14,7 +14,7 @@ import ConsultationWrapUp, { WrapUpSession } from "./ConsultationWrapUp";
 const db = supabase as any;
 const STATUS_STYLE: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800", confirmed: "bg-blue-100 text-blue-800", in_progress: "bg-green-100 text-green-800",
-  completed: "bg-gray-100 text-gray-700", cancelled: "bg-red-100 text-red-700",
+  completed: "bg-cloth text-ink", cancelled: "bg-red-100 text-red-700",
 };
 const startOf = (s: any) => new Date(`${s.session_date}T${String(s.start_time).slice(0, 8)}`);
 
@@ -65,12 +65,12 @@ const BabalawoSessions: React.FC = () => {
       <Card><CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
         <div>
           <p className="font-medium">{s.clientName} {s.is_instant && <Badge variant="outline" className="ml-1">Instant</Badge>}</p>
-          <p className="text-sm text-gray-600 flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })} · {String(s.start_time).slice(0, 5)}-{String(s.end_time).slice(0, 5)}{s.user_timezone ? ` · client in ${s.user_timezone}` : ""}</p>
+          <p className="text-sm text-muted-foreground flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })} · {String(s.start_time).slice(0, 5)}-{String(s.end_time).slice(0, 5)}{s.user_timezone ? ` · client in ${s.user_timezone}` : ""}</p>
           <div className="flex flex-wrap gap-1 mt-1">
             <Badge className={STATUS_STYLE[s.status]}>{String(s.status).replace("_", " ")}</Badge>
             {s.amount != null && <Badge variant="outline">₦{Number(s.amount).toLocaleString()} · {s.payment_status ?? "n/a"}</Badge>}
             {s.session_type === "ebo_ritual" && <Badge className="bg-orange-100 text-orange-800">Ebo ritual{s.ebo?.title ? `: ${s.ebo.title}` : ""}</Badge>}
-            {s.note?.status === "draft" && s.note.source === "ai" && <Badge className="bg-violet-100 text-violet-800"><Bot className="h-3 w-3 mr-1" />AI notes need review</Badge>}
+            {s.note?.status === "draft" && s.note.source === "ai" && <Badge className="bg-indigo-100 text-indigo-800"><Bot className="h-3 w-3 mr-1" />AI notes need review</Badge>}
             {s.note && s.note.status !== "draft" && <Badge className="bg-green-100 text-green-800">Notes shared</Badge>}
           </div>
         </div>
@@ -96,13 +96,12 @@ const BabalawoSessions: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <h2 className="text-2xl font-semibold text-gray-800">Sessions</h2>
-        <div className="relative sm:w-64"><Search className="h-4 w-4 absolute left-3 top-3 text-gray-400" /><Input className="pl-9" placeholder="Search by client" value={q} onChange={e => setQ(e.target.value)} /></div>
+      <div className="flex justify-end">
+        <div className="relative w-full sm:w-72"><Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" /><Input className="pl-9" placeholder="Search by client" value={q} onChange={e => setQ(e.target.value)} /></div>
       </div>
-      {needNotes > 0 && <div className="rounded-xl bg-violet-50 border border-violet-200 p-3 text-sm text-violet-900">{needNotes} completed session{needNotes > 1 ? "s" : ""} still need notes approved so clients can see them.</div>}
+      {needNotes > 0 && <div className="rounded-field bg-indigo-50 border border-indigo-200 p-3 text-sm text-indigo-900">{needNotes} completed session{needNotes > 1 ? "s" : ""} still need notes approved so clients can see them.</div>}
       {eboTodo.length > 0 && (
-        <div className="rounded-xl bg-orange-50 border border-orange-200 p-3 space-y-2">
+        <div className="rounded-field bg-orange-50 border border-orange-200 p-3 space-y-2">
           <p className="text-sm font-medium text-orange-900">{eboTodo.length} paid Ebo to perform</p>
           {eboTodo.map((e: any) => (
             <div key={e.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm">
@@ -111,12 +110,12 @@ const BabalawoSessions: React.FC = () => {
               {e.parent && <Button size="sm" variant="outline" onClick={() => setWrap({ s: e.parent, tab: "ebo" })}>Open</Button>}
             </div>))}
         </div>)}
-      {isLoading && <p className="text-gray-500">Loading sessions...</p>}
-      {isError && <p className="text-red-600">Could not load sessions. Pull to refresh or try again.</p>}
+      {isLoading && <p className="text-muted-foreground">Loading sessions...</p>}
+      {isError && <p className="text-coral">Could not load sessions. Pull to refresh or try again.</p>}
       <Tabs defaultValue="upcoming">
         <TabsList><TabsTrigger value="upcoming">Upcoming ({upcoming.length})</TabsTrigger><TabsTrigger value="past">Past ({past.length})</TabsTrigger></TabsList>
-        <TabsContent value="upcoming" className="space-y-3">{upcoming.length ? upcoming.map(s => <Card1 key={s.id} s={s} isUpcoming />) : <p className="text-gray-500 py-6 text-center">No upcoming sessions.</p>}</TabsContent>
-        <TabsContent value="past" className="space-y-3">{past.length ? past.map(s => <Card1 key={s.id} s={s} isUpcoming={false} />) : <p className="text-gray-500 py-6 text-center">No past sessions yet.</p>}</TabsContent>
+        <TabsContent value="upcoming" className="space-y-3">{upcoming.length ? upcoming.map(s => <Card1 key={s.id} s={s} isUpcoming />) : <p className="text-muted-foreground py-6 text-center">No upcoming sessions.</p>}</TabsContent>
+        <TabsContent value="past" className="space-y-3">{past.length ? past.map(s => <Card1 key={s.id} s={s} isUpcoming={false} />) : <p className="text-muted-foreground py-6 text-center">No past sessions yet.</p>}</TabsContent>
       </Tabs>
       <ConsultationWrapUp session={wrap?.s ?? null} initialTab={wrap?.tab} onClose={() => setWrap(null)} />
     </div>

@@ -13,11 +13,11 @@ const SpiritualJourney: React.FC = () => {
   }
 
   if (isError) {
-    return <div className="text-center py-8 text-red-500">Error loading journey: {error?.message || 'Unknown error'}</div>;
+    return <div className="text-center py-8 text-coral">Error loading journey: {error?.message || 'Unknown error'}</div>;
   }
 
   if (!sessions || sessions.length === 0) {
-    return <div className="text-center py-8 text-gray-500">No spiritual journey sessions found yet.</div>;
+    return <div className="text-center py-8 text-muted-foreground">No spiritual journey sessions found yet.</div>;
   }
 
   return (
@@ -52,7 +52,7 @@ const SpiritualJourney: React.FC = () => {
                   {session.deadline && <p><strong>Deadline:</strong> {format(new Date(session.deadline), 'PPP')}</p>}
                   {session.next_appointment && <p><strong>Next Appointment:</strong> {format(new Date(session.next_appointment), 'PPP')}</p>}
                   {session.consultation_notes && <p><strong>Consultation Notes:</strong> {session.consultation_notes}</p>}
-                  {session.warnings && <p className="text-red-500"><strong>Warnings:</strong> {session.warnings}</p>}
+                  {session.warnings && <p className="text-coral"><strong>Warnings:</strong> {session.warnings}</p>}
                 </div>
               </AccordionContent>
             </AccordionItem>

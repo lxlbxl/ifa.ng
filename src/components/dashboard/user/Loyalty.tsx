@@ -21,11 +21,7 @@ const Loyalty = () => {
   ];
   
   return (
-    <div className="bg-white/50 p-6 rounded-xl shadow-md">
-      <div className="flex items-center gap-3 mb-6">
-        <Award className="h-6 w-6 text-primary" />
-        <h2 className="text-2xl font-semibold text-gray-800">Loyalty & Rewards</h2>
-      </div>
+    <div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
@@ -36,7 +32,7 @@ const Loyalty = () => {
             <CardContent>
               <div className="flex items-center justify-between mb-2">
                 <div className="text-3xl font-bold text-primary">{loyaltyPoints} pts</div>
-                <div className="text-sm text-gray-500">Level: {level}</div>
+                <div className="text-sm text-muted-foreground">Level: {level}</div>
               </div>
               
               <div className="space-y-2">
@@ -45,7 +41,7 @@ const Loyalty = () => {
                   <span>Next Reward: {nextRewardAt} pts</span>
                 </div>
                 <Progress value={(loyaltyPoints / nextRewardAt) * 100} className="h-2" />
-                <div className="text-xs text-gray-500 text-right">
+                <div className="text-xs text-muted-foreground text-right">
                   {nextRewardAt - loyaltyPoints} points to go
                 </div>
               </div>
@@ -56,7 +52,7 @@ const Loyalty = () => {
                     <Trophy className="h-5 w-5 text-primary" />
                     <h3 className="font-medium">How to Earn</h3>
                   </div>
-                  <ul className="text-sm text-gray-600 space-y-2">
+                  <ul className="text-sm text-muted-foreground space-y-2">
                     <li className="flex items-center justify-between">
                       <span>Complete a session</span>
                       <span className="font-medium">+100 pts</span>
@@ -81,7 +77,7 @@ const Loyalty = () => {
                     <Gift className="h-5 w-5 text-primary" />
                     <h3 className="font-medium">Rewards</h3>
                   </div>
-                  <ul className="text-sm text-gray-600 space-y-2">
+                  <ul className="text-sm text-muted-foreground space-y-2">
                     <li className="flex items-center justify-between">
                       <span>500 pts</span>
                       <span className="font-medium">₦1,000 discount</span>
@@ -109,12 +105,12 @@ const Loyalty = () => {
               <CardTitle className="text-lg">Refer Friends & Earn</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-sm text-muted-foreground mb-4">
                 Invite friends to IFA.ng and earn 200 points for each friend who completes their first session.
                 Your friends will also receive a special discount on their first booking!
               </p>
               
-              <div className="bg-gray-50 p-4 rounded-lg mb-4">
+              <div className="bg-cloth p-4 rounded-lg mb-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium">Your Referral Link</span>
                   <Button variant="ghost" size="sm" className="h-7 gap-1">
@@ -122,23 +118,23 @@ const Loyalty = () => {
                     <span className="text-xs">Copy</span>
                   </Button>
                 </div>
-                <div className="bg-white p-2 rounded border text-xs text-gray-600 truncate">
+                <div className="bg-paper p-2 rounded border text-xs text-muted-foreground truncate">
                   https://ifa.ng/ref/{userProfile?.id || 'user123'}
                 </div>
               </div>
               
               <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="bg-white p-3 rounded-lg shadow-sm">
+                <div className="bg-paper p-3 rounded-lg">
                   <div className="text-xl font-bold text-primary mb-1">0</div>
-                  <div className="text-xs text-gray-600">Invites Sent</div>
+                  <div className="text-xs text-muted-foreground">Invites Sent</div>
                 </div>
-                <div className="bg-white p-3 rounded-lg shadow-sm">
+                <div className="bg-paper p-3 rounded-lg">
                   <div className="text-xl font-bold text-primary mb-1">0</div>
-                  <div className="text-xs text-gray-600">Signed Up</div>
+                  <div className="text-xs text-muted-foreground">Signed Up</div>
                 </div>
-                <div className="bg-white p-3 rounded-lg shadow-sm">
+                <div className="bg-paper p-3 rounded-lg">
                   <div className="text-xl font-bold text-primary mb-1">0</div>
-                  <div className="text-xs text-gray-600">Points Earned</div>
+                  <div className="text-xs text-muted-foreground">Points Earned</div>
                 </div>
               </div>
               
@@ -167,22 +163,22 @@ const Loyalty = () => {
                   <div 
                     key={badge.id} 
                     className={`flex items-center gap-3 p-3 rounded-lg ${
-                      badge.earned ? 'bg-primary/10' : 'bg-gray-100'
+                      badge.earned ? 'bg-primary/10' : 'bg-cloth'
                     }`}
                   >
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                      badge.earned ? 'bg-primary text-white' : 'bg-gray-200 text-gray-400'
+                      badge.earned ? 'bg-primary text-white' : 'bg-line text-muted-foreground'
                     }`}>
                       <badge.icon className="h-5 w-5" />
                     </div>
                     <div>
-                      <h4 className={`font-medium ${badge.earned ? 'text-gray-800' : 'text-gray-500'}`}>
+                      <h4 className={`font-medium ${badge.earned ? 'text-ink' : 'text-muted-foreground'}`}>
                         {badge.name}
                       </h4>
                       {badge.earned ? (
-                        <p className="text-xs text-gray-500">Earned on {badge.date}</p>
+                        <p className="text-xs text-muted-foreground">Earned on {badge.date}</p>
                       ) : (
-                        <p className="text-xs text-gray-500">Not yet earned</p>
+                        <p className="text-xs text-muted-foreground">Not yet earned</p>
                       )}
                     </div>
                   </div>
@@ -201,10 +197,10 @@ const Loyalty = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                <div className="bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between">
+                <div className="bg-paper border border-line rounded-lg p-3 flex items-center justify-between">
                   <div>
                     <h4 className="font-medium">₦1,000 Discount</h4>
-                    <p className="text-xs text-gray-500">Valid for your next session</p>
+                    <p className="text-xs text-muted-foreground">Valid for your next session</p>
                   </div>
                   <Button 
                     variant="outline" 
@@ -216,10 +212,10 @@ const Loyalty = () => {
                   </Button>
                 </div>
                 
-                <div className="bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between">
+                <div className="bg-paper border border-line rounded-lg p-3 flex items-center justify-between">
                   <div>
                     <h4 className="font-medium">Free 30-min Session</h4>
-                    <p className="text-xs text-gray-500">With any Babalawo</p>
+                    <p className="text-xs text-muted-foreground">With any Babalawo</p>
                   </div>
                   <Button 
                     variant="outline" 
@@ -231,10 +227,10 @@ const Loyalty = () => {
                   </Button>
                 </div>
                 
-                <div className="bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-between">
+                <div className="bg-paper border border-line rounded-lg p-3 flex items-center justify-between">
                   <div>
                     <h4 className="font-medium">Premium Profile Badge</h4>
-                    <p className="text-xs text-gray-500">Show your dedication</p>
+                    <p className="text-xs text-muted-foreground">Show your dedication</p>
                   </div>
                   <Button 
                     variant="outline" 

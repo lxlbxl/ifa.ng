@@ -70,7 +70,7 @@ const WeeklyHours: React.FC<{ userId: string }> = ({ userId }) => {
       {DAYS.map((name, day) => {
         const rows = slots.map((s, i) => ({ s, i })).filter(r => r.s.day_of_week === day);
         return (
-          <div key={day} className="border rounded-xl p-3 bg-white">
+          <div key={day} className="border rounded-field p-3 bg-paper">
             <div className="flex items-center justify-between mb-2">
               <span className="font-medium">{name}</span>
               <div className="flex gap-1">
@@ -78,7 +78,7 @@ const WeeklyHours: React.FC<{ userId: string }> = ({ userId }) => {
                 <Button size="sm" variant="outline" onClick={() => add(day)}><Plus className="h-4 w-4 mr-1" />Add hours</Button>
               </div>
             </div>
-            {rows.length === 0 && <p className="text-sm text-gray-400">Not available</p>}
+            {rows.length === 0 && <p className="text-sm text-muted-foreground">Not available</p>}
             {rows.map(({ s, i }) => (
               <div key={i} className="flex flex-wrap items-center gap-2 mb-2">
                 <Input type="time" aria-label="Start" value={s.start_time} onChange={e => upd(i, { start_time: e.target.value })} className="w-32" />
@@ -200,13 +200,13 @@ const Preferences: React.FC<{ userId: string }> = ({ userId }) => {
   if (isLoading) return <Loader2 className="h-5 w-5 animate-spin" />;
   return (
     <Card><CardContent className="pt-6 space-y-4 max-w-xl">
-      <label className="flex items-center justify-between border rounded-xl p-3">
-        <span><span className="font-medium block">Accepting new bookings</span><span className="text-sm text-gray-500">Turn off to pause all bookings without deleting your hours.</span></span>
+      <label className="flex items-center justify-between border rounded-field p-3">
+        <span><span className="font-medium block">Accepting new bookings</span><span className="text-sm text-muted-foreground">Turn off to pause all bookings without deleting your hours.</span></span>
         <Switch checked={f.accepting_bookings} onCheckedChange={v => setF({ ...f, accepting_bookings: v })} />
       </label>
       <div><Label>Timezone</Label>
         <select className="w-full border rounded-md h-10 px-2" value={f.timezone} onChange={e => setF({ ...f, timezone: e.target.value })}>{zones.map(z => <option key={z}>{z}</option>)}</select>
-        <p className="text-xs text-gray-500 mt-1">Your weekly hours are in this timezone. Clients see times in their own.</p></div>
+        <p className="text-xs text-muted-foreground mt-1">Your weekly hours are in this timezone. Clients see times in their own.</p></div>
       <div className="grid grid-cols-2 gap-3">
         <div><Label>Session length (min)</Label><Input type="number" min={15} max={240} step={15} value={f.slot_minutes} onChange={num("slot_minutes")} /></div>
         <div><Label>Buffer between (min)</Label><Input type="number" min={0} max={120} step={5} value={f.buffer_minutes} onChange={num("buffer_minutes")} /></div>
@@ -223,7 +223,6 @@ const BabalawoAvailabilityManager: React.FC = () => {
   if (!user) return null;
   return (
     <div className="space-y-4">
-      <div><h2 className="text-2xl font-semibold text-gray-800">Availability</h2><p className="text-gray-500 text-sm">Control exactly when clients can book you.</p></div>
       <Tabs defaultValue="weekly">
         <TabsList className="grid grid-cols-3 w-full sm:w-auto sm:inline-grid">
           <TabsTrigger value="weekly">Weekly hours</TabsTrigger><TabsTrigger value="exceptions">Exceptions & time off</TabsTrigger><TabsTrigger value="prefs">Preferences</TabsTrigger>

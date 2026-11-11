@@ -98,7 +98,7 @@ const AddMoneyToWalletModal: React.FC<AddMoneyToWalletModalProps> = ({
               step="10"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Minimum: ₦100 | Maximum: ₦1,000,000
             </p>
           </div>

@@ -151,14 +151,14 @@ const WithdrawalRequestModal: React.FC<WithdrawalRequestModalProps> = ({
               </Alert>
             )}
             
-            <div className="bg-gradient-to-r from-violet-100 to-indigo-100 p-4 rounded-lg mb-6">
+            <div className="bg-paper p-4 rounded-lg mb-6">
               <div className="flex items-center gap-3 mb-2">
-                <div className="bg-violet-500 text-white p-2 rounded-full">
+                <div className="bg-green-700 text-white p-2 rounded-full">
                   <DollarSign className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Available Balance</p>
-                  <p className="text-2xl font-bold text-gray-900">₦{availableBalance.toLocaleString()}</p>
+                  <p className="text-sm text-muted-foreground">Available Balance</p>
+                  <p className="text-2xl font-bold text-ink">₦{availableBalance.toLocaleString()}</p>
                 </div>
               </div>
             </div>
@@ -171,12 +171,12 @@ const WithdrawalRequestModal: React.FC<WithdrawalRequestModalProps> = ({
                 </AlertDescription>
               </Alert>
             ) : (
-              <div className="bg-gray-50 p-3 rounded-lg mb-6">
+              <div className="bg-cloth p-3 rounded-lg mb-6">
                 <div className="flex items-center gap-2 mb-2">
-                  <CreditCard className="h-4 w-4 text-gray-500" />
-                  <p className="text-sm font-medium text-gray-700">Bank Details</p>
+                  <CreditCard className="h-4 w-4 text-muted-foreground" />
+                  <p className="text-sm font-medium text-ink">Bank Details</p>
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-muted-foreground">
                   <p>{bankDetails.bank_name}</p>
                   <p>{bankDetails.account_name}</p>
                   <p>•••• {bankDetails.account_number.slice(-4)}</p>
@@ -199,7 +199,7 @@ const WithdrawalRequestModal: React.FC<WithdrawalRequestModalProps> = ({
                   required
                   className="text-lg"
                 />
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Minimum: ₦1,000 • Maximum: ₦{availableBalance.toLocaleString()}
                 </p>
               </div>

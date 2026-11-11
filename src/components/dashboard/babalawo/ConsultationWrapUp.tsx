@@ -68,16 +68,16 @@ const NotesTab: React.FC<{ session: WrapUpSession; onDone: () => void }> = ({ se
     onError: (e: any) => toast({ title: "Could not save notes", description: e.message, variant: "destructive" }),
   });
 
-  if (isLoading) return <p className="text-sm text-gray-500">Loading...</p>;
+  if (isLoading) return <p className="text-sm text-muted-foreground">Loading...</p>;
   const lowConf = f.transcript_confidence != null && Number(f.transcript_confidence) < 0.8;
   return (
     <div className="space-y-4">
       {isAiDraft && (
-        <div className="rounded-xl border border-violet-200 bg-violet-50 p-3 text-sm flex gap-2">
-          <Bot className="h-5 w-5 text-violet-600 shrink-0" />
+        <div className="rounded-field border border-indigo-200 bg-indigo-50 p-3 text-sm flex gap-2">
+          <Bot className="h-5 w-5 text-indigo-700 shrink-0" />
           <div>
-            <p className="font-medium text-violet-900">AI-drafted from the session transcript{f.language ? ` (${f.language === "yo" ? "Yoruba" : f.language === "mixed" ? "English and Yoruba" : "English"})` : ""}.</p>
-            <p className="text-violet-800">Read it carefully, fix anything wrong, then approve. The client sees nothing until you approve.</p>
+            <p className="font-medium text-indigo-900">AI-drafted from the session transcript{f.language ? ` (${f.language === "yo" ? "Yoruba" : f.language === "mixed" ? "English and Yoruba" : "English"})` : ""}.</p>
+            <p className="text-indigo-800">Read it carefully, fix anything wrong, then approve. The client sees nothing until you approve.</p>
             {lowConf && <p className="text-amber-700 flex items-center gap-1 mt-1"><AlertTriangle className="h-4 w-4" />Transcription confidence is low ({Math.round(Number(f.transcript_confidence) * 100)}%). Check names, Odu and items carefully.</p>}
           </div>
         </div>

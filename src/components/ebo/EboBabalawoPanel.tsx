@@ -67,26 +67,26 @@ const EboForm: React.FC<{
     const c = it.catalog_item_id ? catalog.find((x) => x.id === it.catalog_item_id) : undefined;
     if (!c || (c.min_price == null && c.max_price == null)) return null;
     const out = (c.max_price != null && it.unit_price > c.max_price) || (c.min_price != null && it.unit_price > 0 && it.unit_price < c.min_price);
-    return <span className={out ? "text-amber-700" : "text-gray-500"}>Usual {c.min_price != null ? naira(c.min_price) : "?"}–{c.max_price != null ? naira(c.max_price) : "?"}</span>;
+    return <span className={out ? "text-amber-700" : "text-muted-foreground"}>Usual {c.min_price != null ? naira(c.min_price) : "?"}–{c.max_price != null ? naira(c.max_price) : "?"}</span>;
   };
 
   return (
-    <div className="border rounded-xl p-3 space-y-3 bg-gray-50">
+    <div className="rounded-panel border-2 border-ink bg-paper p-5 space-y-4 shadow-sticker">
       {mode === "draft" && (
         <>
           <div className="grid sm:grid-cols-3 gap-2">
             <div className="sm:col-span-2"><Label htmlFor="ebo-title">Title</Label><Input id="ebo-title" value={f.title} onChange={(e) => set("title", e.target.value)} placeholder="e.g. Ebo for open roads" /></div>
             <div><Label htmlFor="ebo-kind">Type</Label>
-              <select id="ebo-kind" className="w-full border rounded-md h-10 px-2 bg-white" value={f.kind} onChange={(e) => set("kind", e.target.value as Ebo["kind"])}>
+              <select id="ebo-kind" className="h-12 w-full rounded-field border border-input bg-paper px-3" value={f.kind} onChange={(e) => set("kind", e.target.value as Ebo["kind"])}>
                 <option value="ebo">Ebo</option><option value="etutu">Etutu</option><option value="other">Other offering</option>
               </select></div>
           </div>
           <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Who performs it">
             {(["babalawo", "client"] as const).map((v) => (
               <button key={v} type="button" role="radio" aria-checked={f.performedBy === v} onClick={() => set("performedBy", v)}
-                className={`text-left rounded-lg border p-2 text-sm ${f.performedBy === v ? "border-primary bg-white ring-1 ring-primary" : "bg-white"}`}>
+                className={`text-left rounded-lg border p-2 text-sm ${f.performedBy === v ? "border-primary bg-paper ring-1 ring-primary" : "bg-paper"}`}>
                 <span className="font-medium block">{v === "babalawo" ? "I perform it" : "Client does it"}</span>
-                <span className="text-gray-500 text-xs">{v === "babalawo" ? "Client pays in the app" : "Guidance only, no payment"}</span>
+                <span className="text-muted-foreground text-xs">{v === "babalawo" ? "Client pays in the app" : "Guidance only, no payment"}</span>
               </button>))}
           </div>
           <div><Label htmlFor="ebo-desc">Instructions</Label><Textarea id="ebo-desc" rows={2} value={f.description} onChange={(e) => set("description", e.target.value)} /></div>
@@ -98,17 +98,17 @@ const EboForm: React.FC<{
           <div className="sm:col-span-2"><Label htmlFor="ebo-ritual">Ritual date and time</Label>
             <Input id="ebo-ritual" type="datetime-local" value={f.ritualAt} onChange={(e) => set("ritualAt", e.target.value)} /></div>
           <div><Label htmlFor="ebo-len">Length</Label>
-            <select id="ebo-len" className="w-full border rounded-md h-10 px-2 bg-white" value={f.ritualMinutes} disabled={mode === "revise"}
+            <select id="ebo-len" className="h-12 w-full rounded-field border border-input bg-paper px-3" value={f.ritualMinutes} disabled={mode === "revise"}
               onChange={(e) => set("ritualMinutes", Number(e.target.value))}>
               {[30, 45, 60, 90, 120, 180].map((m) => <option key={m} value={m}>{m < 60 ? `${m} min` : `${m / 60} h`}</option>)}
             </select></div>
-          <p className="sm:col-span-3 text-xs text-gray-500">The client accepts this time when they pay, and chooses to join live or not. Joining is free.</p>
+          <p className="sm:col-span-3 text-xs text-muted-foreground">The client accepts this time when they pay, and chooses to join live or not. Joining is free.</p>
         </div>
       )}
 
       <div className="space-y-2">
         <Label>Items</Label>
-        <p className="text-xs text-gray-500 -mt-1">Pick from the list or type your own, then the quantity and {paidByClient ? "the price for one" : "a rough cost for one"}.</p>
+        <p className="text-xs text-muted-foreground -mt-1">Pick from the list or type your own, then the quantity and {paidByClient ? "the price for one" : "a rough cost for one"}.</p>
         <datalist id="ebo-catalog">{catalog.map((c) => <option key={c.id} value={c.name}>{c.english_name ?? ""}</option>)}</datalist>
         {f.items.map((it, i) => (
           <div key={i} className="grid grid-cols-12 gap-1.5 items-start">
@@ -136,12 +136,12 @@ const EboForm: React.FC<{
       </div>
 
       {paidByClient && (
-        <dl className="text-sm bg-white rounded-lg border p-3 grid grid-cols-2 gap-y-1">
-          <dt className="text-gray-600">Items</dt><dd className="text-right tabular-nums">{naira(itemsTotal)}</dd>
-          <dt className="text-gray-600">Owó Ifá</dt><dd className="text-right tabular-nums">{naira(owo)}</dd>
+        <dl className="text-sm rounded-field border border-dashed border-line bg-cloth p-4 grid grid-cols-2 gap-y-1.5">
+          <dt className="text-muted-foreground">Items</dt><dd className="text-right tabular-nums">{naira(itemsTotal)}</dd>
+          <dt className="text-muted-foreground">Owó Ifá</dt><dd className="text-right tabular-nums">{naira(owo)}</dd>
           <dt className="font-medium">You receive</dt><dd className="text-right font-medium tabular-nums">{naira(total)}</dd>
-          <dt className="text-gray-600">Platform fee ({feePct}%)</dt><dd className="text-right tabular-nums">{naira(fee)}</dd>
-          <dt className="font-semibold">Client pays</dt><dd className="text-right font-semibold tabular-nums">{naira(total + fee)}</dd>
+          <dt className="text-muted-foreground">Platform fee ({feePct}%)</dt><dd className="text-right tabular-nums">{naira(fee)}</dd>
+          <dt className="mt-1 border-t border-dashed border-line pt-2 font-bold">Client pays</dt><dd className="mt-1 border-t border-dashed border-line pt-2 text-right font-display text-xl font-extrabold tabular-nums">{naira(total + fee)}</dd>
         </dl>
       )}
 
@@ -220,27 +220,27 @@ const EboCard: React.FC<{ e: Ebo; clientName?: string; catalog: CatalogItem[]; f
   if (editing) return <EboForm sessionId={sessionId} ebo={e} mode={editing} catalog={catalog} feePct={feePct} onDone={() => { setEditing(null); refresh(); }} />;
   const paid = e.performed_by === "babalawo";
   return (
-    <div className="border rounded-xl p-3 space-y-2 bg-white">
+    <div className="rounded-panel border border-line bg-paper p-5 space-y-3">
       <div className="flex flex-wrap items-center gap-1.5">
-        <p className="font-medium mr-1">{e.title}</p>
+        <p className="font-display text-xl font-extrabold tracking-[-0.02em] mr-1">{e.title}</p>
         <Badge variant="outline">{KIND_LABEL[e.kind]}</Badge>
-        <Badge className={STATUS_STYLE[e.status]}>{statusLabel(e)}</Badge>
-        {e.ai_suggested && e.status === "draft" && <Badge className="bg-violet-100 text-violet-800"><Bot className="h-3 w-3 mr-1" />From the recording: check items, add prices</Badge>}
+        <Badge className={`border-transparent ${STATUS_STYLE[e.status]}`}>{statusLabel(e)}</Badge>
+        {e.ai_suggested && e.status === "draft" && <Badge className="border-transparent bg-indigo-100 text-indigo-800"><Bot className="h-3 w-3 mr-1" />From the recording: check items, add prices</Badge>}
       </div>
       {e.ebo_items?.length ? (
-        <ul className="text-sm text-gray-700">
+        <ul className="text-sm text-ink">
           {[...e.ebo_items].sort((a, b) => (a.position ?? 0) - (b.position ?? 0)).map((i) => (
             <li key={i.id} className="flex justify-between gap-2"><span>{Number(i.quantity)} × {i.name}{i.unit ? ` (${i.unit})` : ""}</span>{paid && <span className="tabular-nums">{naira(i.line_total)}</span>}</li>))}
         </ul>) : null}
       {paid && (
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-muted-foreground">
           Owó Ifá {naira(e.owo_ifa)} · you receive <strong>{naira(e.total)}</strong> · client pays {naira(e.status === "draft" ? e.total * (1 + feePct / 100) : e.amount_due)}
         </p>)}
-      {e.ritual_at && <p className="text-sm text-gray-600"><CalendarClock className="h-3.5 w-3.5 inline mr-1 -mt-0.5" />Ritual {when(e.ritual_at)}{e.attendance ? ` · client ${e.attendance === "present" ? "joins live" : "absent"}` : ""}</p>}
-      {e.status === "sent" && e.expires_at && paid && <p className="text-xs text-gray-500">Quote open until {when(e.expires_at)}</p>}
-      {e.status === "performed" && e.confirm_by && <p className="text-xs text-gray-500">Released to you when the client confirms, or automatically {when(e.confirm_by)}.</p>}
+      {e.ritual_at && <p className="text-sm text-muted-foreground"><CalendarClock className="h-3.5 w-3.5 inline mr-1 -mt-0.5" />Ritual {when(e.ritual_at)}{e.attendance ? ` · client ${e.attendance === "present" ? "joins live" : "absent"}` : ""}</p>}
+      {e.status === "sent" && e.expires_at && paid && <p className="text-xs text-muted-foreground">Quote open until {when(e.expires_at)}</p>}
+      {e.status === "performed" && e.confirm_by && <p className="text-xs text-muted-foreground">Released to you when the client confirms, or automatically {when(e.confirm_by)}.</p>}
       {e.status === "disputed" && <p className="text-sm text-red-700">The client reported a problem. The money is held while IFA reviews it.</p>}
-      {e.status === "declined" && e.decline_reason && <p className="text-sm text-gray-600">Client said: {e.decline_reason}</p>}
+      {e.status === "declined" && e.decline_reason && <p className="text-sm text-muted-foreground">Client said: {e.decline_reason}</p>}
 
       {(e.status === "paid" || e.status === "in_progress") && <PaidActions e={e} clientName={clientName} refresh={refresh} />}
       {(e.status === "performed" || e.status === "completed" || e.status === "disputed") && <EboProofs eboId={e.id} />}
@@ -273,7 +273,7 @@ const EboBabalawoPanel: React.FC<{ session: { id: number; clientName?: string } 
   if (isLoading) return <Loader2 className="h-5 w-5 animate-spin" />;
   return (
     <div className="space-y-3">
-      <p className="text-sm text-gray-500">List the items and your Owó Ifá, and propose a date and time for the ritual. The client sees it when you send it, pays in the app, and the money is held until the ritual is done.</p>
+      <p className="text-sm text-muted-foreground">List the items and your Owó Ifá, and propose a date and time for the ritual. The client sees it when you send it, pays in the app, and the money is held until the ritual is done.</p>
       {list.map((e) => <EboCard key={e.id} e={e} clientName={session.clientName} catalog={catalog} feePct={feePct} sessionId={session.id} refresh={refresh} />)}
       {adding
         ? <EboForm sessionId={session.id} mode="draft" catalog={catalog} feePct={feePct} onDone={() => { setAdding(false); refresh(); }} />

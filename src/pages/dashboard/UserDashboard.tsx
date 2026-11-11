@@ -1,83 +1,49 @@
 import React, { useState } from 'react';
+import { Award, Bell, BookOpen, CalendarDays, History, Home, LifeBuoy, Search, Settings as SettingsIcon, Wallet } from 'lucide-react';
 import NetworkStatusBar from "@/components/pwa/NetworkStatusBar";
-import { motion, AnimatePresence } from 'framer-motion';
-import Sidebar from '@/components/dashboard/user/Sidebar';
-import DashboardHeader from '@/components/dashboard/user/DashboardHeader';
-import MobileBottomNav from '@/components/dashboard/user/MobileBottomNav';
-import SummaryCards from '@/components/dashboard/user/SummaryCards';
-import UpcomingSessions from '@/components/dashboard/user/UpcomingSessions';
+import InstallButton from "@/components/pwa/InstallButton";
+import DashboardShell, { type NavGroup } from '@/components/dashboard/shell/DashboardShell';
+import ClientHome from '@/components/dashboard/user/ClientHome';
 import MySessions from '@/components/dashboard/user/MySessions';
 import SessionHistory from '@/components/dashboard/user/SessionHistory';
 import FindBabalawo from '@/components/dashboard/user/FindBabalawo';
 import Settings from '@/components/dashboard/user/Settings';
 import TransactionHistory from '@/components/dashboard/user/TransactionHistory';
-import FeaturedBabalawos from '@/components/FeaturedBabalawos';
-import WalletWidget from '@/components/dashboard/user/WalletWidget';
 import ClientConsultationRecords from '@/components/dashboard/user/ClientConsultationRecords';
 import Loyalty from '@/components/dashboard/user/Loyalty';
 import Support from '@/components/dashboard/user/Support';
 import NotificationSettings from '@/components/pwa/NotificationSettings';
 import Notifications from '@/components/dashboard/user/Notifications';
 
-// Updated section content for card-based, modern layout
-const DashboardContent = () => (
-  <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 lg:gap-8 w-full animate-fade-in">
-    <div className="flex-1 min-w-0 flex flex-col gap-4 sm:gap-6 lg:gap-8">
-      <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 w-full">
-        <SummaryCards />
-      </div>
-      <div className="grid lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-        <div className="bg-white rounded-2xl shadow-lg px-4 sm:px-6 py-4 sm:py-6 hover:shadow-xl transition-all duration-300 animate-fade-in-up">
-          <UpcomingSessions />
-        </div>
-        <div className="bg-white/70 backdrop-blur-sm p-4 sm:p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 animate-fade-in-up" style={{animationDelay: '100ms'}}>
-          <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">Discover Babalawos</h2>
-          <FeaturedBabalawos />
-        </div>
-      </div>
-    </div>
-    {/* Right-side summary panel for notifications or tips, as in modern dashboards */}
-    <div className="w-full xl:w-80 2xl:w-96 shrink-0 flex flex-col gap-4 sm:gap-6">
-      <WalletWidget />
-      <div className="bg-gradient-to-br from-white via-orange-50/50 to-pink-50/50 rounded-2xl shadow-lg px-4 sm:px-6 lg:px-7 py-4 sm:py-6 lg:py-7 hover:shadow-xl transition-all duration-300 border border-orange-100/50 animate-scale-in">
-        <h3 className="font-bold text-base sm:text-lg mb-2 bg-gradient-to-r from-orange-500 to-pink-500 bg-clip-text text-transparent">Quick Actions</h3>
-        <MySessions />
-      </div>
-      <div className="bg-white rounded-2xl shadow-md p-4 sm:p-6 hover:shadow-lg transition-all duration-300 border border-gray-100 animate-scale-in" style={{animationDelay: '150ms'}}>
-        <h3 className="font-semibold text-sm sm:text-base mb-3 text-gray-800 flex items-center gap-2">
-          <span className="w-1 h-4 bg-gradient-to-b from-primary to-purple-600 rounded-full"></span>
-          Tips for a Great Session
-        </h3>
-        <ul className="space-y-2">
-          <li className="flex items-start gap-2 text-xs sm:text-sm text-gray-600">
-            <span className="text-primary mt-0.5">•</span>
-            <span>Be on time for your bookings</span>
-          </li>
-          <li className="flex items-start gap-2 text-xs sm:text-sm text-gray-600">
-            <span className="text-primary mt-0.5">•</span>
-            <span>Ask clear questions</span>
-          </li>
-          <li className="flex items-start gap-2 text-xs sm:text-sm text-gray-600">
-            <span className="text-primary mt-0.5">•</span>
-            <span>Prepare your space for spiritual clarity</span>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-);
+const GROUPS: NavGroup[] = [
+  { label: 'Consult', items: [
+    { id: 'dashboard', label: 'Home', icon: Home },
+    { id: 'my-sessions', label: 'My sessions', short: 'Sessions', icon: CalendarDays },
+    { id: 'find-babalawo', label: 'Find a Babalawo', short: 'Find', icon: Search },
+    { id: 'spiritual-journey', label: 'Notes & Ebo', short: 'Notes', icon: BookOpen },
+    { id: 'session-history', label: 'Past sessions', icon: History },
+  ] },
+  { label: 'Money', items: [
+    { id: 'transaction-history', label: 'Wallet & payments', short: 'Wallet', icon: Wallet },
+    { id: 'loyalty', label: 'Rewards', icon: Award },
+  ] },
+  { label: 'You', items: [
+    { id: 'notifications', label: 'Notifications', icon: Bell },
+    { id: 'settings', label: 'Settings', icon: SettingsIcon },
+    { id: 'support', label: 'Help & support', icon: LifeBuoy },
+  ] },
+];
 
-const SECTION_MAP: { [key: string]: React.ReactNode } = {
-  'dashboard': <DashboardContent />,
-  'my-sessions': <MySessions />,
-  'session-history': <SessionHistory />,
-  'spiritual-journey': <ClientConsultationRecords />,
-  'find-babalawo': <FindBabalawo />,
-  'transaction-history': <TransactionHistory />,
-  'notifications': <Notifications />,
-  'loyalty': <Loyalty />,
-  'settings': <div className="space-y-6"><NotificationSettings /><Settings /></div>,
-  'support': <Support />,
+const INTROS = {
+  'my-sessions': { eyebrow: 'Your diary', title: 'My sessions', lede: 'Upcoming and live consultations, with their Meet links.' },
+  'session-history': { eyebrow: 'Looking back', title: 'Past sessions', lede: 'Every consultation you have had, with its notes and your review.' },
+  'spiritual-journey': { eyebrow: 'Every consultation, remembered', title: 'Notes & Ebo', lede: 'What Ifá said, and the Ebo or Etutu your Babalawo prescribed.' },
+  'find-babalawo': { eyebrow: 'Verified Babalawos', title: 'Find a Babalawo', lede: 'Choose who you would like to sit with. Each one is verified before they take bookings.' },
+  'transaction-history': { eyebrow: 'Money', title: 'Wallet & payments', lede: 'Your balance, top-ups and what you have paid for.' },
+  'notifications': { eyebrow: 'Updates', title: 'Notifications' },
+  'loyalty': { eyebrow: 'Thank you for showing up', title: 'Rewards', lede: 'Earn points for consultations, reviews and the friends you bring.' },
+  'settings': { eyebrow: 'Your account', title: 'Settings' },
+  'support': { eyebrow: 'We are here', title: 'Help & support', lede: 'Answers to common questions, or write to us.' },
 };
 
 const UserDashboard = () => {
@@ -85,50 +51,32 @@ const UserDashboard = () => {
   const [activeSection, setActiveSection] = useState(() =>
     new URLSearchParams(window.location.search).get('tab') === 'records' ? 'spiritual-journey' : 'dashboard');
 
-  // Page transition variants
-  const pageVariants = {
-    initial: { opacity: 0, x: -20 },
-    animate: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: 20 }
-  };
-
-  const pageTransition = {
-    type: "tween",
-    ease: "anticipate",
-    duration: 0.3
+  const sections: Record<string, React.ReactNode> = {
+    'dashboard': <ClientHome onNavigate={setActiveSection} />,
+    'my-sessions': <MySessions />,
+    'session-history': <SessionHistory />,
+    'spiritual-journey': <ClientConsultationRecords />,
+    'find-babalawo': <FindBabalawo />,
+    'transaction-history': <TransactionHistory />,
+    'notifications': <Notifications />,
+    'loyalty': <Loyalty />,
+    'settings': <div className="space-y-6"><NotificationSettings /><Settings /></div>,
+    'support': <Support />,
   };
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-orange-50 via-pink-50/30 to-purple-50/20 font-poppins">
-      {/* Always show sidebar on desktop, only in drawer on mobile */}
-      <div className="hidden lg:flex">
-        <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
-      </div>
-      <div className="flex-1 flex flex-col min-w-0">
-        <div className="sticky top-0 z-40">
-          <NetworkStatusBar audience="client" />
-          <DashboardHeader activeSection={activeSection} onSectionChange={setActiveSection} />
-        </div>
-        <main className="flex-grow p-3 sm:p-6 lg:p-8 xl:p-10 space-y-4 sm:space-y-6 lg:space-y-8 overflow-y-auto pb-20 lg:pb-8">
-          <div className="w-full max-w-none">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeSection}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={pageVariants}
-                transition={pageTransition}
-              >
-                {SECTION_MAP[activeSection]}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </main>
-        {/* Mobile Bottom Navigation */}
-        <MobileBottomNav activeSection={activeSection} onSectionChange={setActiveSection} />
-      </div>
-    </div>
+    <DashboardShell
+      audience="client"
+      groups={GROUPS}
+      mobile={['dashboard', 'my-sessions', 'find-babalawo', 'spiritual-journey', 'transaction-history']}
+      active={activeSection}
+      intros={INTROS}
+      onNavigate={setActiveSection}
+      topBar={<NetworkStatusBar audience="client" />}
+      headerExtra={<span className="hidden md:inline-flex"><InstallButton label="Install app" /></span>}
+    >
+      {sections[activeSection] ?? sections.dashboard}
+    </DashboardShell>
   );
 };
 

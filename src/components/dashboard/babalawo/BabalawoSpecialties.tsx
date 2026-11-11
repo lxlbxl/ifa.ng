@@ -8,7 +8,7 @@ const BabalawoSpecialties: React.FC = () => {
         <CardTitle>Specialties</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-center py-8 text-gray-500">
+        <p className="text-center py-8 text-muted-foreground">
           Specialties management coming soon.
         </p>
       </CardContent>

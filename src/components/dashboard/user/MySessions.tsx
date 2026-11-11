@@ -12,12 +12,11 @@ const MySessions = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-white/50 p-6 rounded-xl shadow-md">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4">My Sessions</h2>
+      <div>
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="animate-pulse">
-              <div className="bg-gray-200 h-24 rounded-lg"></div>
+              <div className="bg-line h-24 rounded-lg"></div>
             </div>
           ))}
         </div>
@@ -27,9 +26,8 @@ const MySessions = () => {
 
   if (error) {
     return (
-      <div className="bg-white/50 p-6 rounded-xl shadow-md">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4">My Sessions</h2>
-        <div className="text-red-500 mb-4">Error loading sessions: {error.message}</div>
+      <div>
+        <div className="text-coral mb-4">Error loading sessions: {error.message}</div>
         <Button onClick={() => refetch()} variant="outline" size="sm">
           <RefreshCw className="h-4 w-4 mr-2" />
           Retry
@@ -68,14 +66,13 @@ const MySessions = () => {
   };
 
   return (
-    <div className="bg-white/50 p-6 rounded-xl shadow-md">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-6">My Sessions</h2>
+    <div>
       
       {relevantSessions.length === 0 ? (
         <div className="text-center py-8">
-          <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-500 mb-2">No upcoming or in-progress sessions</h3>
-          <p className="text-gray-400">Book a session with a Babalawo to get started</p>
+          <Calendar className="h-16 w-16 text-line mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-muted-foreground mb-2">No upcoming or in-progress sessions</h3>
+          <p className="text-muted-foreground">Book a session with a Babalawo to get started</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -86,7 +83,7 @@ const MySessions = () => {
             const isJoinable = session.status === 'in_progress' || (session.status === 'confirmed' && sessionDateTime <= new Date(now.getTime() + 15 * 60 * 1000)); // Joinable 15 mins before start or if in_progress
 
             return (
-              <div key={session.id} className="bg-white p-6 rounded-lg border border-gray-200 hover:shadow-md transition-shadow">
+              <div key={session.id} className="rounded-panel border border-line bg-paper p-5 sm:p-6 transition-shadow">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <Avatar className="w-12 h-12">
@@ -99,10 +96,10 @@ const MySessions = () => {
                       )}
                     </Avatar>
                     <div>
-                      <h3 className="font-semibold text-gray-800">
+                      <h3 className="font-semibold text-ink">
                         {session.babalawo_name}
                       </h3>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-muted-foreground">
                         {session.session_type === 'ebo_ritual'
                           ? 'Ebo ritual (already paid)'
                           : session.babalawo_specialties?.join(', ') || 'General consultation'}
@@ -110,11 +107,11 @@ const MySessions = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="flex items-center text-sm text-gray-600 mb-1">
+                    <div className="flex items-center text-sm text-muted-foreground mb-1">
                       <Calendar className="h-4 w-4 mr-1" />
                       {format(new Date(session.session_date), 'MMM dd, yyyy')}
                     </div>
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className="flex items-center text-sm text-muted-foreground">
                       <Clock className="h-4 w-4 mr-1" />
                       {session.start_time} - {session.end_time}
                     </div>
@@ -126,7 +123,7 @@ const MySessions = () => {
                     session.status === 'confirmed' ? 'bg-green-100 text-green-800' :
                     session.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                     session.status === 'in_progress' ? 'bg-blue-100 text-blue-800' : // Added in_progress style
-                    'bg-gray-100 text-gray-800'
+                    'bg-cloth text-ink'
                   }`}>
                     {session.status}
                   </span>

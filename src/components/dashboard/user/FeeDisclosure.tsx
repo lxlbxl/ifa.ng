@@ -80,7 +80,7 @@ const FeeDisclosure: React.FC<FeeDisclosureProps> = ({ amount, paymentMethod, cl
             </div>
           </AlertDescription>
         </Alert>
-        <p className="text-xs text-gray-500 mt-2">
+        <p className="text-xs text-muted-foreground mt-2">
           Transaction fees are charged by {paymentMethod === 'flutterwave' ? 'Flutterwave' : 'Paystack'} payment gateway
         </p>
       </div>

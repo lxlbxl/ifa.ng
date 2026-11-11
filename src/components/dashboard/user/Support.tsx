@@ -44,14 +44,10 @@ const Support = () => {
   };
 
   return (
-    <div className="bg-white/50 p-6 rounded-xl shadow-md">
-      <div className="flex items-center gap-3 mb-6">
-        <HelpCircle className="h-6 w-6 text-primary" />
-        <h2 className="text-2xl font-semibold text-gray-800">Support & Help</h2>
-      </div>
+    <div>
 
       <Tabs defaultValue="faq" className="w-full">
-        <TabsList className="grid grid-cols-4 mb-6">
+        <TabsList className="mb-6 h-auto flex-wrap justify-start">
           <TabsTrigger value="faq">FAQs</TabsTrigger>
           <TabsTrigger value="contact">Contact Us</TabsTrigger>
           <TabsTrigger value="report">Report an Issue</TabsTrigger>
@@ -68,7 +64,7 @@ const Support = () => {
                 <AccordionItem value="item-1">
                   <AccordionTrigger>How do I book a session with a Babalawo?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       You can book a session by navigating to the "Find Babalawo" section, browsing available Babalawos, 
                       and clicking the "Book Now" button on their profile. You'll then be able to select a date and time 
                       for your session and complete the payment.
@@ -79,7 +75,7 @@ const Support = () => {
                 <AccordionItem value="item-2">
                   <AccordionTrigger>What payment methods are accepted?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       We accept various payment methods including credit/debit cards, bank transfers, and mobile money. 
                       You can also add funds to your wallet and use your wallet balance to pay for sessions.
                     </p>
@@ -89,7 +85,7 @@ const Support = () => {
                 <AccordionItem value="item-3">
                   <AccordionTrigger>How do I join a virtual session?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       When it's time for your session, go to the "Upcoming Sessions" section on your dashboard. 
                       The "Join Session" button will become active 10 minutes before the scheduled time. Click it 
                       to enter the virtual consultation room.
@@ -100,7 +96,7 @@ const Support = () => {
                 <AccordionItem value="item-4">
                   <AccordionTrigger>Can I reschedule or cancel my session?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Yes, you can reschedule or cancel a session up to 24 hours before the scheduled time. 
                       Go to "My Sessions" and find the session you want to modify. For cancellations less than 
                       24 hours before, a cancellation fee may apply.
@@ -111,7 +107,7 @@ const Support = () => {
                 <AccordionItem value="item-5">
                   <AccordionTrigger>How are Babalawos verified on the platform?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       All Babalawos on our platform go through a rigorous verification process. This includes 
                       verification of their credentials, background checks, and interviews. Verified Babalawos 
                       have a verification badge on their profile.
@@ -122,7 +118,7 @@ const Support = () => {
                 <AccordionItem value="item-6">
                   <AccordionTrigger>What if I'm not satisfied with my session?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       If you're not satisfied with your session, please contact our support team within 48 hours. 
                       We take all feedback seriously and will work with you to resolve any issues. In some cases, 
                       we may offer a partial or full refund.
@@ -133,7 +129,7 @@ const Support = () => {
                 <AccordionItem value="item-7">
                   <AccordionTrigger>How do I earn and redeem loyalty points?</AccordionTrigger>
                   <AccordionContent>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       You earn IFA Points by completing sessions, writing reviews, referring friends, and more. 
                       You can view your points and available rewards in the "Loyalty & Rewards" section. 
                       Points can be redeemed for discounts, free sessions, and other benefits.
@@ -155,7 +151,7 @@ const Support = () => {
                 <div>
                   <form onSubmit={handleContactFormSubmit} className="space-y-4">
                     <div className="space-y-2">
-                      <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                      <label htmlFor="email" className="block text-sm font-medium text-ink">Email</label>
                       <Input
                         id="email"
                         name="email"
@@ -168,7 +164,7 @@ const Support = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <label htmlFor="subject" className="block text-sm font-medium text-gray-700">Subject</label>
+                      <label htmlFor="subject" className="block text-sm font-medium text-ink">Subject</label>
                       <Input
                         id="subject"
                         name="subject"
@@ -180,7 +176,7 @@ const Support = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <label htmlFor="message" className="block text-sm font-medium text-gray-700">Message</label>
+                      <label htmlFor="message" className="block text-sm font-medium text-ink">Message</label>
                       <Textarea
                         id="message"
                         name="message"
@@ -200,32 +196,32 @@ const Support = () => {
                 
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-base font-medium text-gray-800 mb-3">Other Ways to Reach Us</h3>
+                    <h3 className="text-base font-medium text-ink mb-3">Other Ways to Reach Us</h3>
                     
                     <div className="space-y-4">
                       <div className="flex items-start gap-3">
                         <Mail className="h-5 w-5 text-primary mt-0.5" />
                         <div>
-                          <h4 className="font-medium text-gray-700">Email Support</h4>
-                          <p className="text-sm text-gray-600">support@ifa.ng</p>
-                          <p className="text-xs text-gray-500 mt-1">Response time: Within 24 hours</p>
+                          <h4 className="font-medium text-ink">Email Support</h4>
+                          <p className="text-sm text-muted-foreground">support@ifa.ng</p>
+                          <p className="text-xs text-muted-foreground mt-1">Response time: Within 24 hours</p>
                         </div>
                       </div>
                       
                       <div className="flex items-start gap-3">
                         <Phone className="h-5 w-5 text-primary mt-0.5" />
                         <div>
-                          <h4 className="font-medium text-gray-700">Phone Support</h4>
-                          <p className="text-sm text-gray-600">+234 (0) 123 456 7890</p>
-                          <p className="text-xs text-gray-500 mt-1">Available: Mon-Fri, 9am-5pm WAT</p>
+                          <h4 className="font-medium text-ink">Phone Support</h4>
+                          <p className="text-sm text-muted-foreground">+234 (0) 123 456 7890</p>
+                          <p className="text-xs text-muted-foreground mt-1">Available: Mon-Fri, 9am-5pm WAT</p>
                         </div>
                       </div>
                       
                       <div className="flex items-start gap-3">
                         <MessageSquare className="h-5 w-5 text-primary mt-0.5" />
                         <div>
-                          <h4 className="font-medium text-gray-700">WhatsApp Support</h4>
-                          <p className="text-sm text-gray-600">+234 (0) 987 654 3210</p>
+                          <h4 className="font-medium text-ink">WhatsApp Support</h4>
+                          <p className="text-sm text-muted-foreground">+234 (0) 987 654 3210</p>
                           <Button variant="outline" size="sm" className="mt-2 h-8 text-xs gap-1">
                             <ExternalLink className="h-3 w-3" />
                             Chat on WhatsApp
@@ -236,8 +232,8 @@ const Support = () => {
                   </div>
                   
                   <div className="bg-primary/5 p-4 rounded-lg">
-                    <h3 className="font-medium text-gray-800 mb-2">Support Hours</h3>
-                    <ul className="text-sm text-gray-600 space-y-1">
+                    <h3 className="font-medium text-ink mb-2">Support Hours</h3>
+                    <ul className="text-sm text-muted-foreground space-y-1">
                       <li className="flex justify-between">
                         <span>Monday - Friday:</span>
                         <span>9:00 AM - 5:00 PM WAT</span>
@@ -267,27 +263,27 @@ const Support = () => {
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Button variant="outline" className="h-auto py-6 flex flex-col items-center justify-center gap-2">
-                    <Flag className="h-6 w-6 text-red-500" />
+                    <Flag className="h-6 w-6 text-coral" />
                     <span className="font-medium">Report a Babalawo</span>
-                    <span className="text-xs text-gray-500">Report unprofessional behavior</span>
+                    <span className="text-xs text-muted-foreground">Report unprofessional behavior</span>
                   </Button>
                   
                   <Button variant="outline" className="h-auto py-6 flex flex-col items-center justify-center gap-2">
                     <AlertTriangle className="h-6 w-6 text-orange-500" />
                     <span className="font-medium">Dispute a Session</span>
-                    <span className="text-xs text-gray-500">If you had issues with a session</span>
+                    <span className="text-xs text-muted-foreground">If you had issues with a session</span>
                   </Button>
                   
                   <Button variant="outline" className="h-auto py-6 flex flex-col items-center justify-center gap-2">
                     <FileText className="h-6 w-6 text-blue-500" />
                     <span className="font-medium">Payment Issue</span>
-                    <span className="text-xs text-gray-500">Report problems with payments</span>
+                    <span className="text-xs text-muted-foreground">Report problems with payments</span>
                   </Button>
                   
                   <Button variant="outline" className="h-auto py-6 flex flex-col items-center justify-center gap-2">
-                    <HelpCircle className="h-6 w-6 text-purple-500" />
+                    <HelpCircle className="h-6 w-6 text-green-700" />
                     <span className="font-medium">Technical Support</span>
-                    <span className="text-xs text-gray-500">Report bugs or technical issues</span>
+                    <span className="text-xs text-muted-foreground">Report bugs or technical issues</span>
                   </Button>
                 </div>
                 
@@ -320,7 +316,7 @@ const Support = () => {
                   <AccordionItem value="item-1">
                     <AccordionTrigger>Refund Policy</AccordionTrigger>
                     <AccordionContent>
-                      <div className="text-sm text-gray-600 space-y-2">
+                      <div className="text-sm text-muted-foreground space-y-2">
                         <p>
                           We offer refunds under the following circumstances:
                         </p>
@@ -340,7 +336,7 @@ const Support = () => {
                   <AccordionItem value="item-2">
                     <AccordionTrigger>Cancellation Policy</AccordionTrigger>
                     <AccordionContent>
-                      <div className="text-sm text-gray-600 space-y-2">
+                      <div className="text-sm text-muted-foreground space-y-2">
                         <p>
                           Our cancellation policy is as follows:
                         </p>
@@ -360,7 +356,7 @@ const Support = () => {
                   <AccordionItem value="item-3">
                     <AccordionTrigger>Privacy Policy</AccordionTrigger>
                     <AccordionContent>
-                      <div className="text-sm text-gray-600 space-y-2">
+                      <div className="text-sm text-muted-foreground space-y-2">
                         <p>
                           We take your privacy seriously. We collect only the information necessary to provide our services.
                           This includes:
@@ -381,7 +377,7 @@ const Support = () => {
                   <AccordionItem value="item-4">
                     <AccordionTrigger>Terms of Service</AccordionTrigger>
                     <AccordionContent>
-                      <div className="text-sm text-gray-600 space-y-2">
+                      <div className="text-sm text-muted-foreground space-y-2">
                         <p>
                           By using our platform, you agree to our Terms of Service, which include:
                         </p>

@@ -20,7 +20,7 @@ const DashboardSkeleton = () => {
         {[...Array(4)].map((_, i) => (
           <motion.div
             key={i}
-            className="bg-white rounded-2xl p-4 shadow"
+            className="bg-paper rounded-panel p-4 shadow"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
@@ -41,7 +41,7 @@ const DashboardSkeleton = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <div className="bg-white rounded-2xl p-6 shadow">
+          <div className="bg-paper rounded-panel p-6 shadow">
             <Skeleton className="h-6 w-40 mb-4" />
             <div className="space-y-3">
               {[...Array(3)].map((_, i) => (
@@ -64,7 +64,7 @@ const DashboardSkeleton = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.5 }}
         >
-          <div className="bg-white rounded-2xl p-6 shadow">
+          <div className="bg-paper rounded-panel p-6 shadow">
             <Skeleton className="h-6 w-40 mb-4" />
             <div className="space-y-3">
               {[...Array(3)].map((_, i) => (

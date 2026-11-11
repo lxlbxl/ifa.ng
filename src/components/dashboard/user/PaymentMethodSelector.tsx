@@ -37,16 +37,16 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <Wallet className="h-6 w-6 text-green-600" />
+                <Wallet className="h-6 w-6 text-green-700" />
                 <div>
                   <div className="font-bold">IFA.ng wallet</div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-muted-foreground">
                     Available: ₦{walletBalance.toLocaleString()}
                   </div>
                 </div>
               </div>
               {hasInsufficientBalance && (
-                <div className="text-xs text-red-500">
+                <div className="text-xs text-coral">
                   Insufficient balance
                 </div>
               )}
@@ -68,7 +68,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
               <CreditCard className="h-6 w-6 text-camwood" />
               <div>
                 <div className="font-bold">Flutterwave</div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-muted-foreground">
                   Pay with card, bank transfer, or USSD
                 </div>
               </div>
@@ -90,7 +90,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
               <CreditCard className="h-6 w-6 text-indigo-700" />
               <div>
                 <div className="font-bold">Paystack</div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-muted-foreground">
                   Pay with card or bank transfer
                 </div>
               </div>

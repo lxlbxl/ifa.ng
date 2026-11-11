@@ -8,7 +8,7 @@ const BabalawoConsultationPanel: React.FC = () => {
         <CardTitle>Consultation Panel</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-center py-8 text-gray-500">
+        <p className="text-center py-8 text-muted-foreground">
           Consultation management coming soon.
         </p>
       </CardContent>

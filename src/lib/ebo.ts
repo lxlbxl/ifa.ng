@@ -80,10 +80,10 @@ export const STATUS_LABEL: Record<EboStatus, string> = {
   completed: "Completed", declined: "Declined", expired: "Expired", cancelled: "Withdrawn", refunded: "Refunded", disputed: "Under review",
 };
 export const STATUS_STYLE: Record<EboStatus, string> = {
-  draft: "bg-gray-100 text-gray-700", sent: "bg-amber-100 text-amber-800", paid: "bg-blue-100 text-blue-800",
-  in_progress: "bg-blue-100 text-blue-800", performed: "bg-violet-100 text-violet-800", completed: "bg-green-100 text-green-800",
-  declined: "bg-gray-100 text-gray-600", expired: "bg-gray-100 text-gray-600", cancelled: "bg-gray-100 text-gray-600",
-  refunded: "bg-gray-100 text-gray-700", disputed: "bg-red-100 text-red-800",
+  draft: "bg-cloth text-ink border border-line", sent: "bg-sun text-ink", paid: "bg-indigo-100 text-indigo-800",
+  in_progress: "bg-indigo-100 text-indigo-800", performed: "bg-teal-100 text-teal-800", completed: "bg-leaf text-ink",
+  declined: "bg-cloth text-muted-foreground", expired: "bg-cloth text-muted-foreground", cancelled: "bg-cloth text-muted-foreground",
+  refunded: "bg-cloth text-ink", disputed: "bg-coral text-white",
 };
 /** A client-performed Ebo is guidance: "sent" means "to do", not "awaiting payment". */
 export const statusLabel = (e: Pick<Ebo, "status" | "performed_by">) =>

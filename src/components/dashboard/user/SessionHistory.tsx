@@ -114,8 +114,7 @@ const SessionHistory = () => {
 
   if (isLoading) {
     return (
-      <div className="bg-white/50 p-6 rounded-xl shadow-md">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Session History</h2>
+      <div>
         <div className="flex justify-center items-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -125,9 +124,8 @@ const SessionHistory = () => {
 
   if (error) {
     return (
-      <div className="bg-white/50 p-6 rounded-xl shadow-md">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Session History</h2>
-        <div className="text-red-500">Error loading session history: {error.message}</div>
+      <div>
+        <div className="text-coral">Error loading session history: {error.message}</div>
       </div>
     );
   }
@@ -141,9 +139,8 @@ const SessionHistory = () => {
     : completedSessions.filter(session => session.status === activeTab);
 
   return (
-    <div className="bg-white/50 p-6 rounded-xl shadow-md">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-semibold text-gray-800">Your Past Sessions</h2>
+    <div>
+      <div className="flex items-center justify-end mb-4">
         <div className="flex gap-2">
           <Button variant="outline" size="sm">
             <FileText className="h-4 w-4 mr-1" />
@@ -163,9 +160,9 @@ const SessionHistory = () => {
       
       {filteredSessions.length === 0 ? (
         <div className="text-center py-8">
-          <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-500 mb-2">No {activeTab === 'all' ? 'completed' : activeTab} sessions</h3>
-          <p className="text-gray-400">Your {activeTab === 'all' ? 'completed' : activeTab} sessions will appear here</p>
+          <Calendar className="h-16 w-16 text-line mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-muted-foreground mb-2">No {activeTab === 'all' ? 'completed' : activeTab} sessions</h3>
+          <p className="text-muted-foreground">Your {activeTab === 'all' ? 'completed' : activeTab} sessions will appear here</p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -175,7 +172,7 @@ const SessionHistory = () => {
             
             return (
               <Card key={session.id} className={`overflow-hidden transition-all duration-200 ${isExpanded ? 'shadow-md' : 'shadow-sm'}`}>
-                <div className="bg-white p-5">
+                <div className="bg-paper p-5">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-4">
                       <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
@@ -183,13 +180,13 @@ const SessionHistory = () => {
                       </div>
                       <div>
                        {(() => { console.log('[SessionHistory] session.babalawo.profile:', session.babalawo_name); return null; })()}
-                       <h3 className="font-semibold text-gray-800">
+                       <h3 className="font-semibold text-ink">
                          {session.babalawo_name || 'Babalawo (Name Missing)'}
                        </h3>
-                         <p className="text-sm text-gray-500 mb-2">
+                         <p className="text-sm text-muted-foreground mb-2">
                            {session.babalawo_specialties?.join(', ') || 'General consultation'}
                          </p>
-                        <div className="flex items-center text-sm text-gray-600 space-x-4">
+                        <div className="flex items-center text-sm text-muted-foreground space-x-4">
                           <div className="flex items-center">
                             <Calendar className="h-4 w-4 mr-1" />
                             {format(new Date(session.session_date), 'MMM dd, yyyy')}
@@ -207,7 +204,7 @@ const SessionHistory = () => {
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star 
                             key={star} 
-                            className={`h-4 w-4 ${star <= (sessionDetails.rating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                            className={`h-4 w-4 ${star <= (sessionDetails.rating || 0) ? 'text-sun fill-current' : 'text-line'}`} 
                           />
                         ))}
                       </div>
@@ -215,7 +212,7 @@ const SessionHistory = () => {
                         className={`
                           ${session.status === 'completed' ? 'bg-green-100 text-green-800 hover:bg-green-200' : 
                             session.status === 'cancelled' ? 'bg-red-100 text-red-800 hover:bg-red-200' : 
-                            'bg-gray-100 text-gray-800 hover:bg-gray-200'}
+                            'bg-cloth text-ink hover:bg-line'}
                         `}
                       >
                         {session.status === 'completed' ? 'Completed' : 
@@ -226,8 +223,8 @@ const SessionHistory = () => {
                   </div>
                   
                   {session.notes && (
-                    <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-600">
+                    <div className="mt-4 p-3 bg-cloth rounded-lg">
+                      <p className="text-sm text-muted-foreground">
                         <strong>Session Notes:</strong> {session.notes}
                       </p>
                     </div>
@@ -271,16 +268,16 @@ const SessionHistory = () => {
                   </div>
                   
                   {isExpanded && (
-                    <div className="mt-6 pt-4 border-t border-gray-100">
+                    <div className="mt-6 pt-4 border-t border-line">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <h4 className="font-medium text-gray-700 mb-3 flex items-center">
+                          <h4 className="font-medium text-ink mb-3 flex items-center">
                             <FileText className="h-4 w-4 mr-2 text-primary" />
                             Consultation Outcome
                           </h4>
                           <div className="space-y-4">
                             <div>
-                              <h5 className="text-sm font-medium text-gray-600 mb-1">Primary Odu</h5>
+                              <h5 className="text-sm font-medium text-muted-foreground mb-1">Primary Odu</h5>
                               <p className="text-sm bg-primary/5 p-2 rounded">
                                 {sessionDetails.primaryOdu || 'Not recorded'}
                               </p>
@@ -288,10 +285,10 @@ const SessionHistory = () => {
                             
                             {sessionDetails.otherOdus && sessionDetails.otherOdus.length > 0 && (
                               <div>
-                                <h5 className="text-sm font-medium text-gray-600 mb-1">Other Odu</h5>
+                                <h5 className="text-sm font-medium text-muted-foreground mb-1">Other Odu</h5>
                                 <div className="flex flex-wrap gap-2">
                                   {sessionDetails.otherOdus.map((odu, index) => (
-                                    <Badge key={index} variant="outline" className="bg-gray-50">
+                                    <Badge key={index} variant="outline" className="bg-cloth">
                                       {odu}
                                     </Badge>
                                   ))}
@@ -300,8 +297,8 @@ const SessionHistory = () => {
                             )}
                             
                             <div>
-                              <h5 className="text-sm font-medium text-gray-600 mb-1">Ebo/Etutu (Ritual) Recommended</h5>
-                              <p className="text-sm bg-orange-50 p-2 rounded text-gray-700">
+                              <h5 className="text-sm font-medium text-muted-foreground mb-1">Ebo/Etutu (Ritual) Recommended</h5>
+                              <p className="text-sm bg-orange-50 p-2 rounded text-ink">
                                 {sessionDetails.ritualRecommendations || 'No specific rituals recommended'}
                               </p>
                             </div>
@@ -309,31 +306,31 @@ const SessionHistory = () => {
                         </div>
                         
                         <div>
-                          <h4 className="font-medium text-gray-700 mb-3 flex items-center">
+                          <h4 className="font-medium text-ink mb-3 flex items-center">
                             <ShoppingBag className="h-4 w-4 mr-2 text-primary" />
                             Items & Next Steps
                           </h4>
                           <div className="space-y-4">
                             {sessionDetails.itemsNeeded && sessionDetails.itemsNeeded.length > 0 ? (
                               <div>
-                                <h5 className="text-sm font-medium text-gray-600 mb-1">Items Needed</h5>
-                                <div className="bg-gray-50 p-3 rounded">
+                                <h5 className="text-sm font-medium text-muted-foreground mb-1">Items Needed</h5>
+                                <div className="bg-cloth p-3 rounded">
                                   <table className="w-full text-sm">
                                     <thead>
-                                      <tr className="text-left text-gray-500">
+                                      <tr className="text-left text-muted-foreground">
                                         <th className="pb-2">Item</th>
                                         <th className="pb-2 text-right">Cost</th>
                                       </tr>
                                     </thead>
                                     <tbody>
                                       {sessionDetails.itemsNeeded.map((item, index) => (
-                                        <tr key={index} className="border-t border-gray-200">
+                                        <tr key={index} className="border-t border-line">
                                           <td className="py-2">{item.name}</td>
                                           <td className="py-2 text-right">₦{item.cost.toLocaleString()}</td>
                                         </tr>
                                       ))}
                                       {sessionDetails.totalCost && (
-                                        <tr className="border-t border-gray-300">
+                                        <tr className="border-t border-line">
                                           <td className="py-2 font-medium">Total</td>
                                           <td className="py-2 text-right font-medium">₦{sessionDetails.totalCost.toLocaleString()}</td>
                                         </tr>
@@ -344,15 +341,15 @@ const SessionHistory = () => {
                               </div>
                             ) : (
                               <div>
-                                <h5 className="text-sm font-medium text-gray-600 mb-1">Items Needed</h5>
-                                <p className="text-sm text-gray-500">No specific items required</p>
+                                <h5 className="text-sm font-medium text-muted-foreground mb-1">Items Needed</h5>
+                                <p className="text-sm text-muted-foreground">No specific items required</p>
                               </div>
                             )}
                             
                             <div className="grid grid-cols-2 gap-4">
                               <div>
-                                <h5 className="text-sm font-medium text-gray-600 mb-1 flex items-center">
-                                  <AlertCircle className="h-3 w-3 mr-1 text-red-500" /> Deadline
+                                <h5 className="text-sm font-medium text-muted-foreground mb-1 flex items-center">
+                                  <AlertCircle className="h-3 w-3 mr-1 text-coral" /> Deadline
                                 </h5>
                                 <p className="text-sm">
                                   {sessionDetails.deadline 
@@ -362,7 +359,7 @@ const SessionHistory = () => {
                               </div>
                               
                               <div>
-                                <h5 className="text-sm font-medium text-gray-600 mb-1 flex items-center">
+                                <h5 className="text-sm font-medium text-muted-foreground mb-1 flex items-center">
                                   <CalendarClock className="h-3 w-3 mr-1 text-blue-500" /> Next Appointment
                                 </h5>
                                 <p className="text-sm">
@@ -414,7 +411,7 @@ const SessionHistory = () => {
                     className="focus:outline-none"
                   >
                     <Star 
-                      className={`h-8 w-8 ${star <= reviewData.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                      className={`h-8 w-8 ${star <= reviewData.rating ? 'text-sun fill-current' : 'text-line'}`} 
                     />
                   </button>
                 ))}

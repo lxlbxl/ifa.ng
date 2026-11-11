@@ -95,3 +95,22 @@ shadcn/ui primitives in `src/components/ui` are restyled to match: `Button` has 
 Plain, warm and specific: "Hear Ifá speak.", "Every consultation, remembered.",
 "Your Meet link arrives once payment clears." Say Babalawo, Odù, ẹbọ with their marks.
 Don't promise outcomes.
+
+## Dashboards (client and Babalawo)
+
+Both dashboards use one layout, `src/components/dashboard/shell/DashboardShell.tsx`:
+an ink sidebar with grouped navigation (the current page is a leaf pill), a cloth page,
+a quiet header (date eyebrow, breadcrumb, bell, avatar) and an ink-bordered bottom bar on phones.
+
+Build pages from `src/components/dashboard/shell/Panel.tsx`:
+
+| Piece | Use |
+| --- | --- |
+| `PageIntro` | Eyebrow, big Bricolage title, lede. The shell adds it from each dashboard's `INTROS` map, so pages don't repeat their own title. |
+| `Panel` / `PanelHeader` | Paper block with a hairline border and an eyebrow + title. Don't nest panels inside panels. |
+| `EmptyState` | Dashed paper block with a leaf icon, a line of text and one action. |
+| `ClothStrip` | The seven brand colours as a thin aṣọ-òkè band, under the ink greeting. |
+| `greeting()` | Ẹ káàárọ̀ / Ẹ káàsán / Ẹ kúùrọ̀lẹ́ by time of day. |
+
+Home pages open with an ink greeting band carrying the one sun button, then `StatTile`s
+(leaf, paper, indigo, coral), then panels. Money and ritual totals use `font-display`.

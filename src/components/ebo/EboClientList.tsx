@@ -17,12 +17,12 @@ const Attendance: React.FC<{ value: "present" | "absent"; onChange: (v: "present
   <div className="grid sm:grid-cols-2 gap-2" role="radiogroup" aria-label="Will you join the ritual?">
     {(["present", "absent"] as const).map((v) => (
       <button key={v} type="button" role="radio" aria-checked={value === v} onClick={() => onChange(v)}
-        className={`text-left rounded-lg border p-3 text-sm ${value === v ? "border-primary ring-1 ring-primary bg-primary/5" : "bg-white"}`}>
-        <span className="font-medium flex items-center gap-1">
+        className={`text-left rounded-field border-2 p-4 text-sm transition-colors ${value === v ? "border-ink bg-leaf" : "border-line bg-paper hover:border-ink"}`}>
+        <span className="font-bold flex items-center gap-1.5">
           {v === "present" ? <UserCheck className="h-4 w-4" /> : <UserX className="h-4 w-4" />}
           {v === "present" ? "I'll join live" : "I won't attend"}
         </span>
-        <span className="text-gray-500 text-xs block mt-0.5">
+        <span className="text-ink/70 text-xs block mt-1">
           {v === "present" ? "A video call at the ritual time. No extra charge." : `${name} records a video showing the items and the prayers with your name.`}
         </span>
       </button>))}
@@ -30,7 +30,7 @@ const Attendance: React.FC<{ value: "present" | "absent"; onChange: (v: "present
 );
 
 const Quote: React.FC<{ e: Ebo }> = ({ e }) => (
-  <dl className="text-sm grid grid-cols-[1fr_auto] gap-x-3 gap-y-1">
+  <dl className="text-sm grid grid-cols-[1fr_auto] gap-x-3 gap-y-1.5 rounded-field border border-dashed border-line bg-cloth p-4">
     {[...(e.ebo_items ?? [])].sort((a, b) => (a.position ?? 0) - (b.position ?? 0)).map((i) => (
       <React.Fragment key={i.id}>
         <dt>{Number(i.quantity)} × {i.name}{i.unit ? ` (${i.unit})` : ""}</dt>
@@ -38,8 +38,8 @@ const Quote: React.FC<{ e: Ebo }> = ({ e }) => (
       </React.Fragment>))}
     {e.performed_by === "babalawo" && <>
       <dt>Owó Ifá</dt><dd className="text-right tabular-nums">{naira(e.owo_ifa)}</dd>
-      <dt className="text-gray-600">Platform fee ({Number(e.platform_fee_percent)}%)</dt><dd className="text-right tabular-nums text-gray-600">{naira(e.platform_fee)}</dd>
-      <dt className="font-semibold border-t pt-1">Total</dt><dd className="text-right font-semibold tabular-nums border-t pt-1">{naira(e.amount_due)}</dd>
+      <dt className="text-muted-foreground">Platform fee ({Number(e.platform_fee_percent)}%)</dt><dd className="text-right tabular-nums text-muted-foreground">{naira(e.platform_fee)}</dd>
+      <dt className="mt-1 border-t border-dashed border-line pt-2 font-bold">Total</dt><dd className="mt-1 border-t border-dashed border-line pt-2 text-right font-display text-2xl font-extrabold tabular-nums tracking-[-0.02em]">{naira(e.amount_due)}</dd>
     </>}
   </dl>
 );
@@ -72,30 +72,30 @@ const EboClientCard: React.FC<{ e: Ebo; babalawoName: string; refresh: () => voi
   const canChangeAttendance = (e.status === "paid" || e.status === "in_progress") && e.ritual_at && new Date(e.ritual_at).getTime() - Date.now() > 3600_000;
 
   return (
-    <Card><CardContent className="p-4 space-y-3">
+    <Card><CardContent className="p-5 sm:p-6 space-y-4">
       <div className="flex flex-wrap items-center gap-1.5">
-        <p className="font-medium text-base mr-1">{e.title}</p>
+        <p className="font-display text-xl font-extrabold tracking-[-0.02em] mr-1">{e.title}</p>
         <Badge variant="outline">{KIND_LABEL[e.kind]}</Badge>
-        <Badge className={STATUS_STYLE[e.status]}>{statusLabel(e)}</Badge>
+        <Badge className={`border-transparent ${STATUS_STYLE[e.status]}`}>{statusLabel(e)}</Badge>
       </div>
-      <p className="text-sm text-gray-500">From {babalawoName}{e.due_date ? ` · complete by ${e.due_date}` : ""}</p>
+      <p className="text-sm text-muted-foreground">From {babalawoName}{e.due_date ? ` · complete by ${e.due_date}` : ""}</p>
       {e.description && <p className="text-sm">{e.description}</p>}
       <Quote e={e} />
       {e.ritual_at && (
         <p className="text-sm"><CalendarClock className="h-4 w-4 inline mr-1 -mt-0.5" />Ritual: <strong>{when(e.ritual_at)}</strong>
-          {e.attendance && <span className="text-gray-500"> · {e.attendance === "present" ? "you're joining live" : "you won't attend"}</span>}</p>)}
+          {e.attendance && <span className="text-muted-foreground"> · {e.attendance === "present" ? "you're joining live" : "you won't attend"}</span>}</p>)}
 
       {payable && (
         <div className="space-y-3 border-t pt-3">
-          {e.expires_at && <p className="text-xs text-gray-500">Pay by {when(e.expires_at)} to keep this time. The money is held by IFA until the ritual is done.</p>}
+          {e.expires_at && <p className="text-xs text-muted-foreground">Pay by {when(e.expires_at)} to keep this time. The money is held by IFA until the ritual is done.</p>}
           <Attendance value={attendance} onChange={setAttendance} name={babalawoName} />
           <div className="flex flex-col sm:flex-row gap-2">
-            <Button disabled={!!busy} onClick={payWallet}>{busy === "wallet" ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Wallet className="h-4 w-4 mr-1" />}Pay {naira(e.amount_due)} from wallet</Button>
-            <div className="flex gap-2">
-              <select aria-label="Payment provider" className="border rounded-md h-10 px-2 bg-white text-sm" value={gateway} onChange={(ev) => setGateway(ev.target.value as PaymentGateway)}>
+            <Button variant="sun" size="lg" disabled={!!busy} onClick={payWallet}>{busy === "wallet" ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Wallet className="h-4 w-4 mr-1" />}Pay {naira(e.amount_due)} from wallet</Button>
+            <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2">
+              <select aria-label="Payment provider" className="h-14 rounded-pill border-2 border-line bg-paper px-4 text-sm font-semibold" value={gateway} onChange={(ev) => setGateway(ev.target.value as PaymentGateway)}>
                 <option value="paystack">Paystack</option><option value="flutterwave">Flutterwave</option>
               </select>
-              <Button variant="outline" disabled={!!busy} onClick={payCard}>{busy === "card" ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CreditCard className="h-4 w-4 mr-1" />}Card or transfer</Button>
+              <Button variant="outline" size="lg" disabled={!!busy} onClick={payCard}>{busy === "card" ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CreditCard className="h-4 w-4 mr-1" />}Card or transfer</Button>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -103,7 +103,7 @@ const EboClientCard: React.FC<{ e: Ebo; babalawoName: string; refresh: () => voi
             <Button size="sm" variant="ghost" onClick={() => setMode(mode === "decline" ? null : "decline")}>Decline</Button>
           </div>
         </div>)}
-      {e.status === "expired" && <p className="text-sm text-gray-600">This quote has expired. Ask {babalawoName} to renew it.</p>}
+      {e.status === "expired" && <p className="text-sm text-muted-foreground">This quote has expired. Ask {babalawoName} to renew it.</p>}
 
       {mode && (
         <div className="space-y-2">
@@ -134,15 +134,15 @@ const EboClientCard: React.FC<{ e: Ebo; babalawoName: string; refresh: () => voi
           <EboProofs eboId={e.id} forClient />
           {e.status === "performed" && (
             <>
-              <p className="text-xs text-gray-500">If you do nothing, the payment is released to {babalawoName} {when(e.confirm_by)}.</p>
+              <p className="text-xs text-muted-foreground">If you do nothing, the payment is released to {babalawoName} {when(e.confirm_by)}.</p>
               <div className="flex flex-wrap gap-2">
                 <Button disabled={!!busy} onClick={() => act("ok", () => eboApi.confirm(e.id), "Thank you. Confirmed.")}><CheckCircle2 className="h-4 w-4 mr-1" />Confirm it was done</Button>
                 <Button variant="outline" onClick={() => setMode(mode === "dispute" ? null : "dispute")}>Report a problem</Button>
               </div>
             </>)}
-          {e.status === "disputed" && <p className="text-sm text-gray-600">IFA is reviewing this. The money stays held until it is resolved.</p>}
+          {e.status === "disputed" && <p className="text-sm text-muted-foreground">IFA is reviewing this. The money stays held until it is resolved.</p>}
         </div>)}
-      {e.status === "refunded" && <p className="text-sm text-gray-600">{naira(e.refunded_amount)} was refunded to your IFA wallet.</p>}
+      {e.status === "refunded" && <p className="text-sm text-muted-foreground">{naira(e.refunded_amount)} was refunded to your IFA wallet.</p>}
 
       {e.performed_by === "client" && (e.status === "sent" || e.status === "in_progress") && (
         <div className="flex gap-2">
@@ -154,7 +154,7 @@ const EboClientCard: React.FC<{ e: Ebo; babalawoName: string; refresh: () => voi
 };
 
 const EboClientList: React.FC<{ ebo: Ebo[]; names: Record<string, string>; refresh: () => void }> = ({ ebo, names, refresh }) => {
-  if (!ebo.length) return <p className="text-gray-500 py-6 text-center">No Ebo or Etutu prescribed yet.</p>;
+  if (!ebo.length) return <p className="text-muted-foreground py-6 text-center">No Ebo or Etutu prescribed yet.</p>;
   return <>{ebo.map((e) => <EboClientCard key={e.id} e={e} babalawoName={names[e.babalawo_id] || "your Babalawo"} refresh={refresh} />)}</>;
 };
 

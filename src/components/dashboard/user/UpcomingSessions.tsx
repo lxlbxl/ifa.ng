@@ -102,7 +102,7 @@ const UpcomingSessions = () => {
       case 'cancelled':
         return <Badge className="bg-red-100 text-red-800 hover:bg-red-200">Cancelled</Badge>;
       default:
-        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200">{status}</Badge>;
+        return <Badge className="bg-cloth text-ink hover:bg-line">{status}</Badge>;
     }
   };
 
@@ -148,13 +148,13 @@ const UpcomingSessions = () => {
     }
 
     if (isError) {
-      return <div className="text-red-500 flex items-center gap-2"><AlertCircle className="h-5 w-5" /> Error: {error.message}</div>;
+      return <div className="text-coral flex items-center gap-2"><AlertCircle className="h-5 w-5" /> Error: {error.message}</div>;
     }
 
     if (!upcomingSessions || upcomingSessions.length === 0) {
       return (
-        <div className="text-center text-gray-500 py-6 sm:py-8">
-          <Calendar className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-gray-400" />
+        <div className="text-center text-muted-foreground py-6 sm:py-8">
+          <Calendar className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-muted-foreground" />
           <p className="text-sm sm:text-base">No upcoming sessions.</p>
           <Button variant="secondary" className="mt-4 text-sm" onClick={() => setShowFinder(true)}>
             Book a new session
@@ -175,7 +175,7 @@ const UpcomingSessions = () => {
       <div className="space-y-4 sm:space-y-5">
         {upcomingSessions.map((session: any) => (
           <Card key={session.id} className="overflow-hidden">
-            <div className="bg-white p-4 sm:p-5 flex flex-col gap-4">
+            <div className="bg-paper p-4 sm:p-5 flex flex-col gap-4">
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3 sm:gap-4">
                   <Avatar className="h-12 w-12 sm:h-14 sm:w-14 border-2 border-primary/10">
@@ -184,12 +184,12 @@ const UpcomingSessions = () => {
                   </Avatar>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-base sm:text-lg text-gray-800">
+                      <h3 className="font-semibold text-base sm:text-lg text-ink">
                         {session.babalawo?.profile?.full_name || "Babalawo"}
                       </h3>
                       {getStatusBadge(session.status)}
                     </div>
-                    <p className="text-xs sm:text-sm text-gray-600 mt-1">
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                       {session.babalawo?.specialties?.join(', ') || "Ifá Consultation"}
                     </p>
                   </div>
@@ -206,7 +206,7 @@ const UpcomingSessions = () => {
                       <Calendar className="mr-2 h-4 w-4" />
                       <span>Reschedule</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleCancel(session)} className="text-red-600">
+                    <DropdownMenuItem onClick={() => handleCancel(session)} className="text-coral">
                       <XCircle className="mr-2 h-4 w-4" />
                       <span>Cancel Session</span>
                     </DropdownMenuItem>
@@ -216,7 +216,7 @@ const UpcomingSessions = () => {
               
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-sm">
                 <div className="flex flex-col">
-                  <span className="text-gray-500 text-xs mb-1 flex items-center">
+                  <span className="text-muted-foreground text-xs mb-1 flex items-center">
                     <Calendar className="h-3 w-3 mr-1" /> Date
                   </span>
                   <span className="font-medium">
@@ -224,7 +224,7 @@ const UpcomingSessions = () => {
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-gray-500 text-xs mb-1 flex items-center">
+                  <span className="text-muted-foreground text-xs mb-1 flex items-center">
                     <Clock className="h-3 w-3 mr-1" /> Time
                   </span>
                   <span className="font-medium">
@@ -232,7 +232,7 @@ const UpcomingSessions = () => {
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-gray-500 text-xs mb-1 flex items-center">
+                  <span className="text-muted-foreground text-xs mb-1 flex items-center">
                     <Clock className="h-3 w-3 mr-1" /> Duration
                   </span>
                   <span className="font-medium">
@@ -240,7 +240,7 @@ const UpcomingSessions = () => {
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-gray-500 text-xs mb-1 flex items-center">
+                  <span className="text-muted-foreground text-xs mb-1 flex items-center">
                     <AlertCircle className="h-3 w-3 mr-1" /> Countdown
                   </span>
                   <span className="font-medium text-primary">
@@ -249,8 +249,8 @@ const UpcomingSessions = () => {
                 </div>
               </div>
               
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 pt-2 border-t border-gray-100">
-                <div className="flex items-center text-xs text-gray-500">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 pt-2 border-t border-line">
+                <div className="flex items-center text-xs text-muted-foreground">
                   <CheckCircle className="h-3 w-3 mr-1 text-green-500" />
                   <span>
                     {session.status === 'confirmed' 
@@ -282,7 +282,7 @@ const UpcomingSessions = () => {
 
   return (
     <>
-      <Card className="shadow-lg bg-white/50">
+      <Card className="shadow-lg bg-paper">
         <CardHeader className="pb-3 sm:pb-6">
           <CardTitle className="text-lg sm:text-xl">Your Upcoming Sessions</CardTitle>
         </CardHeader>
@@ -302,7 +302,7 @@ const UpcomingSessions = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               Current session: {selectedSession && format(new Date(selectedSession.session_date), 'EEE, MMM d, yyyy')} at {selectedSession && format(new Date(`2000-01-01T${selectedSession.start_time}`), 'h:mm a')}
             </p>
             <div className="bg-yellow-50 p-3 rounded-md flex items-start gap-2">
@@ -313,7 +313,7 @@ const UpcomingSessions = () => {
                 </p>
               </div>
             </div>
-            <p className="text-sm text-gray-500 mt-4">
+            <p className="text-sm text-muted-foreground mt-4">
               Please note: This is a placeholder for the rescheduling interface. In a complete implementation, 
               you would see a calendar and time picker here.
             </p>
@@ -335,11 +335,11 @@ const UpcomingSessions = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               Session details: {selectedSession && format(new Date(selectedSession.session_date), 'EEE, MMM d, yyyy')} at {selectedSession && format(new Date(`2000-01-01T${selectedSession.start_time}`), 'h:mm a')}
             </p>
             <div className="bg-red-50 p-3 rounded-md flex items-start gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5" />
+              <AlertTriangle className="h-5 w-5 text-coral mt-0.5" />
               <div>
                 <p className="text-sm text-red-700">
                   Cancellations less than 24 hours before your session may not be eligible for a refund.

@@ -17,6 +17,7 @@ import BabalawoCommissionModal from "./BabalawoCommissionModal";
 const BabalawoManagement: React.FC = () => {
   const { data: babalawos, isLoading, error, refetch } = useAdminBabalawos();
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'suspended'>('pending');
   const [updatingFeatured, setUpdatingFeatured] = useState<string | null>(null);
   const [commissionModalOpen, setCommissionModalOpen] = useState(false);
   const [selectedBabalawo, setSelectedBabalawo] = useState<{ id: string; name: string } | null>(null);
@@ -57,7 +58,6 @@ const BabalawoManagement: React.FC = () => {
   };
 
   const review = useReviewBabalawo();
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'suspended'>('pending');
   const [rejectTarget, setRejectTarget] = useState<{ id: string; name: string } | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 

@@ -33,17 +33,17 @@ const cols = [
 /** Ink footer shared by every public page. */
 const Footer = () => (
   <footer className="bg-ink pb-safe text-[#bfbaa9]">
-    <div className="wrap grid gap-10 py-14 md:grid-cols-[1.4fr_repeat(3,1fr)]">
-      <div className="max-w-sm">
-        <Logo tone="light" />
-        <p className="mt-5 text-[15px] leading-relaxed">
+    <div className="wrap grid grid-cols-2 gap-x-6 gap-y-6 py-8 sm:gap-x-8 md:grid-cols-[1.35fr_repeat(3,minmax(0,1fr))] md:gap-8 md:py-9">
+      <div className="col-span-2 max-w-xs md:col-span-1">
+        <Logo tone="light" size="sm" />
+        <p className="mt-3 text-xs leading-relaxed">
           Consult a verified Babalawo over Google Meet, wherever you are, and keep written notes from every session.
         </p>
       </div>
       {cols.map((c) => (
         <div key={c.title}>
-          <h3 className="eyebrow mb-4 text-sun">{c.title}</h3>
-          <ul className="space-y-2.5 text-[15px]">
+          <h3 className="mb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-sun">{c.title}</h3>
+          <ul className="space-y-1.5 text-[13px] leading-snug">
             {c.links.map((l) => (
               <li key={l.label}>
                 {'href' in l && l.href ? (
@@ -61,7 +61,7 @@ const Footer = () => (
         </div>
       ))}
     </div>
-    <div className="wrap flex flex-wrap justify-between gap-4 border-t border-white/10 py-6 text-[13px]">
+    <div className="wrap flex flex-wrap justify-between gap-x-4 gap-y-1 border-t border-white/10 py-3 text-[11px]">
       <span>© {new Date().getFullYear()} IFA.ng</span>
       <span>Ẹ kú àbọ̀. Made in Nigeria for the world.</span>
     </div>

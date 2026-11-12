@@ -153,6 +153,7 @@ export function registerV1(app: Hono<AppEnv>, svc: Services, live?: LiveHub) {
       whatsapp: set(k.WHATSAPP_ACCESS_TOKEN, k.WHATSAPP_PHONE_NUMBER_ID),
       email: set(k.SMTP_URL),
       web_push: set(k.VAPID_PUBLIC_KEY, k.VAPID_PRIVATE_KEY),
+      error_tracking: set(k.SENTRY_DSN),
       file_storage: set(k.S3_ENDPOINT, k.S3_BUCKET, k.S3_ACCESS_KEY_ID, k.S3_SECRET_ACCESS_KEY),
     });
   });

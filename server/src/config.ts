@@ -14,6 +14,7 @@ const Env = z.object({
   /** Parent domain for cookies shared by app and API, e.g. ifa.ng. Empty in development. */
   COOKIE_DOMAIN: z.string().optional(),
   SMTP_URL: z.string().optional(),
+  SENTRY_DSN: z.string().optional(),
   MAIL_FROM: z.string().default("IFA.ng <no-reply@ifa.ng>"),
   NODE_ENV: z.string().default("development"),
   /**

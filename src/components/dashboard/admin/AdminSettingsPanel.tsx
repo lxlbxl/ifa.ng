@@ -25,6 +25,7 @@ const INTEGRATIONS: { key: string; label: string; env: string }[] = [
   { key: "email", label: "Email", env: "SMTP_URL" },
   { key: "web_push", label: "Push notifications", env: "VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY" },
   { key: "file_storage", label: "File storage", env: "S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY" },
+  { key: "error_tracking", label: "Error tracking (Sentry)", env: "SENTRY_DSN" },
 ];
 
 function PlatformRules() {

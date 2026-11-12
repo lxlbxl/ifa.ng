@@ -8,6 +8,7 @@ import { HttpError } from "./services/context.js";
 import { registerV1 } from "./routes/v1.js";
 import { createFileStore, type FileStore } from "./services/storage.js";
 import type { LiveHub } from "./services/live.js";
+import { reportError } from "./services/errors.js";
 
 export type AppEnv = { Variables: { caller: Caller } };
 
@@ -68,7 +69,7 @@ export function createApp(deps: {
 
   app.onError((err, c) => {
     if (err instanceof HttpError) return c.json({ error: err.message, ...(err.code ? { code: err.code } : {}) }, err.status as 400);
-    console.error(err);
+    reportError(err, { method: c.req.method, path: c.req.path });
     return c.json({ error: "internal_error" }, 500);
   });
 

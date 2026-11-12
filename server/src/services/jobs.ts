@@ -4,6 +4,7 @@ import { notificationTick } from "./notify.js";
 import { expireStalePresence } from "./presence.js";
 import { pushPending } from "./push.js";
 import { eboTick } from "./ebo.js";
+import { reportError } from "./errors.js";
 
 /**
  * Scheduled work that pg_cron / Supabase schedules used to run. One API
@@ -34,7 +35,7 @@ export function startJobs(svc: Services) {
         const r = (await job.run(svc)) as { sent?: number; queued?: number; failed?: number } | undefined;
         if (r?.sent || r?.queued || r?.failed) console.log(`job ${job.name}`, r);
       } catch (e) {
-        console.error(`job ${job.name} failed`, e);
+        reportError(e, { job: job.name });
       } finally {
         running = false;
       }

@@ -24,6 +24,7 @@ export function usePlatformRules() {
     commissionPercent: n('platform_commission_percent', 20),
     recordingDays: n('recording_retention_days', 90),
     minCardPayment: n('min_card_payment', 100),
+    minCardPaymentUsd: n('min_card_payment_usd', 1),
     retention: {
       notificationsDays: n('retention_notifications_days', 365),
       messageLogDays: n('retention_message_log_days', 90),

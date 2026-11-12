@@ -42,7 +42,8 @@ export interface InitRequest {
   use_wallet?: boolean;
 }
 
-export async function initPayment(svc: Services, userId: string, b: Partial<InitRequest>) {
+/** country: the visitor's country from a trusted edge header (see pricing.trustedCountry), if known. */
+export async function initPayment(svc: Services, userId: string, b: Partial<InitRequest>, country: string | null = null) {
   if (b.gateway !== "paystack" && b.gateway !== "flutterwave") throw new HttpError(400, "Unsupported gateway");
   if (b.kind !== "session" && b.kind !== "wallet_topup" && b.kind !== "ebo") throw new HttpError(400, "Bad kind");
   const publicKey = b.gateway === "paystack" ? svc.config.PAYSTACK_PUBLIC_KEY : svc.config.FLW_PUBLIC_KEY;
@@ -58,18 +59,18 @@ export async function initPayment(svc: Services, userId: string, b: Partial<Init
 
   try {
     return await asService(svc, async (trx) => {
-      const r = await sql<{ reference: string; amount: string; wallet_amount: string; total: string }>`
+      const r = await sql<{ reference: string; amount: string; wallet_amount: string; total: string; currency: string }>`
         select * from public.create_payment_intent(
           ${userId}::uuid, ${b.kind}, ${b.gateway},
           ${b.kind === "wallet_topup" ? Number(b.amount) : null}::numeric,
           ${b.babalawo_user_id ?? null}::uuid, ${b.session_date ?? null}::date,
           ${b.start_time ?? null}::text, ${!!b.is_instant},
-          ${b.kind === "ebo" ? b.ebo_id! : null}::uuid, ${b.kind === "ebo" ? b.attendance! : null}::text, ${b.use_wallet === true})`.execute(trx);
+          ${b.kind === "ebo" ? b.ebo_id! : null}::uuid, ${b.kind === "ebo" ? b.attendance! : null}::text, ${b.use_wallet === true}, ${country})`.execute(trx);
       const who = await sql<{ email: string; full_name: string | null }>`
         select u.email, p.full_name from auth.users u left join public.profiles p on p.id = u.id
          where u.id = ${userId}::uuid`.execute(trx);
       return {
-        reference: r.rows[0].reference, amount: Number(r.rows[0].amount), currency: "NGN", gateway: b.gateway,
+        reference: r.rows[0].reference, amount: Number(r.rows[0].amount), currency: r.rows[0].currency, gateway: b.gateway,
         wallet_amount: Number(r.rows[0].wallet_amount), total: Number(r.rows[0].total),
         public_key: publicKey, email: who.rows[0]?.email ?? null, name: who.rows[0]?.full_name ?? null,
       };

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { PortraitCard } from '@/components/brand';
 import { babalawoChips } from '@/components/FeaturedBabalawos';
 import { BabalawoProfile } from '@/types/babalawo';
+import { usePricing } from '@/hooks/usePricing';
 
 interface BabalawoCardProps {
   babalawo: BabalawoProfile;
@@ -15,6 +16,7 @@ interface BabalawoCardProps {
 /** Grid version of the portrait card, with Book and Profile actions under it. */
 const BabalawoCard: React.FC<BabalawoCardProps> = ({ babalawo, onBookSession, onViewProfile, color }) => {
   const name = babalawo.full_name;
+  const { currency } = usePricing();
   const status =
     babalawo.current_status === 'online' || babalawo.current_status === 'available'
       ? 'available'
@@ -28,7 +30,7 @@ const BabalawoCard: React.FC<BabalawoCardProps> = ({ babalawo, onBookSession, on
         fluid
         name={name}
         imageUrl={babalawo.avatar_url}
-        chips={babalawoChips(babalawo)}
+        chips={babalawoChips(babalawo, currency)}
         status={status}
         color={color}
         onClick={() => onViewProfile(babalawo.id)}

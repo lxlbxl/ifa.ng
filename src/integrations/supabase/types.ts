@@ -1009,6 +1009,10 @@ export type Database = {
           is_active: boolean
           is_featured: boolean
           current_status: string
+          session_price: number
+          instant_price: number
+          usd_price: number
+          usd_instant_price: number
         }[]
       }
       is_admin: {

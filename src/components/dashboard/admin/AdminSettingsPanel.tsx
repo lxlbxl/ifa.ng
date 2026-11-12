@@ -94,7 +94,7 @@ function PlatformRules() {
                     {r.options!.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                 ) : (
-                  <Input type="number" inputMode="decimal" min={r.min} value={values[r.key]}
+                  <Input type="number" inputMode="decimal" step="any" min={r.min} value={values[r.key]}
                     onChange={(e) => setValues((v) => ({ ...v, [r.key]: e.target.value }))} />
                 )}
                 <span className="block text-xs text-muted-foreground mt-1">{r.help}</span>

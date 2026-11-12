@@ -92,8 +92,9 @@ Uploaded files (avatars, recordings) live in MinIO; back up its bucket with your
 2. Configure the integrations the launch needs in `.env`: Paystack or Flutterwave for payments; Termii for production phone sign-in codes; SMTP for email; WhatsApp credentials for WhatsApp delivery; Google service account and organizer email for Meet links; and Agora credentials for video fallback. Configure VAPID as described above for push while the app is closed. Set up each provider's matching webhook/callback URL in its provider dashboard. Admin → Settings → Integrations reports which server-side integrations are present.
 3. Strongly recommended: set `RCLONE_REMOTE` and the `BACKUP_S3_*` values to copy database dumps off the VPS, and arrange backups for the MinIO `ifa-files` bucket too.
 4. Optional error tracking: set `SENTRY_DSN` (API) and `VITE_SENTRY_DSN` (web) in `.env`, then rebuild. Add the Sentry ingest host to `connect-src` in `security-headers.conf` when the CSP is enforced.
-5. Set `VITE_SUPPORT_EMAIL` and `VITE_SUPPORT_WHATSAPP` (international format without +) in `.env` for the Help page and footer, then rebuild the web app.
-6. Have the Terms, Privacy and Refund pages (`/terms`, `/privacy`, `/refunds`, in `src/pages/Legal.tsx`) reviewed. Confirm the main site, `www`, `/health`, phone sign-in, a test payment, file upload, and any enabled notification/video providers before launch.
+5. Prices for the diaspora: put the site behind Cloudflare's proxy and set `GEO_COUNTRY_HEADER=cf-ipcountry`, so visitors outside Nigeria see US dollar prices. Without it, only the phone number decides (a +234 number pays naira). Dollar prices, the naira rate and per-Babalawo dollar prices are in Admin → Settings → Diaspora prices and on each Babalawo's record. Dollar payments go through Flutterwave, so enable USD collections on the Flutterwave account.
+6. Set `VITE_SUPPORT_EMAIL` and `VITE_SUPPORT_WHATSAPP` (international format without +) in `.env` for the Help page and footer, then rebuild the web app.
+7. Have the Terms, Privacy and Refund pages (`/terms`, `/privacy`, `/refunds`, in `src/pages/Legal.tsx`) reviewed. Confirm the main site, `www`, `/health`, phone sign-in, a test payment, file upload, and any enabled notification/video providers before launch.
 
 ## Provider keys from the admin screen
 

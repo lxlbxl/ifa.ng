@@ -5,6 +5,10 @@ export interface BabalawoProfile {
   specialties: string[] | null;
   experience_years: number | null;
   hourly_rate: number | null;
+  /** Diaspora prices (USD), set by the admin or derived from the naira price. */
+  usd_price?: number | null;
+  usd_instant_price?: number | null;
+  instant_price?: number | null;
   bio: string | null;
   verification_status: string | null;
   rating: number | null;

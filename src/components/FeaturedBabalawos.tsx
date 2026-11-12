@@ -4,13 +4,14 @@ import { Marquee, PortraitCard, SectionHeading } from '@/components/brand';
 import { useFeaturedBabalawos } from '@/hooks/useBabalawoSearch';
 import { BabalawoProfile } from '@/types/babalawo';
 import { blockColors } from '@/design/tokens';
+import { babalawoPrice, formatMoney, usePricing, type Currency } from '@/hooks/usePricing';
 
-export const babalawoChips = (b: BabalawoProfile) => {
+export const babalawoChips = (b: BabalawoProfile, currency: Currency = 'NGN') => {
   const chips: string[] = [];
   if (b.languages?.length) chips.push(b.languages.slice(0, 2).join(' · '));
   else if (b.specialties?.length) chips.push(b.specialties[0]);
   if (b.experience_years) chips.push(`${b.experience_years} yrs`);
-  if (b.hourly_rate) chips.push(`₦${Number(b.hourly_rate).toLocaleString()}`);
+  if (b.hourly_rate) { const p = babalawoPrice(b, { currency }); chips.push(formatMoney(p.amount, p.currency)); }
   return chips;
 };
 
@@ -24,6 +25,7 @@ const statusOf = (b: BabalawoProfile) =>
 /** "Meet the Babalawos": the right-to-left marquee of colour-block cards. */
 const FeaturedBabalawos = () => {
   const { featuredBabalawos: babalawos, loading } = useFeaturedBabalawos(12);
+  const { currency } = usePricing();
 
   return (
     <section id="babalawos" aria-label="Babalawos" className="overflow-hidden pb-10 pt-[72px]">
@@ -65,7 +67,7 @@ const FeaturedBabalawos = () => {
               key={`${b.id}${isClone ? '-c' : ''}`}
               name={b.full_name}
               imageUrl={b.avatar_url}
-              chips={babalawoChips(b)}
+              chips={babalawoChips(b, currency)}
               status={statusOf(b)}
               color={blockColors[i % blockColors.length]}
               tilt={i % 2 ? 'right' : 'left'}

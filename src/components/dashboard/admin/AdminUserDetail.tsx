@@ -19,6 +19,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useSetUserRole, useSetUserSuspended, useAdminRefundSession, useReviewBabalawo } from "@/hooks/useAdminActions";
 import BabalawoCommissionModal from "./BabalawoCommissionModal";
+import { PaysInRow, UsdPriceKVs, UsdPricesButton } from "./PricingAdmin";
 import {
   exportUserData, useAddUserNote, useSetBabalawoListing, useAdjustUserWallet, useMessageUser, type Provider, useSignOutUser, useUpdateUserNote, useUserDetail,
   type UserDetail,
@@ -254,10 +255,12 @@ function BabalawoPractice({ d, userId, name }: { d: UserDetail; userId: string; 
               <Button variant="outline" disabled={listing.isPending} onClick={() => listing.mutate({ userId, takeOffline: true })}><Power /> Set offline</Button>
             )}
             <Button variant="outline" onClick={() => setCommission(true)}><Percent /> Commission</Button>
+            <UsdPricesButton userId={userId} name={name} />
           </div>
           <div className="mt-5 grid grid-cols-2 gap-x-6 sm:grid-cols-3">
             <KV k="Scheduled price" v={naira(b.session_price)} />
             <KV k="Consult now" v={naira(b.instant_price)} />
+            <UsdPriceKVs userId={userId} />
             <KV k="Their share" v={b.commission_babalawo_percent != null ? `${b.commission_babalawo_percent}%` : "Default"} />
             <KV k="Experience" v={prof?.experience_years ? `${prof.experience_years} years` : "—"} />
             <KV k="Location" v={[b.city, b.country].filter(Boolean).join(", ") || "—"} />
@@ -539,6 +542,7 @@ const AdminUserDetail = ({ userId, onBack, onOpen, backLabel = "All people" }: {
               <KV k="Signed up as" v={<span className="capitalize">{d.account?.signup_role || "client"}</span>} />
               <KV k="Roles" v={d.roles.map((r) => `${r.role}${r.granted_by ? ` (by ${r.granted_by})` : ""}`).join(", ") || "user"} />
               <KV k="Time zone" v={d.account?.timezone || "—"} />
+              <PaysInRow userId={userId} />
               <KV k="WhatsApp / SMS" v={`${d.account?.whatsapp_opt_in ? "Yes" : "No"} / ${d.account?.sms_opt_in ? "Yes" : "No"}`} />
             </Panel>
           </div>

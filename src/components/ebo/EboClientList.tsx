@@ -13,6 +13,7 @@ import type { PaymentGateway } from "@/utils/paymentGatewayUtils";
 import { getUserWallet } from "@/utils/walletUtils";
 import { walletSplit } from "@/utils/walletSplit";
 import { usePlatformRules } from "@/hooks/usePlatformRules";
+import { eboUsd, formatMoney, usePricing } from "@/hooks/usePricing";
 
 const fail = (e: unknown) => toast({ title: "Something went wrong", description: (e as Error).message, variant: "destructive" });
 
@@ -51,14 +52,20 @@ const EboClientCard: React.FC<{ e: Ebo; babalawoName: string; refresh: () => voi
   const qc = useQueryClient();
   const [attendance, setAttendance] = useState<"present" | "absent">(e.attendance ?? "present");
   const [busy, setBusy] = useState<string | null>(null);
-  const [gateway, setGateway] = useState<PaymentGateway>("paystack");
+  const [gatewayPick, setGateway] = useState<PaymentGateway>("paystack");
+  const pricing = usePricing();
+  const usd = pricing.isUsd;
+  // Diaspora clients pay the naira amount in US dollars, through Flutterwave only.
+  const gateway: PaymentGateway = usd ? "flutterwave" : gatewayPick;
+  const due = usd ? eboUsd(Number(e.amount_due), pricing) : Number(e.amount_due);
+  const money = (n: number) => formatMoney(n, pricing.currency);
   const [useWallet, setUseWallet] = useState(true);
   const rules = usePlatformRules();
   const { data: balance = 0 } = useQuery({
     queryKey: ["wallet", e.client_id], enabled: e.status === "sent",
     queryFn: async () => Number((await getUserWallet(e.client_id))?.balance ?? 0),
   });
-  const split = walletSplit(balance, Number(e.amount_due), rules.minCardPayment);
+  const split = walletSplit(balance, due, usd ? rules.minCardPaymentUsd : rules.minCardPayment);
   const splitting = useWallet && !split.covered && split.wallet > 0;
   const [mode, setMode] = useState<null | "time" | "decline" | "dispute">(null);
   const [text, setText] = useState("");
@@ -100,19 +107,20 @@ const EboClientCard: React.FC<{ e: Ebo; babalawoName: string; refresh: () => voi
       {payable && (
         <div className="space-y-3 border-t pt-3">
           {e.expires_at && <p className="text-xs text-muted-foreground">Pay by {when(e.expires_at)} to keep this time. The money is held by IFA until the ritual is done.</p>}
+          {usd && <p className="text-sm" data-testid="ebo-usd-due">You pay <strong>{money(due)}</strong>, the total above in US dollars.</p>}
           <Attendance value={attendance} onChange={setAttendance} name={babalawoName} />
           {!split.covered && split.wallet > 0 && (
             <label className="flex items-start gap-2 text-sm" data-testid="ebo-use-wallet">
               <input type="checkbox" className="mt-0.5 h-4 w-4 accent-ink" checked={useWallet} onChange={(ev) => setUseWallet(ev.target.checked)} />
-              <span>Use my wallet balance first ({naira(balance)}).{splitting && ` ${naira(split.wallet)} comes from your wallet and ${naira(split.card)} by card.`}</span>
+              <span>Use my wallet balance first ({money(balance)}).{splitting && ` ${money(split.wallet)} comes from your wallet and ${money(split.card)} by card.`}</span>
             </label>)}
           <div className="flex flex-col sm:flex-row gap-2">
-            {split.covered && <Button variant="sun" size="lg" disabled={!!busy} onClick={payWallet}>{busy === "wallet" ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Wallet className="h-4 w-4 mr-1" />}Pay {naira(e.amount_due)} from wallet</Button>}
+            {split.covered && <Button variant="sun" size="lg" disabled={!!busy} onClick={payWallet}>{busy === "wallet" ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Wallet className="h-4 w-4 mr-1" />}Pay {money(due)} from wallet</Button>}
             <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2">
-              <select aria-label="Payment provider" className="h-14 rounded-pill border-2 border-line bg-paper px-4 text-sm font-semibold" value={gateway} onChange={(ev) => setGateway(ev.target.value as PaymentGateway)}>
-                <option value="paystack">Paystack</option><option value="flutterwave">Flutterwave</option>
+              <select aria-label="Payment provider" className="h-14 rounded-pill border-2 border-line bg-paper px-4 text-sm font-semibold" value={gateway} disabled={usd} onChange={(ev) => setGateway(ev.target.value as PaymentGateway)}>
+                {!usd && <option value="paystack">Paystack</option>}<option value="flutterwave">Flutterwave</option>
               </select>
-              <Button variant="outline" size="lg" disabled={!!busy} onClick={payCard}>{busy === "card" ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CreditCard className="h-4 w-4 mr-1" />}{split.covered ? "Card or transfer" : `Pay ${naira(splitting ? split.card : Number(e.amount_due))} by card or transfer`}</Button>
+              <Button variant="outline" size="lg" disabled={!!busy} onClick={payCard}>{busy === "card" ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CreditCard className="h-4 w-4 mr-1" />}{split.covered ? "Card or transfer" : `Pay ${money(splitting ? split.card : due)} by ${usd ? "card" : "card or transfer"}`}</Button>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -159,7 +167,7 @@ const EboClientCard: React.FC<{ e: Ebo; babalawoName: string; refresh: () => voi
             </>)}
           {e.status === "disputed" && <p className="text-sm text-muted-foreground">IFA is reviewing this. The money stays held until it is resolved.</p>}
         </div>)}
-      {e.status === "refunded" && <p className="text-sm text-muted-foreground">{naira(e.refunded_amount)} was refunded to your IFA wallet.</p>}
+      {e.status === "refunded" && <p className="text-sm text-muted-foreground">{e.paid_currency === "USD" ? "Your refund" : naira(e.refunded_amount)} was refunded to your IFA wallet.</p>}
 
       {e.performed_by === "client" && (e.status === "sent" || e.status === "in_progress") && (
         <div className="flex gap-2">

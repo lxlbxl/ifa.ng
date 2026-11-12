@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Wallet, Plus, History } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { formatMoney, usePricing } from "@/hooks/usePricing";
 import { getUserWallet, getWalletTransactions, WalletBalance, WalletTransaction } from "@/utils/walletUtils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import AddMoneyToWalletModal from "./AddMoneyToWalletModal";
@@ -11,6 +12,8 @@ import { format } from "date-fns";
 const WalletWidget: React.FC = () => {
   const { user } = useAuth();
   const [wallet, setWallet] = useState<WalletBalance | null>(null);
+  const pricing = usePricing();
+  const walletCurrency = wallet?.currency ?? pricing.wallet_currency ?? pricing.currency;
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [showAddMoney, setShowAddMoney] = useState(false);
   const [showTransactions, setShowTransactions] = useState(false);
@@ -50,7 +53,7 @@ const WalletWidget: React.FC = () => {
           <Wallet className="h-5 w-5 opacity-80" />
         </div>
         <span className="font-display text-[clamp(28px,3vw,40px)] font-extrabold leading-none tracking-[-0.03em]">
-          {loading ? <span className="inline-block h-9 w-32 animate-pulse rounded-field bg-ink/10 align-middle" /> : `₦${Number(wallet?.balance ?? 0).toLocaleString()}`}
+          {loading ? <span className="inline-block h-9 w-32 animate-pulse rounded-field bg-ink/10 align-middle" /> : formatMoney(Number(wallet?.balance ?? 0), walletCurrency)}
         </span>
         <div className="mt-auto flex gap-2 pt-2">
           <Button size="sm" onClick={() => setShowAddMoney(true)} className="flex-1">
@@ -81,7 +84,7 @@ const WalletWidget: React.FC = () => {
                 <div key={transaction.id} className="flex justify-between items-center rounded-field border border-line bg-paper p-3">
                   <div>
                     <div className="font-medium">
-                      {transaction.transaction_type === 'credit' ? '+' : '-'}₦{transaction.amount.toLocaleString()}
+                      {transaction.transaction_type === 'credit' ? '+' : '-'}{formatMoney(transaction.amount, transaction.currency ?? walletCurrency)}
                     </div>
                     <div className="text-sm text-muted-foreground">
                       {transaction.description || transaction.transaction_source}

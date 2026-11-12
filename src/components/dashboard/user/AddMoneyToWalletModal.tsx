@@ -8,6 +8,7 @@ import { toast } from "@/hooks/use-toast";
 import { createPaymentIntent, openCheckout, verifyPayment, PaymentGateway } from "@/utils/paymentGatewayUtils";
 import { getSuggestedAmounts } from "@/utils/priceUtils";
 import FeeDisclosure from "./FeeDisclosure";
+import { formatMoney, usePricing } from "@/hooks/usePricing";
 
 interface AddMoneyToWalletModalProps {
   open: boolean;
@@ -24,13 +25,19 @@ const AddMoneyToWalletModal: React.FC<AddMoneyToWalletModalProps> = ({
   const [amount, setAmount] = useState<string>("");
   const [selectedGateway, setSelectedGateway] = useState<PaymentGateway>('flutterwave');
   const [isLoading, setIsLoading] = useState(false);
+  const pricing = usePricing();
+  const usd = pricing.isUsd;
+  const money = (n: number) => formatMoney(n, pricing.currency);
+  const minTopup = pricing.min_wallet_topup || (usd ? 5 : 100);
+  const maxTopup = usd ? 5000 : 1000000;
+  const gateway: PaymentGateway = usd ? 'flutterwave' : selectedGateway;
 
   const handleAddMoney = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const numAmount = parseFloat(amount);
-    if (!numAmount || numAmount < 100 || numAmount > 1000000) {
-      toast({ title: "Enter an amount between ₦100 and ₦1,000,000", variant: "destructive" });
+    if (!numAmount || numAmount < minTopup || numAmount > maxTopup) {
+      toast({ title: `Enter an amount between ${money(minTopup)} and ${money(maxTopup)}`, variant: "destructive" });
       return;
     }
 
@@ -38,7 +45,7 @@ const AddMoneyToWalletModal: React.FC<AddMoneyToWalletModalProps> = ({
     try {
       // The server creates the payment, the provider is asked whether it really succeeded,
       // and only the server can credit the wallet.
-      const intent = await createPaymentIntent({ kind: 'wallet_topup', gateway: selectedGateway, amount: numAmount });
+      const intent = await createPaymentIntent({ kind: 'wallet_topup', gateway, amount: numAmount });
       const popupSaidPaid = await openCheckout(intent, "Top up your IFA.ng wallet");
       const result = await verifyPayment(intent.reference, popupSaidPaid ? 6 : 1, popupSaidPaid ? 2000 : 0);
 
@@ -61,7 +68,7 @@ const AddMoneyToWalletModal: React.FC<AddMoneyToWalletModalProps> = ({
     }
   };
 
-  const suggestedAmounts = getSuggestedAmounts(0); // Can pass current balance if needed
+  const suggestedAmounts = usd ? [10, 25, 50, 100, 200, 500] : getSuggestedAmounts(0);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -81,29 +88,31 @@ const AddMoneyToWalletModal: React.FC<AddMoneyToWalletModalProps> = ({
                   onClick={() => setAmount(suggested.toString())}
                   className="h-12 text-sm"
                 >
-                  ₦{suggested.toLocaleString()}
+                  {money(suggested)}
                 </Button>
               ))}
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Custom Amount (₦)</label>
+            <label className="block text-sm font-medium mb-2">Custom Amount ({usd ? "$" : "₦"})</label>
             <Input
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder="Enter amount (minimum ₦100)"
-              min="100"
-              step="10"
+              placeholder={`Enter amount (minimum ${money(minTopup)})`}
+              min={minTopup}
+              step={usd ? "1" : "10"}
               required
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Minimum: ₦100 | Maximum: ₦1,000,000
+              Minimum: {money(minTopup)} | Maximum: {money(maxTopup)}
             </p>
           </div>
 
-          <div>
+          {usd ? (
+            <p className="text-sm text-muted-foreground">You pay in US dollars by card through Flutterwave.</p>
+          ) : <div>
             <label className="block text-sm font-medium mb-2">Payment Gateway</label>
             <div className="space-y-2">
               <label className="flex items-center space-x-2">
@@ -125,11 +134,12 @@ const AddMoneyToWalletModal: React.FC<AddMoneyToWalletModalProps> = ({
                 <span>Paystack</span>
               </label>
             </div>
-          </div>
+          </div>}
 
           <FeeDisclosure
             amount={parseFloat(amount) || 0}
-            paymentMethod={selectedGateway}
+            paymentMethod={gateway}
+            currency={pricing.currency}
           />
 
           <DialogFooter>

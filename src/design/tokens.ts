@@ -52,8 +52,8 @@ export const blockColors = [
 export const pastelBlocks = [brand.leaf, brand.sun, '#f3b9a6', '#b9c4f2', '#bfe6e1'] as const;
 
 export const fonts = {
-  display: ['"Bricolage Grotesque"', '"Arial Black"', 'system-ui', 'sans-serif'],
-  body: ['Figtree', 'system-ui', '-apple-system', '"Segoe UI"', 'sans-serif'],
+  display: ['"Bricolage Grotesque Variable"', '"Bricolage Grotesque"', '"Arial Black"', 'system-ui', 'sans-serif'],
+  body: ['"Figtree Variable"', 'Figtree', 'system-ui', '-apple-system', '"Segoe UI"', 'sans-serif'],
 } as const;
 
 export const radii = {

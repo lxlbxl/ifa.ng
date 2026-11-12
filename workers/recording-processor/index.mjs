@@ -8,7 +8,7 @@ import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { meetGet, driveDownload } from "./lib/google.mjs";
+import { meetGet, driveDownload, driveDelete } from "./lib/google.mjs";
 import { transcribeChunk, providerName } from "./lib/stt.mjs";
 import { assessTranscript, overallLanguage, normalizeLanguage } from "./lib/quality.mjs";
 import { draftNotes } from "./lib/notes.mjs";
@@ -204,6 +204,18 @@ async function purgeExpired() {
     await files.remove(REC(r.storage_path));
     await db.q("update public.session_recordings set storage_path = null, status = 'done' where id = $1::uuid", [r.id]);
     log("purged expired recording", r.id);
+  }
+  // The Meet original in the organizer's Google Drive (past retention, consent withdrawn, or account erased).
+  // Needs GOOGLE_DRIVE_DELETE=true and the full Drive scope on the domain-wide delegation; otherwise
+  // set a Drive retention rule for the organizer account (docs/privacy/RETENTION.md).
+  if (process.env.GOOGLE_DRIVE_DELETE !== "true") return;
+  const drive = await db.q("select id::text, drive_file_id from public.session_recordings where retention_until < now() and drive_file_id is not null limit 50");
+  for (const r of drive) {
+    try {
+      await driveDelete(r.drive_file_id);
+      await db.q("update public.session_recordings set drive_file_id = null where id = $1::uuid", [r.id]);
+      log("deleted Meet recording from Drive", r.id);
+    } catch (e) { log("Drive delete failed", r.id, e.message || e); }
   }
 }
 

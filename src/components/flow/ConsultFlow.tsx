@@ -22,6 +22,10 @@ import { cn } from '@/lib/utils';
 import { usePlatformRules } from '@/hooks/usePlatformRules';
 import { ChoiceCard, StepFrame } from './StepFrame';
 import { PhoneAuthFlow } from './PhoneAuthFlow';
+import { useQueryClient } from '@tanstack/react-query';
+import { ConsentForm } from '@/components/privacy/ConsentForm';
+import { usePrivacyStatus } from '@/components/privacy/ConsentGate';
+import type { PrivacyStatus } from '@/lib/privacy';
 
 /** The Babalawo being booked. `id` is their user id. */
 export interface FlowBabalawo {
@@ -84,6 +88,8 @@ export function ConsultFlow({ babalawo, preferMode, onClose }: { babalawo: FlowB
   const [slot, setSlot] = useState<BookableSlot | null>(null);
   const presence = useBabalawoAvailableNow(babalawo.id, babalawo, step === 'mode' || step === 'topic' || (step === 'pay' && mode === 'now'));
   const signedInAtStart = useRef(!!user);
+  const privacy = usePrivacyStatus();
+  const qc = useQueryClient();
   const name = babalawo.full_name || 'Babalawo';
   const short = name.replace(/^(Babalawo|Bàbá|Baba|Chief|Olúwo|Oluwo)\s+/i, '').split(' ')[0];
 
@@ -251,6 +257,14 @@ export function ConsultFlow({ babalawo, preferMode, onClose }: { babalawo: FlowB
         phoneSubtitle={`We’ll use it to sign you in and send your ${mode === 'now' ? 'session' : 'booking'} details. No password needed.`}
         onDone={() => push('pay')}
       />
+    );
+  } else if (user && privacy.data && privacy.data.missing.length > 0) {
+    // Signed in, but hasn't agreed (or withdrew consent for consultation content): ask before paying.
+    body = (
+      <StepFrame stepKey="consent" progress={progress} onBack={back} onClose={onClose} top={top}
+        title="Before you book" subtitle="Consultations are personal. Please confirm a few things.">
+        <ConsentForm missing={privacy.data.missing} onDone={(s) => { qc.setQueryData<PrivacyStatus>(['privacy-status', user.id], s); }} />
+      </StepFrame>
     );
   } else {
     body = (

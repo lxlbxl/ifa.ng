@@ -9,6 +9,7 @@ import { Panel, PanelHeader } from '@/components/dashboard/shell/Panel';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
+import { PrivacyCenter } from '@/components/privacy/PrivacyCenter';
 
 const db = supabase as any;
 
@@ -98,12 +99,15 @@ const Settings = () => {
         </p>
       </Panel>
 
+      <PrivacyCenter />
+
       <Panel className="lg:col-span-2">
         <PanelHeader eyebrow="Leaving" title="Delete my account" />
         <p className="mb-4 max-w-[70ch] text-muted-foreground">
-          We remove your name, phone number, photo and sign-in, and you are signed out everywhere. Records of payments and past
-          consultations are kept without your details, because the law and the other person need them. Upcoming consultations
-          must be cancelled first, and Babalawos must withdraw their earnings.
+          We remove your name, phone number, photo and sign-in, your consultation notes, recordings and transcripts, and you are
+          signed out everywhere. Records of payments are kept without your details for as long as tax law requires, and the
+          other person keeps the date of a consultation you had together. Upcoming consultations must be cancelled first, and
+          Babalawos must withdraw their earnings. You may want to download your data first.
         </p>
         <Button variant="destructive" onClick={() => { setDeleting(true); setConfirm(''); setWalletNote(null); setForfeit(false); }}>Delete my account</Button>
       </Panel>

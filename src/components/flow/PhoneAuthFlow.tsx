@@ -9,11 +9,13 @@ import { detectCountry, formatNational, prettyPhone, toE164 } from '@/lib/countr
 import { cn } from '@/lib/utils';
 import { CountryPicker } from './CountryPicker';
 import { StepFrame } from './StepFrame';
+import { ConsentForm } from '@/components/privacy/ConsentForm';
+import { blockingConsents, privacyApi, type ConsentPurpose } from '@/lib/privacy';
 
-export type AuthStep = 'phone' | 'otp' | 'pin' | 'newPin' | 'confirmPin' | 'name';
+export type AuthStep = 'phone' | 'otp' | 'pin' | 'newPin' | 'confirmPin' | 'name' | 'consent';
 
 /** Rough share of the auth part each step represents, for the progress bar. */
-const ORDER: AuthStep[] = ['phone', 'otp', 'pin', 'newPin', 'confirmPin', 'name'];
+const ORDER: AuthStep[] = ['phone', 'otp', 'pin', 'newPin', 'confirmPin', 'name', 'consent'];
 
 const errMsg = (e: unknown) => (e instanceof ApiError || e instanceof Error ? e.message : 'Something went wrong. Please try again.');
 const errCode = (e: unknown) => (e instanceof ApiError ? (e.body as { code?: string } | null)?.code : undefined);
@@ -52,6 +54,7 @@ export function PhoneAuthFlow({ onDone, onExit, onClose, progress = (p) => p, to
   const [value, setValue] = useState('');
   const [firstPin, setFirstPin] = useState('');
   const [name, setName] = useState('');
+  const [missing, setMissing] = useState<ConsentPurpose[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setErrorState] = useState<string | null>(null);
   // Remounts the code/PIN boxes after a failed try so they clear and take focus again.
@@ -76,9 +79,17 @@ export function PhoneAuthFlow({ onDone, onExit, onClose, progress = (p) => p, to
   const go = (s: AuthStep) => { setError(null); setValue(''); setStep(s); };
   const e164 = toE164(national, country);
   const finish = (newPerson: boolean, nameNeeded: boolean) => {
-    if (askName && nameNeeded) go('name');
-    else onDone({ isNew: newPerson });
+    if (askName && nameNeeded) { setIsNew(newPerson); go('name'); }
+    else return afterName(newPerson);
   };
+  // Age, terms, privacy notice and special-category consent, asked once (and again if the notice changes).
+  async function afterName(newPerson: boolean) {
+    try {
+      const m = blockingConsents(await privacyApi.status());
+      if (m.length) { setMissing(m); setIsNew(newPerson); go('consent'); return; }
+    } catch { /* the dashboard asks again if this check could not run */ }
+    onDone({ isNew: newPerson });
+  }
 
   async function submitPhone(forgotPin = false) {
     const p = forgotPin ? phone : e164;
@@ -100,7 +111,7 @@ export function PhoneAuthFlow({ onDone, onExit, onClose, progress = (p) => p, to
     try {
       const r = await apiAuth.phoneVerifyOtp(phone, code);
       // Admins with a PIN are signed in by the code alone.
-      if (r.skip_pin) { finish(false, r.needs_name); return; }
+      if (r.skip_pin) { await finish(false, r.needs_name); return; }
       setTicket(r.pin_ticket ?? '');
       setIsNew(r.is_new);
       setNeedsName(r.needs_name);
@@ -114,7 +125,7 @@ export function PhoneAuthFlow({ onDone, onExit, onClose, progress = (p) => p, to
     setBusy(true); setError(null);
     try {
       const r = await apiAuth.phoneSignInPin(phone, pin);
-      finish(false, r.needs_name);
+      await finish(false, r.needs_name);
     } catch (e) {
       if (errCode(e) === 'NO_PIN') { await submitPhone(true); return; }
       if (errCode(e) === 'CODE_REQUIRED') { await submitPhone(false); return; }
@@ -127,7 +138,7 @@ export function PhoneAuthFlow({ onDone, onExit, onClose, progress = (p) => p, to
     setBusy(true); setError(null);
     try {
       await apiAuth.phoneSetPin(pin, ticket);
-      finish(isNew, needsName);
+      await finish(isNew, needsName);
     } catch (e) {
       const code = errCode(e);
       if (code === 'WEAK_PIN' || code === 'INVALID_PIN') { setFirstPin(''); setStep('newPin'); setValue(''); setError(errMsg(e)); }
@@ -141,7 +152,7 @@ export function PhoneAuthFlow({ onDone, onExit, onClose, progress = (p) => p, to
     setBusy(true); setError(null);
     try {
       await apiAuth.updateName(n);
-      onDone({ isNew });
+      await afterName(isNew);
     } catch (e) { setError(errMsg(e)); } finally { setBusy(false); }
   }
 
@@ -286,6 +297,16 @@ export function PhoneAuthFlow({ onDone, onExit, onClose, progress = (p) => p, to
         }, true, confirming ? 'confirm-pin-input' : 'new-pin-input')}
         {busy && <Loader2 className="mt-5 h-5 w-5 animate-spin" aria-label="Saving" />}
         <Error />
+      </StepFrame>
+    );
+  }
+
+  if (step === 'consent') {
+    return (
+      <StepFrame stepKey="consent" progress={p} onClose={onClose} top={top}
+        title="Before you continue"
+        subtitle="Consultations are personal. Please confirm a few things. We only ask once.">
+        <ConsentForm missing={missing} source={isNew ? 'signup' : 'app'} onDone={() => onDone({ isNew })} />
       </StepFrame>
     );
   }

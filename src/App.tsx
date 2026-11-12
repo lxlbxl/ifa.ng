@@ -12,6 +12,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import PwaPrompts from "./components/pwa/PwaPrompts";
 import BrowserAdviceBanner from "./components/pwa/BrowserAdviceBanner";
 import { ConsultFlowProvider } from "./components/flow/ConsultFlow";
+import { CookieNotice } from "./components/privacy/CookieNotice";
 
 // Lazy-loaded components
 const Index = lazy(() => import("./pages/Index"));
@@ -27,6 +28,7 @@ const Legal = lazy(() => import("./pages/Legal"));
 const SupportPage = lazy(() => import("./pages/SupportPage"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const PaymentFailed = lazy(() => import("./pages/PaymentFailed"));
+const PrivacyRequestPage = lazy(() => import("./pages/PrivacyRequest"));
 
 /** Old dashboard paths (/dashboard/user, /dashboard/admin) go to /dashboard, keeping the section. */
 const LegacyDashboard = ({ tab }: { tab?: string }) => {
@@ -58,6 +60,7 @@ const App = () => (
         <BrowserAdviceBanner />
         <BrowserRouter>
           <ScrollManager />
+          <CookieNotice />
           <ConsultFlowProvider>
           <Suspense fallback={<LoadingFallback />}>
             <Routes>
@@ -86,6 +89,9 @@ const App = () => (
               <Route path="/terms" element={<Legal doc="terms" />} />
               <Route path="/privacy" element={<Legal doc="privacy" />} />
               <Route path="/refunds" element={<Legal doc="refunds" />} />
+              <Route path="/cookies" element={<Legal doc="cookies" />} />
+              <Route path="/privacy/request" element={<PrivacyRequestPage />} />
+              <Route path="/data-request" element={<Navigate to="/privacy/request" replace />} />
               <Route path="/support" element={<SupportPage />} />
               <Route path="/help" element={<Navigate to="/support" replace />} />
               <Route path="/babalawos" element={<BabalawosRedirect />} />

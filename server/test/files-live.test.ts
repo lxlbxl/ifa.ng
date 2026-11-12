@@ -184,3 +184,17 @@ describe("Ebo proof uploads", () => {
     expect((await app.request(`/v1/ebo/${e}/proofs`, as(ADMIN))).status).toBe(200);
   });
 });
+
+describe("queued file deletions (erasure and retention)", () => {
+  it("removes files the database queued, and keeps failing ones for an admin to see", async () => {
+    const files = createFileStore(config);
+    await files.put("avatars/queued-test.png", PNG, "image/png");
+    await service(sql`insert into private.storage_deletions(object_key, reason) values ('avatars/queued-test.png', 'test')`);
+    const { deleteQueuedFiles } = await import("../src/services/privacy.js");
+    const r = await deleteQueuedFiles({ config, database, fetch, files } as never);
+    expect(r.sent).toBeGreaterThanOrEqual(1);
+    expect(await files.get("avatars/queued-test.png")).toBeNull();
+    const left = await service(sql`select count(*)::int n from private.storage_deletions where object_key = 'avatars/queued-test.png' and done_at is null`);
+    expect(left.rows[0].n).toBe(0);
+  });
+});

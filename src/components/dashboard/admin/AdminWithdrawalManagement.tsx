@@ -1,324 +1,252 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 import { format } from 'date-fns';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { errorService } from '@/services/errorService';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
+
+interface BankSnapshot {
+  bank_name?: string;
+  account_name?: string;
+  account_number?: string;
+}
 
 interface WithdrawalRequest {
   id: string;
   amount: number;
   status: string;
   created_at: string;
-  updated_at: string | null;
   reason: string | null;
   babalawo_id: string;
+  bank_snapshot: BankSnapshot | null;
+  babalawo_name: string;
 }
 
-const fetchWithdrawalRequests = async (filters: any): Promise<WithdrawalRequest[]> => {
-  let query = supabase.from('withdrawal_requests').select(`
-    id,
-    amount,
-    status,
-    created_at,
-    updated_at,
-    reason,
-    babalawo_id
-  `).order('created_at', { ascending: false });
+type WithdrawalAction = 'approve' | 'reject' | 'mark_paid';
+type WithdrawalDialog = { action: 'reject' | 'mark_paid'; request: WithdrawalRequest } | null;
 
-  if (filters.status && filters.status !== 'all') {
-    query = query.eq('status', filters.status);
-  }
-  if (filters.search_term) {
-    // This requires a full-text search index or a more complex RPC function
-    // For now, we'll filter client-side or rely on exact matches if possible
-    // A better solution would be to create a Supabase function for searching profiles
-  }
+const fetchWithdrawalRequests = async (status: string): Promise<WithdrawalRequest[]> => {
+  let query = supabase.from('withdrawal_requests').select(
+    'id, amount, status, created_at, reason, babalawo_id, bank_snapshot',
+  ).order('created_at', { ascending: false });
+  if (status !== 'all') query = query.eq('status', status);
 
   const { data, error } = await query;
-  if (error) {
-    throw errorService.handleError(error, 'FETCH_WITHDRAWAL_REQUESTS');
-  }
-  return (data || []) as WithdrawalRequest[];
+  if (error) throw errorService.handleError(error, 'FETCH_WITHDRAWAL_REQUESTS');
+  const rows = data ?? [];
+  if (!rows.length) return [];
+
+  const ids = [...new Set(rows.map((row) => row.babalawo_id))];
+  const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', ids);
+  const names = new Map((profiles ?? []).map((profile) => [profile.id, profile.full_name]));
+  return rows.map((row) => ({
+    ...row,
+    amount: Number(row.amount),
+    bank_snapshot: row.bank_snapshot as unknown as BankSnapshot | null,
+    babalawo_name: names.get(row.babalawo_id) || row.babalawo_id,
+  }));
 };
 
-// All balance movements happen in the database (admin_process_withdrawal); the browser can no longer edit these rows.
-const updateWithdrawalStatus = async ({ id, status, rejection_reason, reference }: { id: string; status: string; rejection_reason?: string; reference?: string }) => {
-  const action = status === 'approved' ? 'approve' : status === 'rejected' ? 'reject' : 'mark_paid';
+const updateWithdrawal = async ({
+  id,
+  action,
+  reference,
+  note,
+}: {
+  id: string;
+  action: WithdrawalAction;
+  reference?: string;
+  note?: string;
+}) => {
   const { error } = await supabase.rpc('admin_process_withdrawal' as any, {
     p_id: id,
     p_action: action,
-    p_reference: reference || null,
-    p_note: rejection_reason || null,
+    p_reference: reference ?? null,
+    p_note: note ?? null,
   });
-  if (error) {
-    throw errorService.handleError(error, 'UPDATE_WITHDRAWAL_STATUS');
-  }
-  return { id, status };
+  if (error) throw errorService.handleError(error, 'UPDATE_WITHDRAWAL_STATUS');
 };
 
-const AdminWithdrawalManagement: React.FC = () => {
+const AdminWithdrawalManagement = () => {
   const queryClient = useQueryClient();
-  const [filters, setFilters] = useState({ status: 'all', search_term: '' });
-  const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
-  const [rejectReason, setRejectReason] = useState('');
-  const [processRef, setProcessRef] = useState('');
-  const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
+  const [status, setStatus] = useState('all');
+  const [dialog, setDialog] = useState<WithdrawalDialog>(null);
+  const [reference, setReference] = useState('');
+  const [rejectionReason, setRejectionReason] = useState('');
 
-  const { data: requests, isLoading, isError, error } = useQuery<WithdrawalRequest[], Error>({
-    queryKey: ['withdrawalRequests', filters],
-    queryFn: () => fetchWithdrawalRequests(filters),
-    staleTime: 5 * 60 * 1000,
+  const { data: requests = [], isLoading, isError, error } = useQuery<WithdrawalRequest[], Error>({
+    queryKey: ['withdrawalRequests', status],
+    queryFn: () => fetchWithdrawalRequests(status),
+    staleTime: 30_000,
   });
 
   const mutation = useMutation({
-    mutationFn: updateWithdrawalStatus,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['withdrawalRequests'] });
-      toast.success('Withdrawal request updated successfully!');
-      setCurrentRequestId(null);
-      setRejectReason('');
-      setProcessRef('');
+    mutationFn: updateWithdrawal,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['withdrawalRequests'] });
+      toast.success('Withdrawal updated.');
+      setDialog(null);
+      setReference('');
+      setRejectionReason('');
     },
-    onError: (err: any) => {
-      errorService.showErrorToast(err);
-    },
+    onError: (err: unknown) => errorService.showErrorToast(err),
   });
 
-  const handleStatusChange = (status: string) => {
-    setFilters(prev => ({ ...prev, status }));
+  const closeDialog = () => {
+    setDialog(null);
+    setReference('');
+    setRejectionReason('');
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilters(prev => ({ ...prev, search_term: e.target.value }));
-  };
+  const approve = (id: string) => mutation.mutate({ id, action: 'approve' });
 
-  const handleApprove = (id: string) => {
-    mutation.mutate({ id, status: 'approved' });
-  };
-
-  const handleProcess = (id: string) => {
-    setCurrentRequestId(id);
-  };
-
-  const handleReject = (id: string) => {
-    setCurrentRequestId(id);
-  };
-
-  const confirmProcess = () => {
-    if (currentRequestId) {
-      mutation.mutate({ id: currentRequestId, status: 'completed', reference: processRef });
-    }
-  };
-
-  const confirmReject = () => {
-    if (currentRequestId && rejectReason) {
-      mutation.mutate({ id: currentRequestId, status: 'rejected', rejection_reason: rejectReason });
-    } else {
-      toast.error('Please provide a rejection reason.');
-    }
-  };
-
-  const handleSelectRequest = (id: string) => {
-    setSelectedRequests(prev => 
-      prev.includes(id) ? prev.filter(reqId => reqId !== id) : [...prev, id]
-    );
-  };
-
-  const handleBatchProcess = () => {
-    if (selectedRequests.length === 0) {
-      toast.error('No requests selected for batch processing.');
+  const submitDialog = () => {
+    if (!dialog) return;
+    if (dialog.action === 'mark_paid') {
+      const payoutReference = reference.trim();
+      if (!payoutReference) {
+        toast.error('Enter the bank transfer reference to complete this payout.');
+        return;
+      }
+      mutation.mutate({ id: dialog.request.id, action: 'mark_paid', reference: payoutReference });
       return;
     }
-    // This would ideally call a new RPC function for batch processing
-    // For now, we'll simulate by processing each one individually
-    selectedRequests.forEach(id => {
-      mutation.mutate({ id, status: 'completed' });
-    });
-    setSelectedRequests([]);
-  };
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case 'pending': return 'secondary';
-      case 'approved': return 'default';
-      case 'completed': return 'success';
-      case 'rejected': return 'destructive';
-      default: return 'outline';
+    const note = rejectionReason.trim();
+    if (!note) {
+      toast.error('Enter a reason for rejecting this withdrawal.');
+      return;
     }
+    mutation.mutate({ id: dialog.request.id, action: 'reject', note });
   };
 
-  if (isLoading) {
-    return <div className="text-center py-8">Loading withdrawal requests...</div>;
-  }
+  if (isLoading) return <div className="py-8 text-center">Loading withdrawal requests…</div>;
+  if (isError) return <div className="py-8 text-center text-destructive">Could not load withdrawals: {error.message}</div>;
 
-  if (isError) {
-    return <div className="text-center py-8 text-red-500">Error: {error?.message || 'Failed to load requests'}</div>;
-  }
+  const bank = dialog?.request.bank_snapshot;
+  const dialogOpen = dialog !== null;
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between gap-4">
         <CardTitle>Withdrawal Management</CardTitle>
+        <Select value={status} onValueChange={setStatus}>
+          <SelectTrigger className="w-[180px]" aria-label="Filter withdrawals by status">
+            <SelectValue placeholder="All statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="approved">Approved</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="rejected">Rejected</SelectItem>
+          </SelectContent>
+        </Select>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
-          <Input
-            placeholder="Search by Babalawo name..."
-            value={filters.search_term}
-            onChange={handleSearchChange}
-            className="max-w-sm"
-          />
-          <Select value={filters.status} onValueChange={handleStatusChange}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button onClick={handleBatchProcess} disabled={selectedRequests.length === 0}>
-            Batch Process ({selectedRequests.length})
-          </Button>
-        </div>
-
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>
-                <input
-                  type="checkbox"
-                  checked={selectedRequests.length === requests.length && requests.length > 0}
-                  onChange={() => 
-                    setSelectedRequests(selectedRequests.length === requests.length ? [] : requests.map(r => r.id))
-                  }
-                />
-              </TableHead>
               <TableHead>Babalawo</TableHead>
               <TableHead>Amount</TableHead>
+              <TableHead>Payout account</TableHead>
               <TableHead>Reason</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Requested On</TableHead>
+              <TableHead>Requested</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {requests.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center text-gray-500">
-                  No withdrawal requests found.
+              <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">No withdrawal requests found.</TableCell></TableRow>
+            ) : requests.map((request) => (
+              <TableRow key={request.id}>
+                <TableCell>
+                  <div>{request.babalawo_name}</div>
+                  {request.babalawo_name !== request.babalawo_id && <div className="text-xs text-muted-foreground">{request.babalawo_id}</div>}
                 </TableCell>
-              </TableRow>
-            ) : (
-              requests.map((request) => (
-                <TableRow key={request.id}>
-                  <TableCell>
-                    <input
-                      type="checkbox"
-                      checked={selectedRequests.includes(request.id)}
-                      onChange={() => handleSelectRequest(request.id)}
-                      disabled={request.status !== 'pending' && request.status !== 'approved'}
-                    />
-                  </TableCell>
-                  <TableCell>{request.babalawo_id}</TableCell>
-                  <TableCell>₦{request.amount.toLocaleString()}</TableCell>
-                  <TableCell>
-                    {request.reason || 'N/A'}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusBadgeVariant(request.status)}>
-                      {request.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{format(new Date(request.created_at), 'PPP')}</TableCell>
-                  <TableCell className="space-x-2">
+                <TableCell className="whitespace-nowrap">₦{request.amount.toLocaleString()}</TableCell>
+                <TableCell>
+                  {request.bank_snapshot ? (
+                    <div className="text-sm">
+                      <div className="font-medium">{request.bank_snapshot.bank_name || 'Bank not recorded'}</div>
+                      <div>{request.bank_snapshot.account_name}</div>
+                      <div className="font-mono">{request.bank_snapshot.account_number}</div>
+                    </div>
+                  ) : <span className="text-muted-foreground">No account snapshot</span>}
+                </TableCell>
+                <TableCell>{request.reason || '—'}</TableCell>
+                <TableCell><Badge variant={request.status === 'completed' ? 'success' : request.status === 'rejected' ? 'destructive' : request.status === 'approved' ? 'default' : 'secondary'}>{request.status}</Badge></TableCell>
+                <TableCell className="whitespace-nowrap">{format(new Date(request.created_at), 'PPP')}</TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap gap-2">
                     {request.status === 'pending' && (
                       <>
-                        <Button variant="outline" size="sm" onClick={() => handleApprove(request.id)}>Approve</Button>
-                        <Dialog open={currentRequestId === request.id && rejectReason === ''} onOpenChange={(open) => !open && setCurrentRequestId(null)}>
-                          <DialogTrigger asChild>
-                            <Button variant="destructive" size="sm" onClick={() => handleReject(request.id)}>Reject</Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Reject Withdrawal Request</DialogTitle>
-                              <DialogDescription>
-                                Please provide a reason for rejecting this withdrawal request.
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="rejectReason" className="text-right">
-                                  Reason
-                                </Label>
-                                <Textarea
-                                  id="rejectReason"
-                                  value={rejectReason}
-                                  onChange={(e) => setRejectReason(e.target.value)}
-                                  className="col-span-3"
-                                />
-                              </div>
-                            </div>
-                            <DialogFooter>
-                              <Button variant="outline" onClick={() => setCurrentRequestId(null)}>Cancel</Button>
-                              <Button onClick={confirmReject}>Confirm Reject</Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
+                        <Button size="sm" variant="outline" disabled={mutation.isPending} onClick={() => approve(request.id)}>Approve</Button>
+                        <Button size="sm" variant="destructive" disabled={mutation.isPending} onClick={() => { setRejectionReason(''); setDialog({ action: 'reject', request }); }}>Reject</Button>
                       </>
                     )}
                     {request.status === 'approved' && (
-                      <Dialog open={currentRequestId === request.id && processRef === ''} onOpenChange={(open) => !open && setCurrentRequestId(null)}>
-                        <DialogTrigger asChild>
-                          <Button size="sm" onClick={() => handleProcess(request.id)}>Process</Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Process Withdrawal Request</DialogTitle>
-                            <DialogDescription>
-                              Enter the processor reference for this withdrawal.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                              <Label htmlFor="processRef" className="text-right">
-                                Reference
-                              </Label>
-                              <Input
-                                id="processRef"
-                                value={processRef}
-                                onChange={(e) => setProcessRef(e.target.value)}
-                                className="col-span-3"
-                              />
-                            </div>
-                          </div>
-                          <DialogFooter>
-                            <Button variant="outline" onClick={() => setCurrentRequestId(null)}>Cancel</Button>
-                            <Button onClick={confirmProcess}>Confirm Process</Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
+                      <>
+                        <Button size="sm" disabled={mutation.isPending} onClick={() => { setReference(''); setDialog({ action: 'mark_paid', request }); }}>Process payout</Button>
+                        <Button size="sm" variant="destructive" disabled={mutation.isPending} onClick={() => { setRejectionReason(''); setDialog({ action: 'reject', request }); }}>Reject</Button>
+                      </>
                     )}
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </CardContent>
+
+      <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open && !mutation.isPending) closeDialog(); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{dialog?.action === 'mark_paid' ? 'Process withdrawal payout' : 'Reject withdrawal request'}</DialogTitle>
+            <DialogDescription>
+              {dialog?.action === 'mark_paid'
+                ? 'Confirm the transfer to the account shown below, then enter its bank reference.'
+                : 'The held funds will be returned to the Babalawo’s available balance.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {dialog?.action === 'mark_paid' ? (
+            <div className="space-y-4">
+              <div className="rounded-md border p-3 text-sm">
+                <div className="font-medium">{dialog.request.babalawo_name} · ₦{dialog.request.amount.toLocaleString()}</div>
+                <div>{bank?.bank_name || 'Bank not recorded'} · {bank?.account_name || 'Account name not recorded'}</div>
+                <div className="font-mono">{bank?.account_number || 'Account number not recorded'}</div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="payout-reference">Bank transfer reference</Label>
+                <Input id="payout-reference" autoFocus maxLength={120} value={reference} onChange={(event) => setReference(event.target.value)} placeholder="Enter transfer reference" />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="rejection-reason">Reason</Label>
+              <Textarea id="rejection-reason" autoFocus maxLength={500} value={rejectionReason} onChange={(event) => setRejectionReason(event.target.value)} placeholder="Explain why this request is being rejected" />
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" disabled={mutation.isPending} onClick={closeDialog}>Cancel</Button>
+            <Button disabled={mutation.isPending} onClick={submitDialog}>
+              {mutation.isPending ? 'Saving…' : dialog?.action === 'mark_paid' ? 'Confirm payout' : 'Confirm rejection'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

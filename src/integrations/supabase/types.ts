@@ -896,6 +896,7 @@ export type Database = {
         Row: {
           amount: number
           babalawo_id: string
+          bank_snapshot: Json | null
           created_at: string | null
           id: string
           reason: string | null
@@ -905,6 +906,7 @@ export type Database = {
         Insert: {
           amount: number
           babalawo_id: string
+          bank_snapshot?: Json | null
           created_at?: string | null
           id?: string
           reason?: string | null
@@ -914,6 +916,7 @@ export type Database = {
         Update: {
           amount?: number
           babalawo_id?: string
+          bank_snapshot?: Json | null
           created_at?: string | null
           id?: string
           reason?: string | null

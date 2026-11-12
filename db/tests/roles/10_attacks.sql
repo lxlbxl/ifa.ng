@@ -59,6 +59,9 @@ select pg_temp.must_fail('babalawo edits amount',             $$update sessions 
 select pg_temp.must_fail('babalawo sets room_url',            $$update sessions set room_url='https://evil.example' where id=1$$);
 select pg_temp.must_pass('babalawo confirms paid session',    $$update sessions set status='confirmed' where id=3$$);
 select pg_temp.must_pass('babalawo records outcome',          $$update sessions set primary_odu='Ejiogbe', notes='ebo advised' where id=1$$);
+select pg_temp.must_fail('babalawo completes before the start', $$update sessions set status='completed' where id=1$$);
+select pg_temp.must_fail('babalawo starts before the start',    $$update sessions set status='in_progress' where id=1$$);
+reset role; update sessions set session_date = current_date - 1 where id = 1; set role authenticated;
 select pg_temp.must_pass('babalawo starts then completes',    $$update sessions set status='in_progress' where id=1; update sessions set status='completed' where id=1$$);
 select pg_temp.must_fail('babalawo reopens completed',        $$update sessions set status='confirmed' where id=1$$);
 

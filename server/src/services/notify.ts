@@ -37,9 +37,11 @@ async function setting(svc: Services, key: string): Promise<string | null> {
 async function sendSms(svc: Services, to: string, text: string) {
   const key = svc.config.TERMII_API_KEY;
   if (!key) throw new Error("Termii API key not configured");
-  const res = await svc.fetch("https://api.ng.termii.com/api/sms/send", {
+  const res = await svc.fetch(`${svc.config.TERMII_BASE_URL.replace(/\/$/, "")}/api/sms/send`, {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ to, from: svc.config.TERMII_SENDER_ID, sms: text, type: "plain", channel: "generic", api_key: key }),
+    body: JSON.stringify({ to, from: svc.config.TERMII_SENDER_ID, sms: text, type: "plain",
+      // "dnd" (transactional) reaches Nigerian numbers on the Do-Not-Disturb list; "generic" does not.
+      channel: "dnd", api_key: key }),
   });
   const body = (await res.json().catch(() => ({}))) as { message_id?: string; code?: string };
   if (!res.ok || !(body.message_id || body.code === "ok")) throw new Error(`Termii: ${JSON.stringify(body)}`);
@@ -141,7 +143,9 @@ export async function dispatchDue(svc: Services, limit = 25) {
       const bab = people.find((p) => p.id === s.babalawo_id);
       if (!client || !bab) throw new Error("profiles missing");
       client.timezone = s.user_timezone;
-      const joinLink = s.video_provider === "google_meet" && s.meet_uri ? s.meet_uri : `${appUrl}/session/${s.id}`;
+      // Always the app's session page: it records who joined (no-show refunds depend on it),
+      // asks for recording consent, and then opens Meet (or the backup video).
+      const joinLink = `${appUrl}/session/${s.id}`;
       const link = isEbo(row.kind) ? `${appUrl}/dashboard${row.kind === "ebo_paid" ? "" : "?tab=records"}`
         : row.kind === "completed" || row.kind === "notes_ready" ? `${appUrl}/dashboard` : joinLink;
       const atText = ebo

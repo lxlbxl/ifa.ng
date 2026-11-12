@@ -34,7 +34,10 @@ export const useSessionById = (sessionId: string) => {
           video_provider,
           meet_uri,
           recording_status,
-          video_fallback_reason
+          video_fallback_reason,
+          accept_deadline,
+          accepted_at,
+          no_show
         `)
         .eq('id', sessionId)
         .maybeSingle();
@@ -42,5 +45,7 @@ export const useSessionById = (sessionId: string) => {
       return data;
     },
     enabled: !!sessionId,
+    // A Consult Now request is waiting to be accepted: keep checking.
+    refetchInterval: (q) => ((q.state.data as any)?.is_instant && (q.state.data as any)?.status === 'pending' ? 4000 : false),
   });
 };

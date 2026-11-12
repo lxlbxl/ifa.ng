@@ -10,10 +10,21 @@ import { useAuth } from "@/hooks/useAuth";
 import { usePresenceGuard, type MyPresence } from "@/hooks/useBabalawoPresence";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "@/hooks/use-toast";
+import { acceptInstantSession } from "@/utils/sessionActions";
 
-interface Alert { id: string; type: string; title: string; body: string; url: string; urgent: boolean }
+interface Alert { id: string; type: string; title: string; body: string; url: string; urgent: boolean; sessionId: string | null }
 
 const ALERT_TYPES = new Set(["instant_session_request", "session_booked"]);
+
+const sessionIdOf = (raw: Record<string, unknown>): string | null => {
+  const data = raw.data as Record<string, unknown> | undefined;
+  if (data && data.session_id != null) return String(data.session_id);
+  for (const k of ["url", "action_url"]) {
+    const m = typeof raw[k] === "string" ? (raw[k] as string).match(/\/session\/(\d+)/) : null;
+    if (m) return m[1];
+  }
+  return null;
+};
 
 /** One shape for alerts from the live stream (notification rows) and from push (service worker). */
 function normalise(raw: Record<string, unknown>, from: "stream" | "push"): Alert | null {
@@ -24,9 +35,10 @@ function normalise(raw: Record<string, unknown>, from: "stream" | "push"): Alert
     id: String(raw.id),
     type,
     urgent,
-    url: typeof raw.url === "string" ? raw.url : "/dashboard?tab=consultations",
+    url: typeof raw.url === "string" ? raw.url : typeof raw.action_url === "string" ? raw.action_url : "/dashboard?tab=consultations",
+    sessionId: sessionIdOf(raw),
     title: urgent ? "A client is waiting" : String(raw.title ?? "New booking"),
-    body: urgent ? "A client has paid for a consultation right now. Join them as soon as you can."
+    body: urgent ? "A client has paid to consult you now. Accept within a few minutes, or they are refunded."
       : String((from === "push" ? raw.body : raw.message) ?? "A client has booked a consultation."),
   };
 }
@@ -43,6 +55,7 @@ const BabalawoLiveAlerts: React.FC = () => {
   const seen = useRef(new Set<string>());
   const stopRef = useRef<(() => void) | null>(null);
   const [active, setActive] = useState<Alert | null>(null);
+  const [accepting, setAccepting] = useState(false);
   usePresenceGuard();
   useEffect(() => unlockOnFirstGesture(), []);
 
@@ -101,8 +114,18 @@ const BabalawoLiveAlerts: React.FC = () => {
         <DialogDescription className="text-sm text-muted-foreground">{active?.body}</DialogDescription>
         <SoundWave className="mx-auto [&>i]:bg-green-700" />
         <div className="mt-2 flex flex-col gap-2">
-          <Button variant="sun" size="lg" onClick={() => { const url = active?.url; dismiss(); if (url) navigate(url); }}>
-            Open consultation
+          <Button variant="sun" size="lg" disabled={accepting} onClick={async () => {
+            const a = active; if (!a) return;
+            if (a.sessionId) {
+              setAccepting(true);
+              try { await acceptInstantSession(a.sessionId); }
+              catch (e) { toast({ title: "Could not accept", description: (e as Error).message, variant: "destructive" }); setAccepting(false); dismiss(); return; }
+              setAccepting(false);
+            }
+            dismiss();
+            navigate(a.sessionId ? `/session/${a.sessionId}` : a.url);
+          }}>
+            {accepting ? "Accepting…" : "Accept and join"}
           </Button>
           <Button variant="outline" onClick={dismiss}>Silence</Button>
         </div>

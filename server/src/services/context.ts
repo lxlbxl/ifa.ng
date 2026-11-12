@@ -1,6 +1,7 @@
 import { sql, type Transaction } from "kysely";
 import type { Config } from "../config.js";
 import type { FileStore } from "./storage.js";
+import type { IntegrationSettings } from "./integrations.js";
 import type { Caller, Database, DB } from "../db.js";
 
 /** What the business logic needs. Tests swap `fetch` for a fake provider. */
@@ -9,6 +10,8 @@ export interface Services {
   database: Database;
   fetch: typeof fetch;
   files: FileStore;
+  /** Provider keys managed from Admin -> Settings -> Integrations (applied over .env). */
+  integrations: IntegrationSettings;
 }
 
 export class HttpError extends Error {

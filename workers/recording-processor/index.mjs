@@ -13,10 +13,16 @@ import { transcribeChunk, providerName } from "./lib/stt.mjs";
 import { assessTranscript, overallLanguage, normalizeLanguage } from "./lib/quality.mjs";
 import { draftNotes } from "./lib/notes.mjs";
 import { createDb, createFiles } from "./lib/store.mjs";
+import { createOverrides } from "./lib/secrets.mjs";
 import { checkProof, compressArgs } from "./lib/proof.mjs";
 
 const db = createDb();
-const files = createFiles();
+// Keys saved in Admin -> Settings -> Integrations win over this worker's environment; re-read every tick.
+const refreshSettings = createOverrides(db);
+let store = createFiles();
+const files = {
+  put: (...a) => store.put(...a), get: (...a) => store.get(...a), remove: (...a) => store.remove(...a),
+};
 const REC = (p) => `session-recordings/${p}`;
 // Columns the worker reads, with dates and times as plain text.
 const SESSION_COLS = `id::text, session_date::text, to_char(start_time, 'HH24:MI') start_time, to_char(end_time, 'HH24:MI') end_time,
@@ -251,6 +257,9 @@ async function processProofs() {
 }
 
 async function tick() {
+  const changed = await refreshSettings();
+  if (changed.some((k) => k.startsWith("S3_"))) store = createFiles();
+  if (changed.length) log("settings updated from admin:", changed.join(", "));
   const due = await db.q(`select ${SESSION_COLS} from public.sessions
      where recording_status in ('scheduled', 'processing')
        and (recording_next_attempt_at is null or recording_next_attempt_at <= now()) limit 10`);

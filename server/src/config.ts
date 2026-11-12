@@ -73,6 +73,19 @@ const Env = z.object({
    * that many entries from the end). Read directly from process.env by phoneAuthPlugin.clientIp.
    */
   TRUSTED_PROXY_HOPS: z.coerce.number().int().min(1).default(1),
+  /**
+   * Encrypts the provider keys saved in Admin -> Settings -> Integrations. 32+ random characters,
+   * e.g. `openssl rand -base64 32`. Without it the key is derived from AUTH_SECRET (then changing
+   * AUTH_SECRET means re-entering those keys). The recording worker needs the same value.
+   */
+  SETTINGS_ENCRYPTION_KEY: z.string().optional(),
+
+  // AI notes (used by the recording worker; here so the admin screen can test them).
+  OPENAI_API_KEY: z.string().optional(),
+  STT_MODEL: z.string().default("whisper-1"),
+  ANTHROPIC_API_KEY: z.string().optional(),
+  NOTES_LLM_MODEL: z.string().default("claude-sonnet-5-5"),
+
   /** Run the once-a-minute notification job inside the API process. */
   JOBS_ENABLED: z.enum(["true", "false"]).default("true"),
 });

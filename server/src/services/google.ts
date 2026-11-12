@@ -15,7 +15,7 @@ export const SCOPES = {
 
 interface ServiceAccount { client_email: string; private_key: string; token_uri?: string }
 
-function serviceAccount(svc: Services): ServiceAccount {
+export function serviceAccount(svc: Pick<Services, "config">): ServiceAccount {
   const raw = svc.config.GOOGLE_SERVICE_ACCOUNT_JSON;
   if (!raw) throw new HttpError(503, "Google Meet is not configured (GOOGLE_SERVICE_ACCOUNT_JSON)");
   try {
@@ -45,11 +45,12 @@ export function signDelegationJwt(sa: ServiceAccount, scopes: string[], subject:
 
 const tokenCache = new Map<string, { token: string; exp: number }>();
 
-export async function googleToken(svc: Services, scopes: string[]): Promise<string> {
+export async function googleToken(svc: Services, scopes: string[], opts: { fresh?: boolean } = {}): Promise<string> {
   const sa = serviceAccount(svc);
   const subject = organizer(svc);
-  const key = `${sa.client_email}|${subject}|${scopes.join(" ")}`;
-  const hit = tokenCache.get(key);
+  // The private key is part of the cache key, so a replaced key is used at once.
+  const key = `${sa.client_email}|${subject}|${scopes.join(" ")}|${sa.private_key.slice(-24)}`;
+  const hit = opts.fresh ? undefined : tokenCache.get(key);
   if (hit && hit.exp > Date.now() + 60_000) return hit.token;
   const res = await svc.fetch(sa.token_uri ?? "https://oauth2.googleapis.com/token", {
     method: "POST",

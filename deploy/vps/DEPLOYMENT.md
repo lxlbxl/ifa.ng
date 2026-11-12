@@ -94,3 +94,14 @@ Uploaded files (avatars, recordings) live in MinIO; back up its bucket with your
 4. Optional error tracking: set `SENTRY_DSN` (API) and `VITE_SENTRY_DSN` (web) in `.env`, then rebuild. Add the Sentry ingest host to `connect-src` in `security-headers.conf` when the CSP is enforced.
 5. Set `VITE_SUPPORT_EMAIL` and `VITE_SUPPORT_WHATSAPP` (international format without +) in `.env` for the Help page and footer, then rebuild the web app.
 6. Have the Terms, Privacy and Refund pages (`/terms`, `/privacy`, `/refunds`, in `src/pages/Legal.tsx`) reviewed. Confirm the main site, `www`, `/health`, phone sign-in, a test payment, file upload, and any enabled notification/video providers before launch.
+
+## Provider keys from the admin screen
+
+Admin → Settings → Integrations lets an admin enter, replace and test every provider key
+(Paystack, Flutterwave, Google Meet, Agora, Termii, WhatsApp, SMTP, VAPID, storage, OpenAI,
+Anthropic, Sentry). A value saved there overrides the same name in `.env` at once, without a
+restart; "Use server value" goes back to `.env`. Values are encrypted with
+`SETTINGS_ENCRYPTION_KEY` (or, if unset, a key derived from `AUTH_SECRET`) and stored in
+`private.integration_secrets`, which PostgREST does not serve. The API and the recording worker
+must share the same key. If that key changes, re-enter the saved values. Saves and tests are
+recorded in the admin activity log, without the values.

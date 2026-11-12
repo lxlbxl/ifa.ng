@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useRef, useState } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Video, ShieldCheck, ExternalLink, LifeBuoy, Upload } from "lucide-react";
@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useSessionById } from "@/hooks/useSessionById";
 import { toast } from "@/hooks/use-toast";
-import AgoraVideoRoom from "./AgoraVideoRoom";
+// The backup video SDK is large: only load it when a session actually falls back to it.
+const AgoraVideoRoom = lazy(() => import("./AgoraVideoRoom"));
 import NetworkStatusBar from "./pwa/NetworkStatusBar";
 import ConsentFields, { ConsentValue } from "./session/ConsentFields";
 import { acceptInstantSession, cancelSession, recordSessionJoin } from "@/utils/sessionActions";
@@ -77,7 +78,9 @@ const SessionVideoRoom = () => {
           <p className="text-center text-xs text-muted-foreground p-2">Using backup video because Google Meet was unavailable.</p>
         )}
         <JoinRecorder sessionId={sessionId} />
-        <AgoraVideoRoom sessionId={sessionId} onLeave={leave} />
+        <Suspense fallback={<div className="grid min-h-[50vh] place-items-center"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+          <AgoraVideoRoom sessionId={sessionId} onLeave={leave} />
+        </Suspense>
       </div>
     );
   }

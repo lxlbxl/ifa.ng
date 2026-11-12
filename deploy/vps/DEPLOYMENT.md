@@ -47,3 +47,30 @@ docker exec "$api_container" node update-profile-portraits.mjs
 This updates profile display names, removes their visible demo tags and serves the portraits through the private MinIO-backed API. The reserved test email addresses and financial fixture markers are preserved. Generated media, credentials, database dumps and logs are intentionally kept outside Git.
 
 `node check-demo.mjs` checks fixture logins, row access, signed recording access, notes and avatars against the public deployment. It spaces logins to respect production rate limits. The completed deployment checks also confirmed public search displays the three approved seeded practitioners.
+
+## Backups
+
+The `backup` service dumps the database every night at `BACKUP_HOUR` (UTC), checks the dump can be read, and keeps `BACKUP_KEEP_LOCAL` days in the `backups` volume. Set `RCLONE_REMOTE` and the `BACKUP_S3_*` values in `.env` to also copy each dump to a bucket off this server (keep `BACKUP_KEEP_REMOTE` days there). Without it, a lost server means lost data.
+
+```sh
+# Take one backup now
+docker compose -f compose.yml run --rm -e BACKUP_ONCE=1 backup
+# List backups
+docker compose -f compose.yml run --rm --entrypoint ls backup -lh /backups
+# Check a backup restores (into a scratch database, production untouched)
+docker compose -f compose.yml run --rm --entrypoint restore.sh backup /backups/ifa-<timestamp>.dump
+```
+
+Uploaded files (avatars, recordings) live in MinIO; back up its bucket with your MinIO/S3 tooling.
+
+## Before real people use it
+
+1. Remove the demo accounts and their fictional sessions and money (including the demo admin, which signs in with a password):
+   ```sh
+   docker compose -f compose.yml exec -T db psql -U ifa_admin -d ifa -v ON_ERROR_STOP=1 < remove-demo.sql
+   rm -f demo-credentials.json DEMO-ACCESS.md
+   ```
+2. Set the provider keys (Paystack/Flutterwave, Termii, WhatsApp, Google, VAPID) and check Admin → Settings → Integrations shows them as set.
+3. Optional error tracking: set `SENTRY_DSN` (API) and `VITE_SENTRY_DSN` (web) in `.env`, then rebuild. Add the Sentry ingest host to `connect-src` in `security-headers.conf` when the CSP is enforced.
+4. Set `VITE_SUPPORT_EMAIL` (and `VITE_SUPPORT_WHATSAPP`, international format without +) in `.env` for the Help page and footer, then rebuild the web app.
+5. Have the Terms, Privacy and Refund pages (`/terms`, `/privacy`, `/refunds`, in `src/pages/Legal.tsx`) reviewed.

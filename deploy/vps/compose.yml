@@ -49,6 +49,10 @@ services:
     build:
       context: ../..
       dockerfile: deploy/vps/Dockerfile.web
+      args:
+        VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
+        VITE_SUPPORT_EMAIL: ${VITE_SUPPORT_EMAIL:-support@ifa.ng}
+        VITE_SUPPORT_WHATSAPP: ${VITE_SUPPORT_WHATSAPP:-}
     restart: unless-stopped
     networks: [private, coolify]
     depends_on: [api, postgrest]
@@ -67,9 +71,34 @@ services:
       - traefik.http.routers.ifa-app-http.middlewares=ifa-app-https
       - traefik.http.middlewares.ifa-app-https.redirectscheme.scheme=https
       - traefik.http.middlewares.ifa-app-https.redirectscheme.permanent=true
+  # Nightly database dump, checked and kept 7 days here; set RCLONE_REMOTE to copy it off the server too.
+  # Restore: see DEPLOYMENT.md ("Backups").
+  backup:
+    build: ../backup
+    restart: unless-stopped
+    networks: [private]
+    depends_on:
+      db: {condition: service_healthy}
+    environment:
+      PGHOST: db
+      PGDATABASE: ${POSTGRES_DB:-ifa}
+      PGUSER: ${POSTGRES_USER:-ifa_admin}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      BACKUP_HOUR: ${BACKUP_HOUR:-2}
+      BACKUP_KEEP_LOCAL: ${BACKUP_KEEP_LOCAL:-7}
+      BACKUP_KEEP_REMOTE: ${BACKUP_KEEP_REMOTE:-30}
+      RCLONE_REMOTE: ${RCLONE_REMOTE:-}
+      RCLONE_CONFIG_OFFSITE_TYPE: s3
+      RCLONE_CONFIG_OFFSITE_PROVIDER: ${BACKUP_S3_PROVIDER:-Other}
+      RCLONE_CONFIG_OFFSITE_ACCESS_KEY_ID: ${BACKUP_S3_ACCESS_KEY_ID:-}
+      RCLONE_CONFIG_OFFSITE_SECRET_ACCESS_KEY: ${BACKUP_S3_SECRET_ACCESS_KEY:-}
+      RCLONE_CONFIG_OFFSITE_ENDPOINT: ${BACKUP_S3_ENDPOINT:-}
+    volumes:
+      - backups:/backups
 volumes:
   pgdata:
   files:
+  backups:
 networks:
   private:
   coolify:

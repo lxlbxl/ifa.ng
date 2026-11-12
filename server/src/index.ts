@@ -8,8 +8,11 @@ import { startJobs } from "./services/jobs.js";
 import { createLiveHub } from "./services/live.js";
 import { createFileStore } from "./services/storage.js";
 import { pushNotification } from "./services/push.js";
+import { initErrorReporting, reportError } from "./services/errors.js";
 
 const config = loadConfig();
+initErrorReporting({ dsn: config.SENTRY_DSN, environment: config.NODE_ENV });
+process.on("unhandledRejection", (e) => reportError(e, { kind: "unhandledRejection" }));
 const database = createDb(config.DATABASE_URL);
 const auth = createAuth(config, createMailer(config.SMTP_URL, config.MAIL_FROM));
 const files = createFileStore(config);

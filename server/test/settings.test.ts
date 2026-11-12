@@ -59,3 +59,17 @@ describe("admin settings", () => {
     expect((await user.request("/v1/admin/integrations")).status).toBe(403);
   });
 });
+
+describe("error reporting", () => {
+  it("turns a Sentry DSN into its envelope endpoint and sends nothing secret", async () => {
+    const { parseDsn, envelope } = await import("../src/services/errors.js");
+    expect(parseDsn("https://abc123@o42.ingest.sentry.io/77")).toEqual({ url: "https://o42.ingest.sentry.io/api/77/envelope/", key: "abc123" });
+    expect(parseDsn("not a dsn")).toBeNull();
+    expect(parseDsn(undefined)).toBeNull();
+    const lines = envelope(new Error("boom"), { path: "/v1/x" }, "test").trim().split("\n");
+    expect(lines).toHaveLength(3);
+    const event = JSON.parse(lines[2]);
+    expect(event.exception.values[0]).toMatchObject({ type: "Error", value: "boom" });
+    expect(event.extra).toEqual({ path: "/v1/x" });
+  });
+});

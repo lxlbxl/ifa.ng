@@ -4,7 +4,9 @@ import { useSearchParams } from "react-router-dom";
 import { ADMIN_TABS, resolveTab } from "@/lib/dashboardLinks";
 import AdminSidebar from "@/components/dashboard/admin/AdminSidebar";
 import AdminHeader from "@/components/dashboard/admin/AdminHeader";
-import AdminSummaryCards from "@/components/dashboard/admin/AdminSummaryCards";
+import AdminInsights from "@/components/dashboard/admin/insights/AdminInsights";
+import { hasInsights } from "@/components/dashboard/admin/insights/sectionInsights";
+import type { InsightPeriod } from "@/components/brand";
 import AdminSectionTabs from "@/components/dashboard/admin/AdminSectionTabs";
 import AdminAnalyticsPanels from "@/components/dashboard/admin/AdminAnalyticsPanels";
 import AdminSidebarMobile from "@/components/dashboard/admin/AdminSidebarMobile";
@@ -34,6 +36,8 @@ const AdminDashboard = () => {
   const activeSection = resolveTab(ADMIN_TABS, searchParams.get('section') ?? searchParams.get('tab'), 'overview') as AdminSection;
   const setActiveSection = (section: AdminSection) => setSearchParams(section === 'overview' ? {} : { section });
   const [mobileOpen, setMobileOpen] = useState(false);
+  // One period for every admin page, so switching pages keeps the comparison the same.
+  const [insightDays, setInsightDays] = useState<InsightPeriod>(30);
   const { isAdmin, loading } = useAuth();
   if (!loading && !isAdmin) return <Navigate to="/dashboard" replace />;
 
@@ -92,8 +96,10 @@ const AdminDashboard = () => {
       <main className="mx-auto flex w-full min-w-0 max-w-[1440px] flex-1 flex-col px-4 pb-24 pt-6 md:pb-10 lg:px-10 lg:pt-10">
         <div className="space-y-6">
           <AdminHeader title={sectionTitle} onOpenMenu={() => setMobileOpen(true)} />
-          {activeSection === 'overview' && <AdminSummaryCards />}
           <AdminSectionTabs activeSection={activeSection} onSectionChange={setActiveSection} />
+          {hasInsights(activeSection) && (
+            <AdminInsights section={activeSection} days={insightDays} onDaysChange={setInsightDays} />
+          )}
           <div className="w-full min-w-0">{renderActiveSection()}</div>
         </div>
       </main>

@@ -114,3 +114,17 @@ Build pages from `src/components/dashboard/shell/Panel.tsx`:
 
 Home pages open with an ink greeting band carrying the one sun button, then `StatTile`s
 (leaf, paper, indigo, coral), then panels. Money and ritual totals use `font-display`.
+
+## Insight cards
+
+`InsightCard` (from `@/components/brand`) is the KPI card for dashboards: eyebrow label, big value,
+a change chip against the previous period (green when better, coral when worse; pass `invertDelta`
+when a fall is good news, such as refunds or wait times) and a small sparkline. It uses the same
+tones as `StatTile`, so the two sit together. Lay cards out with `InsightGrid` (2 across on phones,
+4 on wide screens) and let people pick the period with `InsightPeriodPicker` (7, 30 or 90 days).
+Keep one sun card (the headline) per grid, leaf for money the platform keeps, and coral only for
+something that needs action; a coral card with nothing to act on falls back to paper.
+
+Admin pages get their cards from `src/components/dashboard/admin/insights/sectionInsights.ts`
+(labels, formats, tones) and the `admin_insights(section, days)` database function (numbers).
+To add a card: add the metric to the function's section and a line to that file.

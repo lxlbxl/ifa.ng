@@ -56,10 +56,12 @@ export const adminAdjustWallet = async (
   userId: string,
   amount: number,
   type: 'credit' | 'debit',
-  description: string
+  description: string,
+  provider?: 'paystack' | 'flutterwave'
 ): Promise<{ success: boolean; error?: string }> => {
   const { error } = await supabase.rpc('admin_adjust_wallet' as any, {
     p_user_id: userId, p_amount: amount, p_type: type, p_description: description,
+    p_provider: type === 'credit' ? provider ?? null : null,
   });
   return error ? { success: false, error: error.message } : { success: true };
 };

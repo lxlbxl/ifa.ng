@@ -31,7 +31,7 @@ afterAll(() => admin?.end());
 
 describe("session times", () => {
   it("reads a booked time on the Babalawo's clock and remembers the client's zone", async () => {
-    const r = await one<{ id: number }>(`select public._create_paid_session($1, $2, '2027-01-15', '14:00', false, 10000, 'wallet', 'tz-1') id`,
+    const r = await one<{ id: number }>(`select public._create_paid_session($1, $2, '2027-01-15', '14:00', false, 10000, 'paystack', 'tz-1') id`,
       [CLIENT, BABA]);
     const s = await one<{ starts_at: Date; ends_at: Date; user_timezone: string; start: Date }>(
       `select starts_at, ends_at, user_timezone, public.session_start_at(id) start from sessions where id = $1`, [r.id]);
@@ -43,14 +43,14 @@ describe("session times", () => {
   });
 
   it("follows summer time on the Babalawo's side", async () => {
-    const r = await one<{ id: number }>(`select public._create_paid_session($1, $2, '2027-07-15', '14:00', false, 10000, 'wallet', 'tz-2') id`,
+    const r = await one<{ id: number }>(`select public._create_paid_session($1, $2, '2027-07-15', '14:00', false, 10000, 'paystack', 'tz-2') id`,
       [CLIENT, BABA]);
     const s = await one<{ starts_at: Date }>(`select starts_at from sessions where id = $1`, [r.id]);
     expect(s.starts_at.toISOString()).toBe("2027-07-15T13:00:00.000Z");
   });
 
   it("moves the real start when the time changes", async () => {
-    const r = await one<{ id: number }>(`select public._create_paid_session($1, $2, '2027-02-01', '10:00', false, 10000, 'wallet', 'tz-3') id`,
+    const r = await one<{ id: number }>(`select public._create_paid_session($1, $2, '2027-02-01', '10:00', false, 10000, 'paystack', 'tz-3') id`,
       [CLIENT, BABA]);
     await admin.query(`update sessions set start_time = '11:30', end_time = '12:15' where id = $1`, [r.id]);
     const s = await one<{ starts_at: Date; ends_at: Date }>(`select starts_at, ends_at from sessions where id = $1`, [r.id]);
@@ -59,7 +59,7 @@ describe("session times", () => {
   });
 
   it("starts Consult Now when it is paid, whatever date the browser sent", async () => {
-    const r = await one<{ id: number }>(`select public._create_paid_session($1, $2, '2020-01-01', '03:00', true, 10000, 'wallet', 'tz-4') id`,
+    const r = await one<{ id: number }>(`select public._create_paid_session($1, $2, '2020-01-01', '03:00', true, 10000, 'paystack', 'tz-4') id`,
       [CLIENT, BABA]);
     const s = await one<{ starts_at: Date; session_date: string; start_time: string }>(
       `select starts_at, session_date::text, to_char(start_time, 'HH24:MI') start_time from sessions where id = $1`, [r.id]);

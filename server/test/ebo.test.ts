@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import pg from "pg";
 import { migrate } from "../src/migrate.js";
-import { freshDatabase } from "./helpers.js";
+import { freshDatabase, setBabalawoAvailable, setWallet } from "./helpers.js";
 
 /**
  * Ebo money flow, end to end in the database, acting as each person through
@@ -68,8 +68,8 @@ beforeAll(async () => {
   await admin.query(`insert into auth.users(id,email,raw_user_meta_data) values
     ('${CLIENT}','c@x.ng','{}'), ('${OTHER}','o@x.ng','{}'), ('${ADMIN}','ad@x.ng','{}'), ('${BABA}','b@x.ng','{"role":"babalawo"}')`);
   await admin.query(`insert into user_roles(user_id, role) values ('${ADMIN}','admin') on conflict do nothing`);
-  await admin.query(`insert into wallets(user_id,balance) values ('${CLIENT}', 1000000), ('${OTHER}', 1000000)
-    on conflict (user_id) do update set balance = excluded.balance`);
+  await setWallet(admin, CLIENT, 1000000);
+  await setWallet(admin, OTHER, 1000000);
   const s = await admin.query(`insert into sessions(user_id,babalawo_id,session_date,start_time,end_time,status,payment_status,amount)
     values ('${CLIENT}','${BABA}', current_date, '10:00','11:00','completed','paid',15000) returning id::text`);
   sessionId = s.rows[0].id;
@@ -307,7 +307,7 @@ describe("Ebo: card payments", () => {
   it("takes part from the wallet and the rest by card", async () => {
     const id = await sentEbo();
     const keep = await wallet(CLIENT);
-    await admin.query("update wallets set balance = 5000 where user_id = $1", [CLIENT]);
+    await setWallet(admin, CLIENT, 5000);
     const r = await must(null, "select * from public.create_payment_intent($1,'ebo','paystack',null,null,null,null,false,$2,'absent',true)", [CLIENT, id]);
     expect(Number(r[0].wallet_amount)).toBe(5000);
     expect(Number(r[0].amount)).toBe(35200 - 5000);
@@ -315,7 +315,7 @@ describe("Ebo: card payments", () => {
     expect(s[0].r.status).toBe("settled");
     expect((await ebo(id)).status).toBe("paid");
     expect(await wallet(CLIENT)).toBe(0);
-    await admin.query("update wallets set balance = $2 where user_id = $1", [CLIENT, keep]);
+    await setWallet(admin, CLIENT, Number(keep));
   });
 
   it("does not let clients call the settlement functions", async () => {

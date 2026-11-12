@@ -20,7 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSetUserRole, useSetUserSuspended, useAdminRefundSession, useReviewBabalawo } from "@/hooks/useAdminActions";
 import BabalawoCommissionModal from "./BabalawoCommissionModal";
 import {
-  exportUserData, useAddUserNote, useSetBabalawoListing, useAdjustUserWallet, useMessageUser, useSignOutUser, useUpdateUserNote, useUserDetail,
+  exportUserData, useAddUserNote, useSetBabalawoListing, useAdjustUserWallet, useMessageUser, type Provider, useSignOutUser, useUpdateUserNote, useUserDetail,
   type UserDetail,
 } from "@/hooks/useAdminUserRecords";
 import { downloadJson, requestLabel } from "@/lib/privacy";
@@ -99,6 +99,7 @@ function ActionDialogs({ kind, onClose, d, userId }: { kind: DialogKind; onClose
   const [pinned, setPinned] = useState(false);
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<"credit" | "debit">("credit");
+  const [provider, setProvider] = useState<Provider | null>(null);
   const message = useMessageUser();
   const note = useAddUserNote();
   const suspend = useSetUserSuspended();
@@ -174,13 +175,15 @@ function ActionDialogs({ kind, onClose, d, userId }: { kind: DialogKind; onClose
               ))}
             </div>
             <div><Label htmlFor="w-amt">Amount (₦)</Label><Input id="w-amt" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d.]/g, ""))} /></div>
+            {type === "credit" && <ProviderPicker value={provider} onChange={setProvider} />}
             <div><Label htmlFor="w-why">Reason</Label><Textarea id="w-why" value={text} onChange={(e) => setText(e.target.value)} placeholder="e.g. Goodwill credit for the dropped call on 10 Nov" /></div>
             {type === "debit" && amt > Number(d.wallet.balance) && <p className="text-sm text-camwood">That is more than the balance.</p>}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={onClose}>Cancel</Button>
-            <Button variant="sun" disabled={!(amt > 0) || text.trim().length < 3 || wallet.isPending || (type === "debit" && amt > Number(d.wallet.balance))}
-              onClick={() => wallet.mutate({ userId, amount: amt, type, reason: text.trim() }, { onSuccess: done })}>
+            <Button variant="sun" disabled={!(amt > 0) || text.trim().length < 3 || wallet.isPending || (type === "debit" && amt > Number(d.wallet.balance))
+                || (type === "credit" && !provider)}
+              onClick={() => wallet.mutate({ userId, amount: amt, type, reason: text.trim(), provider: provider ?? undefined }, { onSuccess: done })}>
               {type === "credit" ? `Add ${amount ? naira(amt) : ""}` : `Take ${amount ? naira(amt) : ""}`}
             </Button>
           </DialogFooter>
@@ -674,3 +677,24 @@ const AdminUserDetail = ({ userId, onBack, onOpen, backLabel = "All people" }: {
 };
 
 export default AdminUserDetail;
+
+/**
+ * Money on IFA.ng sits in the Paystack or the Flutterwave balance, and a Babalawo is paid out by the
+ * provider that holds it. A wallet credit must therefore say whose balance it comes from.
+ */
+export function ProviderPicker({ value, onChange }: { value: Provider | null; onChange: (p: Provider) => void }) {
+  return (
+    <div>
+      <Label>Paid from which balance</Label>
+      <div className="mt-1 flex gap-2">
+        {(["paystack", "flutterwave"] as const).map((p) => (
+          <button key={p} type="button" onClick={() => onChange(p)} aria-pressed={value === p}
+            className={cn("h-10 flex-1 rounded-pill text-sm font-bold", value === p ? "bg-ink text-cloth" : "border border-line bg-paper")}>
+            {p === "paystack" ? "Paystack" : "Flutterwave"}
+          </button>
+        ))}
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">Babalawos are paid from the same provider, so pick the balance this money really sits in.</p>
+    </div>
+  );
+}

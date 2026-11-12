@@ -11,6 +11,7 @@ import AdminSidebarMobile from "@/components/dashboard/admin/AdminSidebarMobile"
 import AdminTransactionHistory from "@/components/dashboard/admin/AdminTransactionHistory";
 import AdminWalletManagement from "@/components/dashboard/admin/AdminWalletManagement";
 import UserManagement from "@/components/dashboard/admin/UserManagement";
+import AdminUserDetail from "@/components/dashboard/admin/AdminUserDetail";
 import BabalawoManagement from "@/components/dashboard/admin/BabalawoManagement";
 import BabalawoApplications from "@/components/dashboard/admin/BabalawoApplications";
 import PaymentsFinancePanel from "@/components/dashboard/admin/PaymentsFinancePanel";
@@ -34,6 +35,14 @@ const AdminDashboard = () => {
   const activeSection = resolveTab(ADMIN_TABS, searchParams.get('section') ?? searchParams.get('tab'), 'overview') as AdminSection;
   const setActiveSection = (section: AdminSection) => setSearchParams(section === 'overview' ? {} : { section });
   const [mobileOpen, setMobileOpen] = useState(false);
+  // ?user=<id> opens a person's record inside the current section (Users or Babalawos).
+  const openUser = searchParams.get('user');
+  const openRecord = (id: string | null) => {
+    const next = new URLSearchParams(searchParams);
+    if (id) next.set('user', id); else next.delete('user');
+    setSearchParams(next);
+    window.scrollTo({ top: 0 });
+  };
   const { isAdmin, loading } = useAuth();
   if (!loading && !isAdmin) return <Navigate to="/dashboard" replace />;
 
@@ -44,7 +53,9 @@ const AdminDashboard = () => {
       case 'users':
         return <UserManagement />;
       case 'babalawos':
-        return <BabalawoManagement />;
+        return openUser
+          ? <AdminUserDetail userId={openUser} backLabel="All Babalawos" onBack={() => openRecord(null)} onOpen={openRecord} />
+          : <BabalawoManagement onOpen={openRecord} />;
       case 'applications':
         return <BabalawoApplications />;
       case 'bookings':
@@ -92,7 +103,7 @@ const AdminDashboard = () => {
       <main className="mx-auto flex w-full min-w-0 max-w-[1440px] flex-1 flex-col px-4 pb-24 pt-6 md:pb-10 lg:px-10 lg:pt-10">
         <div className="space-y-6">
           <AdminHeader title={sectionTitle} onOpenMenu={() => setMobileOpen(true)} />
-          {activeSection === 'overview' && <AdminSummaryCards />}
+          {activeSection === 'overview' && !openUser && <AdminSummaryCards />}
           <AdminSectionTabs activeSection={activeSection} onSectionChange={setActiveSection} />
           <div className="w-full min-w-0">{renderActiveSection()}</div>
         </div>

@@ -258,10 +258,10 @@ const PaymentAnalyticsDashboard = () => {
                                 amount: 0
                               };
                             }
-                            acc[stat.gateway].total += parseInt(stat.total_transactions);
-                            acc[stat.gateway].success += parseInt(stat.successful_transactions);
-                            acc[stat.gateway].failed += parseInt(stat.failed_transactions);
-                            acc[stat.gateway].amount += parseFloat(stat.total_amount);
+                            acc[stat.gateway].total += parseInt(String(stat.total_transactions));
+                            acc[stat.gateway].success += parseInt(String(stat.successful_transactions));
+                            acc[stat.gateway].failed += parseInt(String(stat.failed_transactions));
+                            acc[stat.gateway].amount += parseFloat(String(stat.total_amount));
                             return acc;
                           }, {})
                         ).map((agg: any) => (
@@ -320,10 +320,10 @@ const PaymentAnalyticsDashboard = () => {
                       </div>
                       <div className="text-right">
                         <div className="font-bold text-lg">
-                          ₦{parseFloat(babalawo.total_earnings).toLocaleString()}
+                          ₦{parseFloat(String(babalawo.total_earnings)).toLocaleString()}
                         </div>
                         <div className="text-sm text-gray-500">
-                          Avg: ₦{parseFloat(babalawo.average_session_price).toLocaleString()}
+                          Avg: ₦{parseFloat(String(babalawo.average_session_price)).toLocaleString()}
                         </div>
                       </div>
                     </div>

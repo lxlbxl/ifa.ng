@@ -1,7 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { createPaymentIntent, openCheckout, verifyPayment, PaymentGateway } from "./paymentGatewayUtils";
-import { generateSessionIdempotencyKey } from "./webhookVerification";
 
 export type PaymentMethod = 'wallet' | 'flutterwave' | 'paystack';
 
@@ -87,3 +86,7 @@ export const handlePaymentAndBooking = async (
     onError(friendly(err?.message || "An unexpected error occurred"));
   }
 };
+
+/** Same booking, same key: a double tap cannot create two bookings. */
+export const generateSessionIdempotencyKey = (userId: string, babalawoId: string | number, date: string, time: string): string =>
+  `${userId}-${babalawoId}-${date}-${time}`;

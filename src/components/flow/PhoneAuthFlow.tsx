@@ -99,7 +99,9 @@ export function PhoneAuthFlow({ onDone, onExit, onClose, progress = (p) => p, to
     setBusy(true); setError(null);
     try {
       const r = await apiAuth.phoneVerifyOtp(phone, code);
-      setTicket(r.pin_ticket);
+      // Admins with a PIN are signed in by the code alone.
+      if (r.skip_pin) { finish(false, r.needs_name); return; }
+      setTicket(r.pin_ticket ?? '');
       setIsNew(r.is_new);
       setNeedsName(r.needs_name);
       go('newPin');
@@ -115,6 +117,7 @@ export function PhoneAuthFlow({ onDone, onExit, onClose, progress = (p) => p, to
       finish(false, r.needs_name);
     } catch (e) {
       if (errCode(e) === 'NO_PIN') { await submitPhone(true); return; }
+      if (errCode(e) === 'CODE_REQUIRED') { await submitPhone(false); return; }
       setError(errMsg(e)); setValue('');
     } finally { setBusy(false); }
   }

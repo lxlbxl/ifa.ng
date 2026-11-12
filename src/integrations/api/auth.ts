@@ -30,8 +30,8 @@ export interface AppSession {
 export type AuthEvent = "INITIAL_SESSION" | "SIGNED_IN" | "SIGNED_OUT" | "TOKEN_REFRESHED" | "USER_UPDATED";
 
 export type PhoneStartResult =
-  | { next: "pin"; phone: string; name: string | null }
-  | { next: "otp"; phone: string; channel: "sms" | "whatsapp"; purpose: "login" | "reset_pin"; isNew: boolean;
+  | { next: "pin"; phone: string; name?: string | null }
+  | { next: "otp"; phone: string; channel: "sms" | "whatsapp"; purpose: "login" | "reset_pin" | "admin_login"; isNew: boolean;
       resend_in: number; dev_code?: string };
 
 export interface PhoneOtpResult {
@@ -39,7 +39,10 @@ export interface PhoneOtpResult {
   is_new: boolean;
   has_pin: boolean;
   needs_name: boolean;
-  pin_ticket: string;
+  /** Absent when skip_pin is true. */
+  pin_ticket?: string;
+  /** An admin signed in by code alone: no PIN step. */
+  skip_pin?: boolean;
 }
 type Listener = (event: AuthEvent, session: AppSession | null) => void;
 

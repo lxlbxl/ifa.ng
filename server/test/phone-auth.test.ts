@@ -94,7 +94,8 @@ describe("phone + PIN login", () => {
 
   it("asks a returning number for its PIN instead of sending a code", async () => {
     const s = await (await post("/phone/start", { phone: "+2348011112222" }, { ip: freshIp() })).json();
-    expect(s).toEqual({ next: "pin", phone: "+2348011112222", name: "Adé" });
+    // The name is never returned: anyone can type any number.
+    expect(s).toEqual({ next: "pin", phone: "+2348011112222" });
     const ok = await post("/phone/sign-in-pin", { phone: "+2348011112222", pin: "2580" }, { ip: freshIp() });
     expect(ok.status).toBe(200);
     expect((await ok.json()).needs_name).toBe(false);
@@ -252,5 +253,39 @@ describe("Babalawo applications", () => {
     expect(r.rows[0]).toMatchObject({ status: "approved", verified: true, review: "approved", name: "Babalawo Ifásọlá",
       spec: ["Odù readings", "Ẹbọ"] });
     expect(r.rows[0].roles).toEqual(expect.arrayContaining(["user", "babalawo"]));
+  });
+});
+
+describe("admin sign-in and client IPs", () => {
+  it("makes an admin confirm with a fresh code, never a PIN alone", async () => {
+    const phone = "+2348077770001";
+    const { body } = await register(phone, "4826");
+    await svc(sql`insert into user_roles(user_id, role) values (${body.user.id}::uuid, 'admin') on conflict do nothing`);
+
+    const pinTry = await post("/phone/sign-in-pin", { phone, pin: "4826" }, { ip: freshIp() });
+    expect(pinTry.status).toBe(400);
+    expect((await pinTry.json()).code).toBe("CODE_REQUIRED");
+
+    // Past the resend cooldown from registering.
+    await svc(sql`update auth.phone_otps set created_at = created_at - interval '2 minutes' where phone = ${phone}`);
+    const s = await (await post("/phone/start", { phone }, { ip: freshIp() })).json();
+    expect(s).toMatchObject({ next: "otp", purpose: "admin_login" });
+    const v = await post("/phone/verify-otp", { phone, code: lastCode(phone) }, { ip: freshIp() });
+    expect(v.status).toBe(200);
+    const vb = await v.json();
+    expect(vb.skip_pin).toBe(true);
+    expect(vb.pin_ticket).toBeUndefined();
+    expect(cookieFrom(v)).toMatch(/ifa\.session_token=/);
+  });
+
+  it("reads the visitor IP the configured number of proxies from the end", async () => {
+    const { clientIp } = await import("../src/phoneAuthPlugin.js");
+    const req = (xff: string) => new Request("http://x", { headers: { "x-forwarded-for": xff } });
+    expect(clientIp(req("1.1.1.1"), 1)).toBe("1.1.1.1");
+    // A visitor-written entry on the left is ignored.
+    expect(clientIp(req("6.6.6.6, 1.1.1.1"), 1)).toBe("1.1.1.1");
+    // Traefik then nginx appending: the visitor is second from the end.
+    expect(clientIp(req("1.1.1.1, 172.18.0.5"), 2)).toBe("1.1.1.1");
+    expect(clientIp(req("1.1.1.1"), 3)).toBe("1.1.1.1");
   });
 });

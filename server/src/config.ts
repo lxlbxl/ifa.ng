@@ -67,6 +67,11 @@ const Env = z.object({
   /** Contact for push services, a mailto: or https: URL. */
   VAPID_SUBJECT: z.string().default("mailto:support@ifa.ng"),
 
+  /**
+   * Proxies in front of the API that append to X-Forwarded-For (rate limits read the visitor's IP
+   * that many entries from the end). Read directly from process.env by phoneAuthPlugin.clientIp.
+   */
+  TRUSTED_PROXY_HOPS: z.coerce.number().int().min(1).default(1),
   /** Run the once-a-minute notification job inside the API process. */
   JOBS_ENABLED: z.enum(["true", "false"]).default("true"),
 });

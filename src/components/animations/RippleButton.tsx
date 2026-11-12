@@ -66,7 +66,7 @@ const RippleButton = React.forwardRef<HTMLButtonElement, RippleButtonProps>(
         onClick={handleClick}
         whileTap={{ scale: 0.97 }}
         transition={{ duration: 0.1 }}
-        {...props}
+        {...(props as any)}
       >
         {children}
         {ripples.map((ripple) => (

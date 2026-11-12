@@ -121,12 +121,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     // Listen for Supabase auth events FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // The adapter's INITIAL_SESSION event is queued immediately with its
+      // in-memory value (which is still null while the cookie check is in
+      // flight). Treating it as a real sign-out can redirect protected pages
+      // to /auth during a reload, for example after returning from a browser
+      // notification permission prompt.
+      if (event === 'INITIAL_SESSION') return;
       setSession(session);
       setUser(session?.user ?? null);
-      setTimeout(() => {
-        getProfile();
-      }, 0);
+      if (session) {
+        setTimeout(() => getProfile(), 0);
+      } else {
+        setUserProfile(null);
+        setRoles([]);
+        setIsProfileComplete(false);
+        setLoading(false);
+      }
     });
 
     // Then check for existing session
@@ -134,7 +145,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-    });
+    }).catch(() => setLoading(false));
 
     return () => {
       subscription?.unsubscribe();
@@ -144,8 +155,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (user) {
       getProfile();
-    } else {
-      setLoading(false);
     }
   }, [user, getProfile]);
 

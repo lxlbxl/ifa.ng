@@ -12,11 +12,12 @@ import { useBabalawoReviews } from "@/hooks/useBabalawoReviews";
 import { useBabalawoDashboardStats } from "@/hooks/useBabalawoDashboardStatsSimple";
 import { ClothStrip, EmptyState, Panel, PanelHeader, greeting } from "@/components/dashboard/shell/Panel";
 import { PresenceCard } from "./PresenceToggle";
+import { sessionStart, sessionEnd } from "@/utils/sessionTime";
 
-type Row = { id: number; session_date: string; start_time: string; end_time: string; status: string; user_id: string; is_instant?: boolean };
+type Row = { id: number; session_date: string; start_time: string; end_time: string; starts_at?: string | null; ends_at?: string | null; status: string; user_id: string; is_instant?: boolean };
 
-const startOf = (s: Row) => new Date(`${s.session_date}T${s.start_time}`);
-const endOf = (s: Row) => new Date(`${s.session_date}T${s.end_time || s.start_time}`);
+const startOf = (s: Row) => sessionStart(s);
+const endOf = (s: Row) => sessionEnd(s);
 const joinable = (s: Row, now = new Date()) => s.status === "confirmed" && differenceInMinutes(startOf(s), now) <= 10 && now <= endOf(s);
 const initials = (n: string) => n.replace(/[^\p{L}\s]/gu, "").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "C";
 const naira = (n: number) => `₦${Math.round(n).toLocaleString()}`;

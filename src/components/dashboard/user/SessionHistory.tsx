@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { sessionStart, sessionEnd, sessionTimeRange } from "@/utils/sessionTime";
 import { 
   Dialog, 
   DialogContent, 
@@ -131,7 +132,7 @@ const SessionHistory = () => {
   }
 
   const completedSessions = sessions?.filter(session => 
-    session.status === 'completed' || new Date(session.session_date) < new Date()
+    session.status === 'completed' || sessionEnd(session) < new Date()
   ) || [];
 
   const filteredSessions = activeTab === 'all' 
@@ -189,11 +190,11 @@ const SessionHistory = () => {
                         <div className="flex items-center text-sm text-muted-foreground space-x-4">
                           <div className="flex items-center">
                             <Calendar className="h-4 w-4 mr-1" />
-                            {format(new Date(session.session_date), 'MMM dd, yyyy')}
+                            {format(sessionStart(session), 'MMM dd, yyyy')}
                           </div>
                           <div className="flex items-center">
                             <Clock className="h-4 w-4 mr-1" />
-                            {session.start_time} - {session.end_time}
+                            {sessionTimeRange(session)}
                           </div>
                         </div>
                       </div>

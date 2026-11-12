@@ -10,13 +10,14 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ConsultationWrapUp, { WrapUpSession } from "./ConsultationWrapUp";
+import { sessionStart, sessionTimeRange } from "@/utils/sessionTime";
 
 const db = supabase as any;
 const STATUS_STYLE: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800", confirmed: "bg-blue-100 text-blue-800", in_progress: "bg-green-100 text-green-800",
   completed: "bg-cloth text-ink", cancelled: "bg-red-100 text-red-700",
 };
-const startOf = (s: any) => new Date(`${s.session_date}T${String(s.start_time).slice(0, 8)}`);
+const startOf = (s: any) => sessionStart(s);
 
 const BabalawoSessions: React.FC = () => {
   const { user } = useAuth();
@@ -65,7 +66,7 @@ const BabalawoSessions: React.FC = () => {
       <Card><CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
         <div>
           <p className="font-medium">{s.clientName} {s.is_instant && <Badge variant="outline" className="ml-1">Instant</Badge>}</p>
-          <p className="text-sm text-muted-foreground flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })} · {String(s.start_time).slice(0, 5)}-{String(s.end_time).slice(0, 5)}{s.user_timezone ? ` · client in ${s.user_timezone}` : ""}</p>
+          <p className="text-sm text-muted-foreground flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" })} · {sessionTimeRange(s)}{s.user_timezone && s.user_timezone !== Intl.DateTimeFormat().resolvedOptions().timeZone ? ` · client is in ${String(s.user_timezone).replace(/_/g, " ")}` : ""}</p>
           <div className="flex flex-wrap gap-1 mt-1">
             <Badge className={STATUS_STYLE[s.status]}>{String(s.status).replace("_", " ")}</Badge>
             {s.amount != null && <Badge variant="outline">₦{Number(s.amount).toLocaleString()} · {s.payment_status ?? "n/a"}</Badge>}

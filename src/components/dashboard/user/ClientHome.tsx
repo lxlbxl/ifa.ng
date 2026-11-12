@@ -12,11 +12,12 @@ import { useFeaturedBabalawos } from "@/hooks/useBabalawoSearch";
 import { babalawoChips } from "@/components/FeaturedBabalawos";
 import { ClothStrip, EmptyState, Panel, PanelHeader, greeting } from "@/components/dashboard/shell/Panel";
 import WalletWidget from "./WalletWidget";
+import { sessionStart, sessionEnd } from "@/utils/sessionTime";
 
 type S = NonNullable<ReturnType<typeof useUserSessions>["data"]>[number];
 
-const startOf = (s: S) => new Date(`${s.session_date}T${s.start_time}`);
-const endOf = (s: S) => new Date(`${s.session_date}T${s.end_time || s.start_time}`);
+const startOf = (s: S) => sessionStart(s);
+const endOf = (s: S) => sessionEnd(s);
 const joinable = (s: S, now = new Date()) =>
   s.status === "confirmed" && differenceInMinutes(startOf(s), now) <= 10 && now <= endOf(s);
 

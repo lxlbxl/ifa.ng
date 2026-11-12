@@ -47,6 +47,8 @@ export interface SessionRow {
   status: string;
   payment_status: string | null;
   user_timezone: string | null;
+  starts_at?: Date | string | null;
+  ends_at?: Date | string | null;
   video_provider: string | null;
   meet_uri: string | null;
   meet_code: string | null;
@@ -58,7 +60,7 @@ export interface SessionRow {
 export async function getSession(svc: Services, id: string): Promise<SessionRow | undefined> {
   const r = await asService(svc, (trx) => sql<SessionRow>`
     select id::text, user_id, babalawo_id, session_date::text, to_char(start_time, 'HH24:MI') start_time,
-           to_char(end_time, 'HH24:MI') end_time, status::text, payment_status, user_timezone, video_provider,
+           to_char(end_time, 'HH24:MI') end_time, status::text, payment_status, user_timezone, starts_at, ends_at, video_provider,
            meet_uri, meet_code, meet_space_name, recording_status, agora_channel_name
       from public.sessions where id = ${id}::bigint`.execute(trx));
   return r.rows[0];
@@ -80,9 +82,17 @@ export async function loadSessionFor(
   return s;
 }
 
-/** Start and end instants. A booking stores a date and HH:MM in the client's timezone. */
-export function sessionWindow(s: Pick<SessionRow, "session_date" | "start_time" | "end_time" | "user_timezone">) {
-  const tz = s.user_timezone || "Africa/Lagos";
+/**
+ * Start and end instants. The database keeps them in starts_at / ends_at (set from the Babalawo's
+ * calendar). Older rows without them fall back to reading the date and HH:MM in Africa/Lagos.
+ */
+export function sessionWindow(s: Pick<SessionRow, "session_date" | "start_time" | "end_time"> & { starts_at?: Date | string | null; ends_at?: Date | string | null }) {
+  if (s.starts_at) {
+    const start = new Date(s.starts_at);
+    const end = s.ends_at ? new Date(s.ends_at) : new Date(start.getTime() + 3600e3);
+    return { start, end };
+  }
+  const tz = "Africa/Lagos";
   const toDate = (hhmm: string) => zonedToUtc(`${s.session_date}T${hhmm.slice(0, 5)}:00`, tz);
   const start = toDate(s.start_time);
   let end = toDate(s.end_time);

@@ -31,6 +31,7 @@ import {
 } from '@/components/ui/dialog';
 import { format, isAfter, subMinutes, differenceInMinutes, differenceInHours, differenceInDays } from 'date-fns';
 import FindBabalawo from './FindBabalawo';
+import { sessionStart } from "@/utils/sessionTime";
 
 const UpcomingSessions = () => {
   const { data: sessions, isLoading, isError, error } = useUserSessions();
@@ -41,7 +42,7 @@ const UpcomingSessions = () => {
   const [countdowns, setCountdowns] = useState<{[key: string]: string}>({});
 
   const upcomingSessions = sessions?.filter(s => 
-    (new Date(`${s.session_date}T${s.start_time}`) >= new Date() && 
+    (sessionStart(s) >= new Date() && 
     ['confirmed', 'pending', 'awaiting_payment'].includes(s.status))
   );
 
@@ -53,7 +54,7 @@ const UpcomingSessions = () => {
       const newCountdowns: {[key: string]: string} = {};
       
       upcomingSessions.forEach((session: any) => {
-        const sessionDateTime = new Date(`${session.session_date}T${session.start_time}`);
+        const sessionDateTime = sessionStart(session);
         const now = new Date();
         const diffMinutes = differenceInMinutes(sessionDateTime, now);
         const diffHours = differenceInHours(sessionDateTime, now);
@@ -84,7 +85,7 @@ const UpcomingSessions = () => {
   }, [upcomingSessions]);
 
   const canJoinSession = (session: any) => {
-    const sessionDateTime = new Date(`${session.session_date}T${session.start_time}`);
+    const sessionDateTime = sessionStart(session);
     const now = new Date();
     // Allow joining 10 minutes before the session
     const joinTime = subMinutes(sessionDateTime, 10);
@@ -220,7 +221,7 @@ const UpcomingSessions = () => {
                     <Calendar className="h-3 w-3 mr-1" /> Date
                   </span>
                   <span className="font-medium">
-                    {format(new Date(session.session_date), 'EEE, MMM d, yyyy')}
+                    {format(sessionStart(session), 'EEE, MMM d, yyyy')}
                   </span>
                 </div>
                 <div className="flex flex-col">
@@ -228,7 +229,7 @@ const UpcomingSessions = () => {
                     <Clock className="h-3 w-3 mr-1" /> Time
                   </span>
                   <span className="font-medium">
-                    {format(new Date(`2000-01-01T${session.start_time}`), 'h:mm a')}
+                    {format(sessionStart(session), 'h:mm a')}
                   </span>
                 </div>
                 <div className="flex flex-col">
@@ -303,7 +304,7 @@ const UpcomingSessions = () => {
           </DialogHeader>
           <div className="py-4">
             <p className="text-sm text-muted-foreground mb-4">
-              Current session: {selectedSession && format(new Date(selectedSession.session_date), 'EEE, MMM d, yyyy')} at {selectedSession && format(new Date(`2000-01-01T${selectedSession.start_time}`), 'h:mm a')}
+              Current session: {selectedSession && format(sessionStart(selectedSession), 'EEE, MMM d, yyyy')} at {selectedSession && format(sessionStart(selectedSession), 'h:mm a')}
             </p>
             <div className="bg-yellow-50 p-3 rounded-md flex items-start gap-2">
               <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5" />
@@ -336,7 +337,7 @@ const UpcomingSessions = () => {
           </DialogHeader>
           <div className="py-4">
             <p className="text-sm text-muted-foreground mb-4">
-              Session details: {selectedSession && format(new Date(selectedSession.session_date), 'EEE, MMM d, yyyy')} at {selectedSession && format(new Date(`2000-01-01T${selectedSession.start_time}`), 'h:mm a')}
+              Session details: {selectedSession && format(sessionStart(selectedSession), 'EEE, MMM d, yyyy')} at {selectedSession && format(sessionStart(selectedSession), 'h:mm a')}
             </p>
             <div className="bg-red-50 p-3 rounded-md flex items-start gap-2">
               <AlertTriangle className="h-5 w-5 text-coral mt-0.5" />

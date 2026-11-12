@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { sessionStart, sessionTimeRange } from "@/utils/sessionTime";
 
 const SpiritualJourney: React.FC = () => {
   const { data: sessions, isLoading, isError, error } = useUserSessions();
@@ -31,7 +32,7 @@ const SpiritualJourney: React.FC = () => {
             <AccordionItem key={session.id} value={String(session.id)}>
               <AccordionTrigger>
                 <div className="flex flex-col items-start">
-                  <span className="font-semibold">Session with {session.babalawo_name} on {format(new Date(session.session_date), 'PPP')}</span>
+                  <span className="font-semibold">Session with {session.babalawo_name} on {format(sessionStart(session), 'PPP')}</span>
                   <Badge variant={session.status === 'completed' ? 'default' : 'secondary'} className="mt-1">
                     {session.status}
                   </Badge>
@@ -39,7 +40,7 @@ const SpiritualJourney: React.FC = () => {
               </AccordionTrigger>
               <AccordionContent>
                 <div className="grid gap-2 text-sm">
-                  <p><strong>Time:</strong> {session.start_time} - {session.end_time}</p>
+                  <p><strong>Time:</strong> {sessionTimeRange(session)}</p>
                   <p><strong>Notes:</strong> {session.notes || 'N/A'}</p>
                   {session.primary_odu && <p><strong>Primary Odu:</strong> {session.primary_odu}</p>}
                   {session.other_odus && (

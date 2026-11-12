@@ -195,13 +195,20 @@ describe("payments", () => {
   });
 });
 
+/** Wall clock in Lagos (the Babalawo's calendar when they have not set a zone). */
+function lagos(d: Date) {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Lagos", year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(d);
+  const g = (t: string) => parts.find((p) => p.type === t)!.value;
+  return { date: `${g("year")}-${g("month")}-${g("day")}`, hhmm: `${g("hour")}:${g("minute")}` };
+}
+
 describe("video", () => {
   async function paidSessionAt(start: Date, opts: { provider?: string } = {}) {
-    const hhmm = (d: Date) => d.toISOString().slice(11, 16);
     const end = new Date(start.getTime() + 3600_000);
     const r = await service(sql`insert into sessions(user_id, babalawo_id, session_date, start_time, end_time, user_timezone,
         status, payment_status, amount, video_provider)
-      values (${CLIENT}, ${BABA}, ${start.toISOString().slice(0, 10)}, ${hhmm(start)}, ${hhmm(end)}, 'UTC',
+      values (${CLIENT}, ${BABA}, ${lagos(start).date}, ${lagos(start).hhmm}, ${lagos(end).hhmm}, 'UTC',
         'confirmed', 'paid', 20000, ${opts.provider ?? "google_meet"}) returning id::text`);
     return r.rows[0].id as string;
   }
@@ -261,10 +268,9 @@ describe("video", () => {
 describe("notifications", () => {
   it("queues a 1 hour reminder once and sends it; only admins can run the job by hand", async () => {
     const start = new Date(Date.now() + 45 * 60_000);
-    const hhmm = (d: Date) => d.toISOString().slice(11, 16);
     const r = await service(sql`insert into sessions(user_id, babalawo_id, session_date, start_time, end_time, user_timezone,
         status, payment_status, amount, video_provider, meet_uri)
-      values (${CLIENT}, ${BABA}, ${start.toISOString().slice(0, 10)}, ${hhmm(start)}, ${hhmm(new Date(start.getTime() + 3600_000))},
+      values (${CLIENT}, ${BABA}, ${lagos(start).date}, ${lagos(start).hhmm}, ${lagos(new Date(start.getTime() + 3600_000)).hhmm},
         'UTC', 'confirmed', 'paid', 20000, 'google_meet', 'https://meet.google.com/rem-inde-rrr') returning id::text`);
     const id = r.rows[0].id;
 
@@ -282,10 +288,15 @@ describe("notifications", () => {
     expect(toE164("0803 123 4567")).toBe("2348031234567");
     expect(toE164("+234 803 123 4567")).toBe("2348031234567");
     expect(toE164("123")).toBeNull();
-    const w = sessionWindow({ session_date: "2026-12-01", start_time: "14:00", end_time: "15:00", user_timezone: "Africa/Lagos" });
+    const w = sessionWindow({ session_date: "2026-12-01", start_time: "14:00", end_time: "15:00" });
     expect(w.start.toISOString()).toBe("2026-12-01T13:00:00.000Z");
-    const overnight = sessionWindow({ session_date: "2026-12-01", start_time: "23:30", end_time: "00:30", user_timezone: "UTC" });
+    const overnight = sessionWindow({ session_date: "2026-12-01", start_time: "23:30", end_time: "00:30" });
     expect(overnight.end.getTime() - overnight.start.getTime()).toBe(3600_000);
+    // The stored instants win over the wall-clock fields.
+    const stored = sessionWindow({ session_date: "2026-12-01", start_time: "14:00", end_time: "15:00",
+      starts_at: new Date("2026-12-01T14:00:00Z"), ends_at: new Date("2026-12-01T15:30:00Z") });
+    expect(stored.start.toISOString()).toBe("2026-12-01T14:00:00.000Z");
+    expect(stored.end.toISOString()).toBe("2026-12-01T15:30:00.000Z");
   });
 });
 

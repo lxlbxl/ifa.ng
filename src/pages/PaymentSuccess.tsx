@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Download, Share2, ArrowRight } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+import { sessionStart } from '@/utils/sessionTime';
 
 const PaymentSuccess: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -144,7 +146,7 @@ const PaymentSuccess: React.FC = () => {
                       {session.babalawos?.full_name || 'Babalawo'}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      {session.session_date} at {session.start_time}
+                      {format(sessionStart(session), "EEEE d MMMM, h:mm a")}
                     </p>
                   </div>
                 </div>

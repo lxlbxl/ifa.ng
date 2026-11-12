@@ -125,7 +125,7 @@ export async function dispatchDue(svc: Services, limit = 25) {
     try {
       const s = (await asService(svc, (trx) => sql<SessionRow>`
         select id::text, user_id, babalawo_id, session_date::text, to_char(start_time, 'HH24:MI') start_time,
-               to_char(end_time, 'HH24:MI') end_time, status::text, payment_status, user_timezone, video_provider,
+               to_char(end_time, 'HH24:MI') end_time, status::text, payment_status, user_timezone, starts_at, ends_at, video_provider,
                meet_uri, meet_code, meet_space_name, recording_status, agora_channel_name
           from public.sessions where id = ${row.session_id}::bigint`.execute(trx))).rows[0];
       const ebo = row.ebo_id ? (await asService(svc, (trx) => sql<{ title: string; total: string; amount_due: string; status: string; performed_by: string }>`
@@ -136,13 +136,15 @@ export async function dispatchDue(svc: Services, limit = 25) {
         continue;
       }
       const people = (await asService(svc, (trx) => sql<Person>`
-        select p.id, p.full_name, p.phone, p.whatsapp_opt_in, p.sms_opt_in, b.timezone
+        select p.id, p.full_name, p.phone, p.whatsapp_opt_in, p.sms_opt_in,
+               coalesce(nullif(ss.timezone, ''), nullif(p.timezone, ''), b.timezone) timezone
           from public.profiles p left join public.babalawos b on b.user_id = p.id
+          left join public.babalawo_scheduling_settings ss on ss.babalawo_id = p.id
          where p.id in (${s.user_id}::uuid, ${s.babalawo_id}::uuid)`.execute(trx))).rows;
       const client = people.find((p) => p.id === s.user_id);
       const bab = people.find((p) => p.id === s.babalawo_id);
       if (!client || !bab) throw new Error("profiles missing");
-      client.timezone = s.user_timezone;
+      client.timezone = s.user_timezone || client.timezone;
       // Always the app's session page: it records who joined (no-show refunds depend on it),
       // asks for recording consent, and then opens Meet (or the backup video).
       const joinLink = `${appUrl}/session/${s.id}`;
@@ -174,10 +176,10 @@ export async function dispatchDue(svc: Services, limit = 25) {
 export async function enqueueReminders(svc: Services, now = new Date()) {
   const sessions = (await asService(svc, (trx) => sql<SessionRow>`
     select id::text, session_date::text, to_char(start_time, 'HH24:MI') start_time,
-           to_char(end_time, 'HH24:MI') end_time, user_timezone
+           to_char(end_time, 'HH24:MI') end_time, user_timezone, starts_at, ends_at
       from public.sessions
      where payment_status = 'paid' and status::text in ('confirmed', 'pending')
-       and session_date between (now() - interval '1 day')::date and (now() + interval '3 days')::date`.execute(trx))).rows;
+       and starts_at between now() - interval '1 hour' and now() + interval '25 hours'`.execute(trx))).rows;
   let queued = 0;
   for (const s of sessions) {
     const mins = (sessionWindow(s).start.getTime() - now.getTime()) / 60_000;

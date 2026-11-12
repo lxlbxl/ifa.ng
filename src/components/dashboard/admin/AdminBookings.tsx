@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useUpdateSessionStatus, useAdminRefundSession } from "@/hooks/useAdminActions";
 import type { Database } from "@/integrations/supabase/types";
+import { sessionStart } from "@/utils/sessionTime";
 
 type SessionStatus = Database["public"]["Enums"]["session_status_enum"];
 const STATUSES: SessionStatus[] = ["pending", "confirmed", "in_progress", "completed", "cancelled"];
@@ -21,7 +23,7 @@ const statusColor: Record<string, string> = {
 const fetchSessions = async () => {
   const { data: sessions, error } = await supabase
     .from("sessions")
-    .select("id, user_id, babalawo_id, session_date, start_time, end_time, status, payment_status, amount")
+    .select("id, user_id, babalawo_id, session_date, start_time, end_time, starts_at, status, payment_status, amount")
     .order("session_date", { ascending: false })
     .limit(300);
   if (error) throw new Error(error.message);
@@ -86,7 +88,7 @@ const AdminBookings: React.FC = () => {
             <tbody>
               {rows.map((s) => (
                 <tr key={s.id} className="border-b hover:bg-gray-50">
-                  <td className="py-2 px-3 whitespace-nowrap">{s.session_date} {s.start_time?.slice(0, 5)}</td>
+                  <td className="py-2 px-3 whitespace-nowrap">{format(sessionStart(s), "yyyy-MM-dd HH:mm")}</td>
                   <td className="py-2 px-3">{s.client}</td>
                   <td className="py-2 px-3">{s.babalawo}</td>
                   <td className="py-2 px-3">₦{Number(s.amount ?? 0).toLocaleString()}</td>

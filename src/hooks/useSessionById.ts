@@ -16,6 +16,8 @@ export const useSessionById = (sessionId: string) => {
           session_date,
           start_time,
           end_time,
+          starts_at,
+          ends_at,
           status,
           amount,
           payment_status,

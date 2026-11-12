@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
 import { createPaymentIntent, openCheckout, verifyPayment, PaymentGateway } from "./paymentGatewayUtils";
 
 export type PaymentMethod = 'wallet' | 'flutterwave' | 'paystack';
@@ -8,8 +7,8 @@ interface PaymentData {
   user: any;
   userProfile: any;
   babalawo: any;          // babalawo.id is the babalawo's auth user id
-  date: Date;
-  selectedTime: string;   // "HH:mm"
+  date: string;           // "yyyy-MM-dd" on the Babalawo's calendar
+  selectedTime: string;   // "HH:mm" on the Babalawo's clock
   amount: number;         // display only: the server recomputes the price and ignores this
   paymentMethod: PaymentMethod;
   walletBalance?: number;
@@ -34,7 +33,7 @@ export const handlePaymentAndBooking = async (
   onError: (message: string) => void
 ) => {
   const { user, babalawo, date, selectedTime, paymentMethod, isInstant } = paymentData;
-  const sessionDate = format(date, "yyyy-MM-dd");
+  const sessionDate = date;
 
   try {
     if (!user?.id) { onError("Please sign in to continue."); return; }

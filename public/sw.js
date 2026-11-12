@@ -1,5 +1,5 @@
 /* IFA.ng service worker: offline app shell + push. Bump VERSION to invalidate caches. */
-const VERSION = "v2";
+const VERSION = "v3";
 const SHELL_CACHE = `ifa-shell-${VERSION}`;
 const ASSET_CACHE = `ifa-assets-${VERSION}`;
 const SHELL_URLS = ["/", "/offline.html", "/manifest.webmanifest", "/brand/icon-192.png"];
@@ -46,7 +46,13 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       caches.match(req).then((hit) => {
         const net = fetch(req).then((res) => {
-          if (res.ok) caches.open(ASSET_CACHE).then((c) => c.put(req, res.clone()));
+          if (res.ok) {
+            // Clone before the response is handed back to the page. Deferring
+            // clone() until caches.open() resolves races with the page reading
+            // the response body and throws "body is already used".
+            const copy = res.clone();
+            caches.open(ASSET_CACHE).then((c) => c.put(req, copy)).catch(() => {});
+          }
           return res;
         });
         return hit || net;

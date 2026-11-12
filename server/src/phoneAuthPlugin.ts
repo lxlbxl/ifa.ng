@@ -10,11 +10,20 @@ import { PhoneAuthError, type PhoneAuth } from "./services/phoneAuth.js";
  * for the PWA through the bearer plugin).
  */
 
-/** Client IP as Caddy reports it (it overwrites X-Forwarded-For unless told to trust a proxy). */
-export function clientIp(req: Request | undefined): string {
+/**
+ * The visitor's IP, for rate limits. Each proxy in front of the API appends the address it
+ * received the request from to X-Forwarded-For, so the visitor is `hops` entries from the end
+ * (TRUSTED_PROXY_HOPS: 1 behind Caddy alone; the VPS's nginx passes Traefik's header through,
+ * so 1 there too). Anything further left was written by the visitor and is ignored.
+ */
+export function clientIp(req: Request | undefined, hops = Number(process.env.TRUSTED_PROXY_HOPS ?? 1)): string {
   const h = req?.headers;
   const xff = h?.get("x-forwarded-for");
-  if (xff) return xff.split(",").map((s) => s.trim()).filter(Boolean).at(-1) ?? "unknown";
+  if (xff) {
+    const parts = xff.split(",").map((s) => s.trim()).filter(Boolean);
+    const n = Number.isFinite(hops) && hops >= 1 ? Math.floor(hops) : 1;
+    return parts[Math.max(0, parts.length - n)] ?? "unknown";
+  }
   return h?.get("x-real-ip") ?? "unknown";
 }
 
@@ -51,7 +60,9 @@ export function phoneAuthPlugin(phone: PhoneAuth) {
         await setSessionCookie(ctx, { session, user });
         return ctx.json({
           token: session.token, user: { id: user.id, name: user.name },
-          is_new: result.isNew, has_pin: result.hasPin, needs_name: result.needsName, pin_ticket: result.pinTicket,
+          is_new: result.isNew, has_pin: result.hasPin, needs_name: result.needsName,
+          // No PIN step for an admin signed in by code: the ticket is not handed out.
+          ...(result.skipPin ? { skip_pin: true } : { pin_ticket: result.pinTicket }),
         });
       }),
 

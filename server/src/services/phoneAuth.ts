@@ -113,9 +113,10 @@ export function createPhoneAuth(deps: { pool: pg.Pool; secret: string; sender: O
   }
 
   async function findUser(phone: string) {
-    const r = await pool.query<{ id: string; name: string; has_pin: boolean; locked_until: Date | null; suspended: boolean }>(
+    const r = await pool.query<{ id: string; name: string; has_pin: boolean; locked_until: Date | null; suspended: boolean; admin: boolean }>(
       `select u.id, u.name, (p.user_id is not null) has_pin, p.locked_until,
-              coalesce((select is_suspended from public.profiles where id = u.id), false) suspended
+              coalesce((select is_suspended from public.profiles where id = u.id), false) suspended,
+              exists (select 1 from public.user_roles r where r.user_id = u.id and r.role = 'admin') admin
          from auth.users u left join auth.phone_pins p on p.user_id = u.id
         where u.phone = $1`, [phone]);
     return r.rows[0];
@@ -140,8 +141,10 @@ export function createPhoneAuth(deps: { pool: pg.Pool; secret: string; sender: O
     const channel: Channel = input.channel === "whatsapp" ? "whatsapp" : "sms";
     const user = await findUser(phone);
     if (user?.suspended) throw new PhoneAuthError(403, "SUSPENDED", "This account is suspended. Please contact support.");
-    if (user?.has_pin && input.forgotPin !== true) {
-      return { next: "pin" as const, phone, name: user.name || null };
+    // Admins always confirm with a fresh code (something they have), never a PIN alone.
+    // The person's name is never returned here: anyone can type any number.
+    if (user?.has_pin && input.forgotPin !== true && !user.admin) {
+      return { next: "pin" as const, phone };
     }
 
     // Resend cooldown, then hourly caps per number and per network.
@@ -158,7 +161,7 @@ export function createPhoneAuth(deps: { pool: pg.Pool; secret: string; sender: O
     await limit("otp_send_ip", ip, OTP_SENDS_PER_IP_PER_HOUR, 3600, "Too many attempts. Please try again later.");
 
     const code = String(randomInt(0, 1_000_000)).padStart(6, "0");
-    const purpose = user?.has_pin ? "reset_pin" : "login";
+    const purpose = user?.admin && user.has_pin && input.forgotPin !== true ? "admin_login" : user?.has_pin ? "reset_pin" : "login";
     const used = await sender.send(phone, code, channel);
     // A new code replaces any earlier one.
     await pool.query("update auth.phone_otps set consumed_at = now() where phone = $1 and consumed_at is null", [phone]);
@@ -223,7 +226,8 @@ export function createPhoneAuth(deps: { pool: pg.Pool; secret: string; sender: O
     await pool.query(
       `insert into auth.pin_tickets(token_hash, user_id, expires_at) values ($1, $2, now() + make_interval(secs => $3))`,
       [hmac(`ticket:${ticket}`), user.id, PIN_TICKET_TTL_SECONDS]);
-    return { userId: user.id, isNew, hasPin: user.has_pin, needsName: !user.name, pinTicket: ticket };
+    // An admin who already has a PIN is signed in by the code alone; others go on to choose a PIN.
+    return { userId: user.id, isNew, hasPin: user.has_pin, needsName: !user.name, pinTicket: ticket, skipPin: user.admin && user.has_pin };
   }
 
   /** Step 2b: choose a PIN (after an OTP), or a new one after "forgot PIN". */
@@ -253,10 +257,11 @@ export function createPhoneAuth(deps: { pool: pg.Pool; secret: string; sender: O
     const phone = normalizePhone(input.phone);
     await limit("pin_fail_ip", ip, PIN_FAILURES_PER_IP_PER_HOUR, 3600, "Too many attempts. Please try again later.");
     const r = await pool.query<{ user_id: string; pin_hash: string; failed_attempts: number; lock_count: number;
-      locked_for: number | null; name: string; suspended: boolean }>(
+      locked_for: number | null; name: string; suspended: boolean; admin: boolean }>(
       `select p.user_id, p.pin_hash, p.failed_attempts, p.lock_count, u.name,
               case when p.locked_until > now() then ceil(extract(epoch from p.locked_until - now()) / 60)::int end locked_for,
-              coalesce((select is_suspended from public.profiles where id = u.id), false) suspended
+              coalesce((select is_suspended from public.profiles where id = u.id), false) suspended,
+              exists (select 1 from public.user_roles r where r.user_id = u.id and r.role = 'admin') admin
          from auth.users u join auth.phone_pins p on p.user_id = u.id where u.phone = $1`, [phone]);
     const row = r.rows[0];
     if (!row) {
@@ -264,6 +269,7 @@ export function createPhoneAuth(deps: { pool: pg.Pool; secret: string; sender: O
       throw new PhoneAuthError(400, "NO_PIN", "This number has no PIN yet. We'll send you a code instead.");
     }
     if (row.suspended) throw new PhoneAuthError(403, "SUSPENDED", "This account is suspended. Please contact support.");
+    if (row.admin) throw new PhoneAuthError(400, "CODE_REQUIRED", "Admins sign in with a code. We'll send you one.");
     if (row.locked_for) {
       throw new PhoneAuthError(423, "PIN_LOCKED",
         `Too many wrong PINs. Try again in ${row.locked_for} minute${row.locked_for === 1 ? "" : "s"}, or reset your PIN with a code.`,

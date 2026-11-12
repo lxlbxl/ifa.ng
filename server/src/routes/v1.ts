@@ -138,6 +138,25 @@ export function registerV1(app: Hono<AppEnv>, svc: Services, live?: LiveHub) {
   });
   app.post("/v1/me/push-test", async (c) => c.json(await sendTestAlert(svc, c.get("caller"))));
 
+  // Admin: which providers are configured on the server. Only yes/no, never the values.
+  app.get("/v1/admin/integrations", async (c) => {
+    if (!(await isAdmin(svc, c.get("caller")))) throw new HttpError(403, "Forbidden");
+    const k = svc.config;
+    const set = (...v: (string | undefined)[]) => v.every((x) => !!x && x.trim() !== "");
+    c.header("Cache-Control", "no-store");
+    return c.json({
+      paystack: set(k.PAYSTACK_SECRET_KEY, k.PAYSTACK_PUBLIC_KEY),
+      flutterwave: set(k.FLW_SECRET_KEY, k.FLW_PUBLIC_KEY, k.FLW_SECRET_HASH),
+      google_meet: set(k.GOOGLE_SERVICE_ACCOUNT_JSON, k.GOOGLE_ORGANIZER_EMAIL),
+      agora: set(k.AGORA_APP_ID, k.AGORA_APP_CERTIFICATE),
+      termii: set(k.TERMII_API_KEY),
+      whatsapp: set(k.WHATSAPP_ACCESS_TOKEN, k.WHATSAPP_PHONE_NUMBER_ID),
+      email: set(k.SMTP_URL),
+      web_push: set(k.VAPID_PUBLIC_KEY, k.VAPID_PRIVATE_KEY),
+      file_storage: set(k.S3_ENDPOINT, k.S3_BUCKET, k.S3_ACCESS_KEY_ID, k.S3_SECRET_ACCESS_KEY),
+    });
+  });
+
   // Admin: run the notification job now (it also runs every minute on its own).
   app.post("/v1/admin/notifications/dispatch", async (c) => {
     if (!(await isAdmin(svc, c.get("caller")))) throw new HttpError(403, "Forbidden");

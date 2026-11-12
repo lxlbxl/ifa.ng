@@ -16,8 +16,12 @@ export const JOBS: { name: string; everySeconds: number; run: (svc: Services) =>
   { name: "release expired slot holds", everySeconds: 60,
     run: (svc) => asService(svc, (trx) => sql`select public.cleanup_expired_slot_locks()`.execute(trx)) },
   { name: "Ebo: expire quotes and release after proof", everySeconds: 300, run: eboTick },
-  { name: "complete finished sessions", everySeconds: 300,
+  { name: "refund unaccepted Consult Now requests", everySeconds: 30,
+    run: (svc) => asService(svc, (trx) => sql`select public.expire_unaccepted_instant_sessions()`.execute(trx)) },
+  { name: "complete finished sessions, refund Babalawo no-shows", everySeconds: 300,
     run: (svc) => asService(svc, (trx) => sql`select public.auto_complete_sessions()`.execute(trx)) },
+  { name: "release earnings after the hold", everySeconds: 300,
+    run: (svc) => asService(svc, (trx) => sql`select public.release_held_earnings()`.execute(trx)) },
 ];
 
 export function startJobs(svc: Services) {

@@ -155,7 +155,8 @@ describe("payments", () => {
 
     const sms = calls.filter((c) => c.url.startsWith("https://api.ng.termii.com/"));
     expect(sms).toHaveLength(2);
-    expect(sms[0].body).toContain("meet.google.com/abc-defg-hij");
+    // Links go to the app's session page (records attendance, then opens Meet).
+    expect(sms[0].body).toMatch(/\/session\/\d+/);
     const outbox = (await service(sql`select kind, status from notification_outbox where session_id = ${settled.session_id}`)).rows;
     expect(outbox).toEqual([{ kind: "meet_link", status: "sent" }]);
 
@@ -274,7 +275,7 @@ describe("notifications", () => {
     expect(second.queued).toBe(0);
     const rows = (await service(sql`select kind, status from notification_outbox where session_id = ${id}`)).rows;
     expect(rows).toEqual([{ kind: "reminder_1h", status: "sent" }]);
-    expect(calls.some((c) => c.url.startsWith("https://api.ng.termii.com/") && c.body.includes("rem-inde-rrr"))).toBe(true);
+    expect(calls.some((c) => c.url.startsWith("https://api.ng.termii.com/") && c.body.includes(`/session/${id}`))).toBe(true);
   });
 
   it("normalises Nigerian phone numbers and converts booking times to UTC", () => {

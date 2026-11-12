@@ -14,3 +14,15 @@ export const cancelSession = async (sessionId: number | string, reason?: string)
   if (error) throw new Error(error.message);
   return data as { cancelled: boolean; refunded: number; reason?: string };
 };
+
+/** Babalawo accepts a Consult Now request (within the accept window). */
+export const acceptInstantSession = async (sessionId: number | string) => {
+  const { error } = await supabase.rpc('accept_instant_session' as any, { p_session_id: Number(sessionId) });
+  if (error) throw new Error(error.message);
+};
+
+/** Records that this person opened the call; a Babalawo who never joins is treated as a no-show. */
+export const recordSessionJoin = async (sessionId: number | string) => {
+  const { error } = await supabase.rpc('record_session_join' as any, { p_session_id: Number(sessionId) });
+  if (error) console.warn('record_session_join', error.message);
+};

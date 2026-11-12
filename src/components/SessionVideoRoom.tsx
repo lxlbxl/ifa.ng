@@ -9,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import AgoraVideoRoom from "./AgoraVideoRoom";
 import NetworkStatusBar from "./pwa/NetworkStatusBar";
 import ConsentFields, { ConsentValue } from "./session/ConsentFields";
+import { acceptInstantSession, cancelSession, recordSessionJoin } from "@/utils/sessionActions";
 import { ensureMeetLink, getSessionConsents, recordSessionConsent, uploadSessionAudio, SessionConsentRow } from "@/services/videoService";
 
 /**
@@ -57,8 +58,16 @@ const SessionVideoRoom = () => {
   const bothAgreed = !!mine && !!other && [mine, other].every((c) => c.recording_consent && c.ai_processing_consent && !c.withdrawn_at);
   const leave = () => { window.location.href = "/dashboard"; };
 
+  if (session.status === "cancelled") {
+    return <Notice title="This consultation was cancelled"
+      body={session.payment_status === "refunded" ? "The full amount was refunded to your IFA.ng wallet." : "Contact support@ifa.ng if you have a question about it."} />;
+  }
   if (session.payment_status !== "paid") {
     return <Notice title="Payment pending" body="This consultation opens as soon as payment is confirmed." />;
+  }
+  if (session.is_instant && session.status === "pending") {
+    return <WaitingForAccept session={session} isBabalawo={isBabalawo}
+      onChange={() => qc.invalidateQueries({ queryKey: ["session", sessionId] })} />;
   }
   if (useBackup || session.video_provider === "agora") {
     return (
@@ -67,6 +76,7 @@ const SessionVideoRoom = () => {
         {session.video_fallback_reason && !useBackup && (
           <p className="text-center text-xs text-muted-foreground p-2">Using backup video because Google Meet was unavailable.</p>
         )}
+        <JoinRecorder sessionId={sessionId} />
         <AgoraVideoRoom sessionId={sessionId} onLeave={leave} />
       </div>
     );
@@ -112,7 +122,7 @@ const SessionVideoRoom = () => {
               <Button className="w-full" disabled><Loader2 className="h-4 w-4 animate-spin mr-2" /> Preparing your Google Meet room...</Button>
             ) : (
               <Button asChild className="w-full">
-                <a href={session.meet_uri} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4 mr-2" /> Join Google Meet</a>
+                <a href={session.meet_uri} target="_blank" rel="noopener noreferrer" onClick={() => { recordSessionJoin(session.id); }}><ExternalLink className="h-4 w-4 mr-2" /> Join Google Meet</a>
               </Button>
             )}
             <p className="text-xs text-muted-foreground">
@@ -136,6 +146,53 @@ const SessionVideoRoom = () => {
                 }} />
               </label>
             )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/** Records attendance when the in-app backup video opens. */
+const JoinRecorder = ({ sessionId }: { sessionId: string }) => {
+  useEffect(() => { recordSessionJoin(sessionId); }, [sessionId]);
+  return null;
+};
+
+/** Consult Now: the client waits (with a countdown) for the Babalawo to accept; the Babalawo accepts here. */
+const WaitingForAccept = ({ session, isBabalawo, onChange }: { session: any; isBabalawo: boolean; onChange: () => void }) => {
+  const [now, setNow] = useState(Date.now());
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
+  const left = Math.max(0, Math.round((new Date(session.accept_deadline).getTime() - now) / 1000));
+  const clock = `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`;
+  const act = async (fn: () => Promise<unknown>, done: string) => {
+    setBusy(true);
+    try { await fn(); toast({ title: done }); onChange(); }
+    catch (e) { toast({ title: "Something went wrong", description: (e as Error).message, variant: "destructive" }); }
+    finally { setBusy(false); }
+  };
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4 text-center">
+      <div className="w-full max-w-sm space-y-4 rounded-xl border bg-card p-6 shadow-sm">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+        {isBabalawo ? (
+          <>
+            <h1 className="text-lg font-semibold">A client is waiting for you</h1>
+            <p className="text-sm text-muted-foreground">Accept within {clock}, or the client is refunded.</p>
+            <Button className="w-full" disabled={busy || left === 0} onClick={() => act(() => acceptInstantSession(session.id), "Accepted")}>Accept and join</Button>
+          </>
+        ) : (
+          <>
+            <h1 className="text-lg font-semibold">Waiting for your Babalawo to accept</h1>
+            <p className="text-sm text-muted-foreground">
+              {left > 0 ? `They have ${clock} to accept. If they can't, you get a full refund to your wallet automatically.`
+                : "Time is up. Your refund is on its way to your wallet."}
+            </p>
+            <Button variant="outline" className="w-full" disabled={busy}
+              onClick={() => act(() => cancelSession(session.id, "Client stopped waiting"), "Cancelled and refunded")}>
+              Stop waiting and get a refund
+            </Button>
           </>
         )}
       </div>

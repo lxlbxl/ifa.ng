@@ -939,6 +939,10 @@ export type Database = {
         Args: { p_session_id: number; p_reason: string }
         Returns: unknown
       }
+      admin_update_commission_split: {
+        Args: { p_platform_percent: number; p_babalawo_percent: number; p_apply_to_all?: boolean }
+        Returns: Json
+      }
       is_suspended: {
         Args: { _user_id: string }
         Returns: boolean

@@ -16,6 +16,8 @@ import { PLATFORM_RULES } from "./platformRules";
  */
 function PlatformRules() {
   const [values, setValues] = useState<Record<string, string>>({});
+  const [savedCommission, setSavedCommission] = useState<{ platform: string; babalawo: string } | null>(null);
+  const [applyCommissionToAll, setApplyCommissionToAll] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -28,6 +30,7 @@ function PlatformRules() {
       for (const r of PLATFORM_RULES) m[r.key] = r.fallback;
       for (const row of data ?? []) m[row.setting_key] = row.setting_value ?? "";
       setValues(m);
+      setSavedCommission({ platform: m.platform_commission_percent, babalawo: m.babalawo_commission_percent });
       setLoading(false);
     })();
   }, []);
@@ -40,10 +43,35 @@ function PlatformRules() {
         return;
       }
     }
+    const platformCommission = Number(values.platform_commission_percent);
+    const babalawoCommission = Number(values.babalawo_commission_percent);
+    const commissionChanged = savedCommission !== null && (
+      platformCommission !== Number(savedCommission.platform) || babalawoCommission !== Number(savedCommission.babalawo)
+    );
+    if (commissionChanged && platformCommission + babalawoCommission !== 100) {
+      toast({ title: "Commission split must total 100%", description: "The platform and Babalawo shares must add up to 100.", variant: "destructive" });
+      return;
+    }
     setSaving(true);
     const { error } = await supabase.from("admin_settings").upsert(
-      PLATFORM_RULES.map((r) => ({ setting_key: r.key, setting_value: String(values[r.key]), description: r.help, is_public: r.isPublic })),
+      PLATFORM_RULES
+        .filter((r) => !commissionChanged || (r.key !== "platform_commission_percent" && r.key !== "babalawo_commission_percent"))
+        .map((r) => ({ setting_key: r.key, setting_value: String(values[r.key]), description: r.help, is_public: r.isPublic })),
       { onConflict: "setting_key" });
+    if (!error && commissionChanged) {
+      const { error: commissionError } = await supabase.rpc("admin_update_commission_split", {
+        p_platform_percent: platformCommission,
+        p_babalawo_percent: babalawoCommission,
+        p_apply_to_all: applyCommissionToAll,
+      });
+      if (commissionError) {
+        setSaving(false);
+        toast({ title: "Other settings saved, but commission was not", description: commissionError.message, variant: "destructive" });
+        return;
+      }
+      setSavedCommission({ platform: String(platformCommission), babalawo: String(babalawoCommission) });
+      setApplyCommissionToAll(false);
+    }
     setSaving(false);
     toast(error ? { title: "Could not save", description: error.message, variant: "destructive" } : { title: "Settings saved" });
   };
@@ -75,6 +103,21 @@ function PlatformRules() {
           </CardContent>
         </Card>
       ))}
+      {savedCommission && (
+        Number(values.platform_commission_percent) !== Number(savedCommission.platform) ||
+        Number(values.babalawo_commission_percent) !== Number(savedCommission.babalawo)
+      ) && (
+        <label className="flex items-start gap-3 rounded-md border p-3 text-sm">
+          <input type="checkbox" className="mt-1" checked={applyCommissionToAll}
+            onChange={(e) => setApplyCommissionToAll(e.target.checked)} />
+          <span>
+            <span className="font-semibold">Apply this split to all Babalawos</span>
+            <span className="block text-xs text-muted-foreground mt-1">
+              Updates each Babalawo’s individual commission to {values.platform_commission_percent}% / {values.babalawo_commission_percent}%. Leave unchecked to change only the overall defaults.
+            </span>
+          </span>
+        </label>
+      )}
       <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Save settings"}</Button>
     </div>
   );

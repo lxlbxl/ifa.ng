@@ -41,7 +41,9 @@ beforeAll(async () => {
     ($1, 'alice@example.com', '{"full_name":"Alice"}'),
     ($2, 'bob@example.com', '{"full_name":"Bob"}'),
     ($3, 'baba@example.com', '{"full_name":"Baba","role":"babalawo"}') on conflict do nothing`, [ALICE, BOB, BABA]);
-  await db.query(`update babalawos set is_verified = true where user_id = $1`, [BABA]);
+  // A complete profile (photo, price, hours) is what puts a Babalawo in the directory.
+  await db.query(`update babalawos set is_verified = true, hourly_rate = 10000, profile_picture_url = 'https://x.invalid/p.jpg' where user_id = $1`, [BABA]);
+  await db.query(`insert into availability(babalawo_id, day_of_week, start_time, end_time) values ($1, 1, '09:00', '12:00')`, [BABA]);
   // Wait for PostgREST to pick up the migrated schema.
   for (let i = 0; i < 30; i++) {
     const r = await fetch(`${REST}/rpc/get_public_babalawos`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" }).catch(() => null);

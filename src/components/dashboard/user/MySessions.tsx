@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { sessionStart, sessionTimeRange } from "@/utils/sessionTime";
 
 const MySessions = () => {
   const { data: sessions, isLoading, error, refetch } = useUserSessions();
@@ -53,8 +54,8 @@ const MySessions = () => {
     return false;
   }).sort((a, b) => {
     // Sort by date and then time
-    const dateTimeA = new Date(`${a.session_date}T${a.start_time}`);
-    const dateTimeB = new Date(`${b.session_date}T${b.start_time}`);
+    const dateTimeA = sessionStart(a);
+    const dateTimeB = sessionStart(b);
     return dateTimeA.getTime() - dateTimeB.getTime();
   }) || [];
 
@@ -79,7 +80,7 @@ const MySessions = () => {
           {relevantSessions.map((session) => {
             console.log(`[MySessions] Rendering session ${session.id} with babalawo: ${session.babalawo_name}`);
             
-            const sessionDateTime = new Date(`${session.session_date}T${session.start_time}`);
+            const sessionDateTime = sessionStart(session);
             const isJoinable = session.status === 'in_progress' || (session.status === 'confirmed' && sessionDateTime <= new Date(now.getTime() + 15 * 60 * 1000)); // Joinable 15 mins before start or if in_progress
 
             return (
@@ -109,11 +110,11 @@ const MySessions = () => {
                   <div className="text-right">
                     <div className="flex items-center text-sm text-muted-foreground mb-1">
                       <Calendar className="h-4 w-4 mr-1" />
-                      {format(new Date(session.session_date), 'MMM dd, yyyy')}
+                      {format(sessionStart(session), 'MMM dd, yyyy')}
                     </div>
                     <div className="flex items-center text-sm text-muted-foreground">
                       <Clock className="h-4 w-4 mr-1" />
-                      {session.start_time} - {session.end_time}
+                      {sessionTimeRange(session)}
                     </div>
                   </div>
                 </div>

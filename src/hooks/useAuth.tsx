@@ -97,7 +97,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setIsProfileComplete(false);
       } else if (profile) {
         setUserProfile(profile);
-        
+
+        // Remember this person's time zone so reminders and messages show their own clock.
+        try {
+          const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+          if (tz && (profile as any).timezone !== tz) {
+            void (supabase as any).from('profiles').update({ timezone: tz }).eq('id', user.id).then(() => {}, () => {});
+          }
+        } catch { /* ignore */ }
+
         // Check if profile is complete (has required fields)
         const isComplete = Boolean(profile.full_name);
         setIsProfileComplete(isComplete);

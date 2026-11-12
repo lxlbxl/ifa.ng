@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { format, addDays, startOfDay } from 'date-fns';
+import { format } from 'date-fns';
 import { BookOpen, CalendarDays, Compass, HeartHandshake, HelpCircle, Loader2, Lock, Sparkles, Zap } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useBabalawoAvailableNow } from '@/hooks/useBabalawoAvailableNow';
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import ConsentFields, { type ConsentValue } from '@/components/session/ConsentFields';
 import PaymentMethodSelector from '@/components/dashboard/user/PaymentMethodSelector';
 import FeeDisclosure from '@/components/dashboard/user/FeeDisclosure';
-import { fetchBabalawoAvailability, fetchBabalawoSchedule, getBookableTimes, type AvailabilitySlot, type BabalawoSchedule } from '@/utils/availabilityUtils';
+import { fetchBabalawoAvailability, fetchBabalawoSchedule, getBookableSlots, type AvailabilitySlot, type BabalawoSchedule, type BookableSlot } from '@/utils/availabilityUtils';
 import { handlePaymentAndBooking, type PaymentMethod } from '@/utils/multiGatewayPaymentHandler';
 import { getUserWallet } from '@/utils/walletUtils';
 import { parseBabalawoPrice } from '@/utils/priceUtils';
@@ -43,8 +43,9 @@ export const TOPICS: { id: Topic; title: string; body: string; icon: React.React
 ];
 
 const ymd = (d: Date) => format(d, 'yyyy-MM-dd');
-const hhmmLabel = (t: string) => {
-  const [h, m] = t.split(':').map(Number);
+/** A slot's time on the visitor's own clock, e.g. "2:30 pm". */
+const timeLabel = (at: Date) => {
+  const h = at.getHours(), m = at.getMinutes();
   return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h < 12 ? 'am' : 'pm'}`;
 };
 
@@ -78,7 +79,7 @@ export function ConsultFlow({ babalawo, preferMode, onClose }: { babalawo: FlowB
   const [topic, setTopic] = useState<Topic | null>(null);
   const [mode, setMode] = useState<Mode | null>(null);
   const [day, setDay] = useState<Date | null>(null);
-  const [time, setTime] = useState<string>('');
+  const [slot, setSlot] = useState<BookableSlot | null>(null);
   const presence = useBabalawoAvailableNow(babalawo.id, babalawo, step === 'mode' || step === 'topic' || (step === 'pay' && mode === 'now'));
   const signedInAtStart = useRef(!!user);
   const name = babalawo.full_name || 'Babalawo';
@@ -107,19 +108,19 @@ export function ConsultFlow({ babalawo, preferMode, onClose }: { babalawo: FlowB
     return () => { live = false; };
   }, [babalawo.id]);
 
+  // Slots are worked out on the Babalawo's calendar, then grouped by the visitor's own days.
   const days = useMemo(() => {
     if (!availability) return null;
     const horizon = Math.min(schedule?.settings?.max_advance_days ?? 30, 60);
-    const out: { date: Date; times: string[] }[] = [];
-    const today = startOfDay(new Date());
-    for (let i = 0; i <= horizon && out.length < 14; i++) {
-      const d = addDays(today, i);
-      const times = getBookableTimes(d, availability, schedule);
-      if (times.length) out.push({ date: d, times });
+    const byDay = new Map<string, { date: Date; slots: BookableSlot[] }>();
+    for (const x of getBookableSlots(availability, schedule, horizon)) {
+      const k = ymd(x.at);
+      if (!byDay.has(k)) { if (byDay.size >= 14) break; byDay.set(k, { date: new Date(x.at.getFullYear(), x.at.getMonth(), x.at.getDate()), slots: [] }); }
+      byDay.get(k)!.slots.push(x);
     }
-    return out;
+    return [...byDay.values()];
   }, [availability, schedule]);
-  const times = useMemo(() => (day && days ? days.find((d) => ymd(d.date) === ymd(day))?.times ?? [] : []), [day, days]);
+  const slots = useMemo(() => (day && days ? days.find((d) => ymd(d.date) === ymd(day))?.slots ?? [] : []), [day, days]);
 
   const top = (
     <div className="flex items-center gap-3">
@@ -130,7 +131,7 @@ export function ConsultFlow({ babalawo, preferMode, onClose }: { babalawo: FlowB
         <div className="truncate font-bold">{name}</div>
         <div className="truncate text-muted-foreground">
           {[topic && TOPICS.find((t) => t.id === topic)?.title,
-            mode === 'now' ? 'Now' : day && time ? `${format(day, 'EEE d MMM')}, ${hhmmLabel(time)}` : null].filter(Boolean).join(' · ') || 'Consultation'}
+            mode === 'now' ? 'Now' : slot ? `${format(slot.at, 'EEE d MMM')}, ${timeLabel(slot.at)}` : null].filter(Boolean).join(' · ') || 'Consultation'}
         </div>
       </div>
     </div>
@@ -191,12 +192,12 @@ export function ConsultFlow({ babalawo, preferMode, onClose }: { babalawo: FlowB
               const isToday = ymd(d.date) === ymd(new Date());
               return (
                 <button key={ymd(d.date)} type="button" data-testid={`day-${ymd(d.date)}`}
-                  onClick={() => { setDay(d.date); setTime(''); push('time'); }}
+                  onClick={() => { setDay(d.date); setSlot(null); push('time'); }}
                   className={cn('flex h-24 flex-col items-center justify-center rounded-panel border-2 border-ink bg-paper transition-transform hover:-translate-y-0.5 hover:shadow-sticker',
                     sel && 'bg-sun')}>
                   <span className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">{isToday ? 'Today' : format(d.date, 'EEE')}</span>
                   <span className="font-display text-3xl font-extrabold leading-none">{format(d.date, 'd')}</span>
-                  <span className="text-xs font-semibold">{format(d.date, 'MMM')} · {d.times.length} free</span>
+                  <span className="text-xs font-semibold">{format(d.date, 'MMM')} · {d.slots.length} free</span>
                 </button>
               );
             })}
@@ -206,26 +207,29 @@ export function ConsultFlow({ babalawo, preferMode, onClose }: { babalawo: FlowB
     );
   } else if (step === 'time' && day) {
     const groups = [
-      ['Morning', times.filter((t) => +t.slice(0, 2) < 12)],
-      ['Afternoon', times.filter((t) => +t.slice(0, 2) >= 12 && +t.slice(0, 2) < 17)],
-      ['Evening', times.filter((t) => +t.slice(0, 2) >= 17)],
+      ['Morning', slots.filter((x) => x.at.getHours() < 12)],
+      ['Afternoon', slots.filter((x) => x.at.getHours() >= 12 && x.at.getHours() < 17)],
+      ['Evening', slots.filter((x) => x.at.getHours() >= 17)],
     ] as const;
     let tz = '';
     try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone.replace(/_/g, ' '); } catch { /* ignore */ }
+    const babaTz = schedule?.settings?.timezone || 'Africa/Lagos';
+    const sameZone = (() => { try { return new Date().toLocaleString('en-US', { timeZone: babaTz }) === new Date().toLocaleString('en-US'); } catch { return true; } })();
+    const subtitle = tz ? `Times are in your time zone (${tz}).${sameZone ? '' : ` ${short} is in ${babaTz.replace(/_/g, ' ')}.`}` : undefined;
     body = (
       <StepFrame stepKey="time" progress={progress} onBack={back} onClose={onClose} top={top}
-        title={`Pick a time on ${format(day, 'EEEE d MMMM')}`} subtitle={tz ? `Times are in your time zone (${tz}).` : undefined}>
+        title={`Pick a time on ${format(day, 'EEEE d MMMM')}`} subtitle={subtitle}>
         <div className="space-y-5">
           {groups.filter(([, ts]) => ts.length).map(([label, ts]) => (
             <div key={label}>
               <div className="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">{label}</div>
               <div className="grid grid-cols-3 gap-2.5">
-                {ts.map((t) => (
-                  <button key={t} type="button" data-testid={`time-${t}`}
-                    onClick={() => { setTime(t); afterWhen(); }}
+                {ts.map((x) => (
+                  <button key={x.date + x.time} type="button" data-testid={`time-${format(x.at, 'HH:mm')}`}
+                    onClick={() => { setSlot(x); afterWhen(); }}
                     className={cn('h-14 rounded-pill border-2 border-ink bg-paper text-[17px] font-bold transition-transform hover:-translate-y-0.5 hover:shadow-sticker',
-                      time === t && 'bg-sun')}>
-                    {hhmmLabel(t)}
+                      slot?.date === x.date && slot?.time === x.time && 'bg-sun')}>
+                    {timeLabel(x.at)}
                   </button>
                 ))}
               </div>
@@ -249,7 +253,7 @@ export function ConsultFlow({ babalawo, preferMode, onClose }: { babalawo: FlowB
   } else {
     body = (
       <PayStep
-        babalawo={babalawo} topic={topic ?? 'unsure'} mode={mode ?? 'schedule'} day={day} time={time}
+        babalawo={babalawo} topic={topic ?? 'unsure'} mode={mode ?? 'schedule'} slot={slot}
         top={top} progress={progress}
         // Going back from payment skips the sign-in steps: the person is already signed in.
         onBack={() => setHistory((h) => h.filter((s) => s !== 'auth').slice(0, -1))}
@@ -281,9 +285,9 @@ export function ConsultFlow({ babalawo, preferMode, onClose }: { babalawo: FlowB
 // The existing pay wall (wallet, Paystack, Flutterwave), as the last step.
 
 function PayStep({
-  babalawo, topic, mode, day, time, top, progress, onBack, onClose, onDone, onSlotTaken, availableNow, firstName, welcome,
+  babalawo, topic, mode, slot, top, progress, onBack, onClose, onDone, onSlotTaken, availableNow, firstName, welcome,
 }: {
-  babalawo: FlowBabalawo; topic: Topic; mode: Mode; day: Date | null; time: string; top: React.ReactNode; progress: number;
+  babalawo: FlowBabalawo; topic: Topic; mode: Mode; slot: BookableSlot | null; top: React.ReactNode; progress: number;
   onBack: () => void; onClose: () => void; onDone: (sessionId: string) => void; onSlotTaken: () => void;
   availableNow: boolean; firstName?: string; welcome: boolean;
 }) {
@@ -307,10 +311,10 @@ function PayStep({
 
   // Hold the chosen slot for a few minutes while the person pays.
   useEffect(() => {
-    if (mode !== 'schedule' || !day || !time || !user?.id) return;
+    if (mode !== 'schedule' || !slot || !user?.id) return;
     let held: string | null = null;
     let live = true;
-    acquireSlotLock(babalawo.id, ymd(day), time, user.id).then((r) => {
+    acquireSlotLock(babalawo.id, slot.date, slot.time, user.id).then((r) => {
       if (!live) { if (r.lockId) releaseSlotLock(r.lockId, user.id); return; }
       if (r.success && r.lockId) { held = r.lockId; setLock(r.lockId); }
       else if (r.lockedByOther) {
@@ -320,7 +324,7 @@ function PayStep({
     });
     return () => { live = false; if (held) releaseSlotLock(held, user.id); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, day, time, user?.id, babalawo.id]);
+  }, [mode, slot, user?.id, babalawo.id]);
 
   async function pay() {
     if (!user) return;
@@ -329,8 +333,9 @@ function PayStep({
       return;
     }
     setBusy(true);
-    const date = mode === 'now' ? new Date() : day!;
-    const selectedTime = mode === 'now' ? new Date().toTimeString().slice(0, 5) : time;
+    // A booked time is sent on the Babalawo's own clock. Consult Now times are set by the server.
+    const date = mode === 'now' ? ymd(new Date()) : slot!.date;
+    const selectedTime = mode === 'now' ? new Date().toTimeString().slice(0, 5) : slot!.time;
     await handlePaymentAndBooking(
       { user, userProfile, babalawo, date, selectedTime, amount, paymentMethod: method, walletBalance: wallet, isInstant: mode === 'now' },
       async (sessionId) => {
@@ -355,14 +360,14 @@ function PayStep({
     );
   }
 
-  const when = mode === 'now' ? 'Now, as soon as you pay' : day ? `${format(day, 'EEEE d MMMM')} at ${hhmmLabel(time)}` : '';
+  const when = mode === 'now' ? 'Now, as soon as you pay' : slot ? `${format(slot.at, 'EEEE d MMMM')} at ${timeLabel(slot.at)}` : '';
 
   return (
     <StepFrame stepKey="pay" progress={progress} onBack={onBack} onClose={onClose} top={top}
       title={welcome && firstName ? `Almost there, ${firstName}.` : 'Confirm and pay'}
       subtitle={mode === 'now' ? 'You’ll join the call as soon as payment clears.' : 'Your Google Meet link arrives once payment clears.'}
       footer={
-        <Button variant="sun" size="lg" className="w-full" onClick={pay} disabled={busy || (mode === 'schedule' && (!day || !time))} data-testid="pay-button">
+        <Button variant="sun" size="lg" className="w-full" onClick={pay} disabled={busy || (mode === 'schedule' && !slot)} data-testid="pay-button">
           {busy ? <><Loader2 className="animate-spin" /> Processing…</> : <><Lock /> Pay ₦{amount.toLocaleString()}{mode === 'now' ? ' and start' : ''}</>}
         </Button>
       }>

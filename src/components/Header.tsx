@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -26,6 +27,8 @@ interface HeaderProps {
 /** Public site header shared by the homepage and every public page. */
 const Header = ({ variant = 'solid' }: HeaderProps) => {
   const { user } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const closeMenu = () => setMenuOpen(false);
   const overlay = variant === 'overlay';
   const floating = overlay || variant === 'clear';
 
@@ -68,7 +71,7 @@ const Header = ({ variant = 'solid' }: HeaderProps) => {
             <Link to="/search">Book a consultation</Link>
           </Button>
 
-          <Sheet>
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
             <SheetTrigger asChild>
               <Button
                 variant={overlay ? 'glass' : 'outline'}
@@ -89,6 +92,7 @@ const Header = ({ variant = 'solid' }: HeaderProps) => {
                   <Link
                     key={l.to}
                     to={l.to}
+                    onClick={closeMenu}
                     className="border-b border-white/10 py-4 font-display text-3xl font-extrabold tracking-[-0.03em] no-underline"
                   >
                     {l.label}
@@ -96,6 +100,7 @@ const Header = ({ variant = 'solid' }: HeaderProps) => {
                 ))}
                 <Link
                   to={user ? '/dashboard' : '/auth'}
+                  onClick={closeMenu}
                   className="py-4 font-display text-3xl font-extrabold tracking-[-0.03em] text-leaf no-underline"
                 >
                   {user ? 'Dashboard' : 'Sign in'}
@@ -104,7 +109,7 @@ const Header = ({ variant = 'solid' }: HeaderProps) => {
               <div className="mt-auto space-y-3 p-6 pb-safe">
                 <InstallButton variant="block" label="Install the app" buttonVariant="glass" />
                 <Button asChild variant="sun" size="lg" className="w-full">
-                  <Link to="/search">Book a consultation</Link>
+                  <Link to="/search" onClick={closeMenu}>Book a consultation</Link>
                 </Button>
               </div>
             </SheetContent>

@@ -25,6 +25,7 @@ const cols = [
       { to: '/terms', label: 'Terms of use' },
       { to: '/privacy', label: 'Privacy policy' },
       { to: '/refunds', label: 'Refunds and cancellations' },
+      { to: '/support', label: 'Help and support' },
       { href: `mailto:${SUPPORT_EMAIL}`, label: SUPPORT_EMAIL },
     ],
   },

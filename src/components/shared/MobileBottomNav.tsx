@@ -35,7 +35,7 @@ const USER_NAV_ITEMS: NavItem[] = [
   {
     icon: <Home className="w-5 h-5" />,
     label: 'Home',
-    path: '/dashboard/user',
+    path: '/dashboard',
   },
   {
     icon: <Search className="w-5 h-5" />,
@@ -45,17 +45,17 @@ const USER_NAV_ITEMS: NavItem[] = [
   {
     icon: <Calendar className="w-5 h-5" />,
     label: 'Sessions',
-    path: '/dashboard/user?tab=sessions',
+    path: '/dashboard?tab=my-sessions',
   },
   {
     icon: <Wallet className="w-5 h-5" />,
     label: 'Wallet',
-    path: '/dashboard/user?tab=wallet',
+    path: '/dashboard?tab=transaction-history',
   },
   {
     icon: <User className="w-5 h-5" />,
     label: 'Profile',
-    path: '/dashboard/user?tab=profile',
+    path: '/dashboard?tab=settings',
   },
 ];
 
@@ -91,27 +91,27 @@ const ADMIN_NAV_ITEMS: NavItem[] = [
   {
     icon: <Home className="w-5 h-5" />,
     label: 'Overview',
-    path: '/dashboard/admin',
+    path: '/dashboard',
   },
   {
     icon: <Users className="w-5 h-5" />,
     label: 'Users',
-    path: '/dashboard/admin?tab=users',
+    path: '/dashboard?section=users',
   },
   {
     icon: <Heart className="w-5 h-5" />,
     label: 'Babalawos',
-    path: '/dashboard/admin?tab=babalawos',
+    path: '/dashboard?section=babalawos',
   },
   {
     icon: <BarChart3 className="w-5 h-5" />,
-    label: 'Analytics',
-    path: '/dashboard/admin?tab=analytics',
+    label: 'Finance',
+    path: '/dashboard?section=finance',
   },
   {
     icon: <Settings className="w-5 h-5" />,
     label: 'Settings',
-    path: '/dashboard/admin?tab=settings',
+    path: '/dashboard?section=settings',
   },
 ];
 
@@ -129,21 +129,15 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   const navItems = NAV_CONFIG[userType];
 
   const isActive = (path: string) => {
-    // Handle query params in path
-    const pathWithoutQuery = path.split('?')[0];
-    const locationPathWithoutQuery = location.pathname;
-
-    // Check if paths match
-    if (pathWithoutQuery === locationPathWithoutQuery) {
-      // If there's a query param in the nav item, check if it matches
-      const queryMatch = path.match(/\?tab=(\w+)/);
-      if (queryMatch) {
-        const tabParam = new URLSearchParams(location.search).get('tab');
-        return tabParam === queryMatch[1];
-      }
-      return true;
-    }
-    return false;
+    const [pathname, query = ''] = path.split('?');
+    if (pathname !== location.pathname) return false;
+    // A link is on when the page asks for the same section (?tab= or ?section=).
+    const want = new URLSearchParams(query);
+    const have = new URLSearchParams(location.search);
+    const wantKey = want.has('section') ? 'section' : 'tab';
+    const wanted = want.get(wantKey);
+    const current = have.get('section') ?? have.get('tab');
+    return wanted ? current === wanted : !current;
   };
 
   return (

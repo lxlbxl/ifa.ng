@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { CLIENT_TABS, resolveTab } from '@/lib/dashboardLinks';
 import { Bell, BookOpen, CalendarDays, History, Home, LifeBuoy, Search, Settings as SettingsIcon, Wallet } from 'lucide-react';
 import NetworkStatusBar from "@/components/pwa/NetworkStatusBar";
 import InstallButton from "@/components/pwa/InstallButton";
@@ -44,9 +46,11 @@ const INTROS = {
 };
 
 const UserDashboard = () => {
-  // Notifications link to /dashboard?tab=records for notes and Ebo.
-  const [activeSection, setActiveSection] = useState(() =>
-    new URLSearchParams(window.location.search).get('tab') === 'records' ? 'spiritual-journey' : 'dashboard');
+  // The section lives in the URL (?tab=), so links, refresh and the back button all work.
+  // Short names such as tab=wallet or tab=sessions are mapped in dashboardLinks.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeSection = resolveTab(CLIENT_TABS, searchParams.get('tab'), 'dashboard');
+  const setActiveSection = (section: string) => setSearchParams(section === 'dashboard' ? {} : { tab: section });
 
   const sections: Record<string, React.ReactNode> = {
     'dashboard': <ClientHome onNavigate={setActiveSection} />,

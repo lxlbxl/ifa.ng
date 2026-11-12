@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import pg from "pg";
 import { migrate } from "../src/migrate.js";
-import { freshDatabase } from "./helpers.js";
+import { freshDatabase, setBabalawoAvailable, setWallet } from "./helpers.js";
 
 /**
  * Part wallet, part card (migration 20261115000000): the wallet pays what it holds, the
@@ -13,8 +13,7 @@ let admin: pg.Client;
 
 const one = async <T,>(q: string, params: unknown[] = []) => (await admin.query(q, params)).rows[0] as T;
 const balance = () => one<{ balance: string }>(`select balance from wallets where user_id = $1`, [CLIENT]).then((r) => Number(r?.balance ?? 0));
-const setBalance = (n: number) => admin.query(`insert into wallets(user_id, balance) values ($1, $2)
-  on conflict (user_id) do update set balance = excluded.balance`, [CLIENT, n]);
+const setBalance = (n: number) => setWallet(admin, CLIENT, n);
 const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Lagos" }).format(new Date());
 
 type Intent = { reference: string; amount: string; wallet_amount: string; total: string };

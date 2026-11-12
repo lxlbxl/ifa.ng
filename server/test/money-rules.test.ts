@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import pg from "pg";
 import { migrate } from "../src/migrate.js";
-import { freshDatabase } from "./helpers.js";
+import { freshDatabase, setBabalawoAvailable, setWallet } from "./helpers.js";
 
 /**
  * Fair money rules (migration 20261113000000): Consult Now must be accepted or it is
@@ -41,7 +41,7 @@ async function pastBooking(hoursAgo: number): Promise<number> {
   const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Lagos", year: "numeric", month: "2-digit", day: "2-digit",
     hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(start);
   const g = (t: string) => parts.find((p) => p.type === t)!.value;
-  const r = await one<{ id: number }>(`select public._create_paid_session($1, $2, $3::date, $4, false, 10000, 'wallet', $5) id`,
+  const r = await one<{ id: number }>(`select public._create_paid_session($1, $2, $3::date, $4, false, 10000, 'paystack', $5) id`,
     [CLIENT, BABA, `${g("year")}-${g("month")}-${g("day")}`, `${g("hour")}:${g("minute")}`, `ref-${Math.random()}`]);
   return Number(r.id);
 }
@@ -55,8 +55,7 @@ beforeAll(async () => {
     ('${CLIENT}','c@x.ng','{}'), ('${BABA}','b@x.ng','{"role":"babalawo"}')`);
   await admin.query(`update babalawos set hourly_rate = 10000, is_verified = true, profile_picture_url = 'https://x.invalid/p.jpg' where user_id = '${BABA}'`);
   await admin.query(`insert into availability(babalawo_id, day_of_week, start_time, end_time) values ('${BABA}', 1, '09:00', '12:00')`);
-  await admin.query(`insert into wallets(user_id, balance) values ('${CLIENT}', 1000000)
-    on conflict (user_id) do update set balance = 1000000`);
+  await setWallet(admin, CLIENT, 1000000);
 }, 60_000);
 afterAll(() => admin?.end());
 

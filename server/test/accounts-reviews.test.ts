@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import pg from "pg";
 import { migrate } from "../src/migrate.js";
-import { freshDatabase } from "./helpers.js";
+import { freshDatabase, setBabalawoAvailable, setWallet } from "./helpers.js";
 
 const BABA = "00000000-0000-0000-0000-0000000000b3";
 const CLIENT = "00000000-0000-0000-0000-0000000000c3";
@@ -64,7 +64,7 @@ describe("reviews", () => {
 
 describe("deleting an account", () => {
   it("needs the word DELETE and an empty wallet (or giving it up)", async () => {
-    await admin.query(`insert into wallets(user_id, balance) values ($1, 2500) on conflict (user_id) do update set balance = 2500`, [OTHER]);
+    await setWallet(admin, OTHER, 2500);
     await expect(as(OTHER, `select public.delete_my_account('yes')`)).rejects.toThrow(/Type DELETE/);
     await expect(as(OTHER, `select public.delete_my_account('DELETE')`)).rejects.toThrow(/wallet still has ₦2,500/);
   });
@@ -92,8 +92,7 @@ describe("deleting an account", () => {
   });
 
   it("asks a Babalawo to withdraw their earnings first", async () => {
-    await admin.query(`insert into babalawo_wallets(babalawo_id, available_balance) values ($1, 5000)
-      on conflict (babalawo_id) do update set available_balance = 5000`, [BABA]);
+    await setBabalawoAvailable(admin, BABA, 5000);
     await expect(as(BABA, `select public.delete_my_account('DELETE')`)).rejects.toThrow(/Withdraw them first/);
   });
 });

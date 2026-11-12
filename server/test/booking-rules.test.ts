@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import pg from "pg";
 import { migrate } from "../src/migrate.js";
-import { freshDatabase } from "./helpers.js";
+import { freshDatabase, setBabalawoAvailable, setWallet } from "./helpers.js";
 
 /**
  * Booking rules are enforced in the database (public._assert_bookable), so the
@@ -45,7 +45,7 @@ beforeAll(async () => {
   await admin.query(`insert into auth.users(id,email,raw_user_meta_data) values
     ('${CLIENT}','a@x.ng','{}'), ('${BABA}','b@x.ng','{"role":"babalawo"}')`);
   await admin.query(`update babalawos set hourly_rate=10000, is_verified=true, profile_picture_url='https://x.invalid/p.jpg' where user_id='${BABA}'`);
-  await admin.query(`insert into wallets(user_id,balance) values ('${CLIENT}', 10000000) on conflict (user_id) do update set balance=10000000`);
+  await setWallet(admin, CLIENT, 10000000);
   await admin.query(`insert into availability(babalawo_id,day_of_week,start_time,end_time)
     select '${BABA}', d, '08:00','18:00' from generate_series(0,6) d`);
   await admin.query(`insert into babalawo_scheduling_settings(babalawo_id,slot_minutes,buffer_minutes,min_notice_hours,max_advance_days)

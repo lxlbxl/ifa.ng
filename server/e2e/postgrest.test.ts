@@ -102,7 +102,11 @@ describe("Ebo through PostgREST (the web app's calls)", () => {
   it("Babalawo drafts and sends; the client sees the itemised quote, pays from the wallet and nobody else sees it", async () => {
     const s = await db.query(`insert into sessions(user_id, babalawo_id, session_date, start_time, end_time, status, payment_status, amount)
       values ($1, $2, current_date, '09:00', '10:00', 'completed', 'paid', 10000) returning id`, [ALICE, BABA]);
-    await db.query(`insert into wallets(user_id, balance) values ($1, 100000) on conflict (user_id) do update set balance = 100000`, [ALICE]);
+    // wallet balance and its provider part are set together (they must add up at commit)
+    await db.query(`with w as (insert into wallets(user_id, balance) values ($1, 100000)
+        on conflict (user_id) do update set balance = 100000 returning user_id)
+      insert into wallet_parts(user_id, provider, balance) select user_id, 'paystack', 100000 from w
+        on conflict (user_id, provider) do update set balance = 100000`, [ALICE]);
     const rpc = (fn: string, body: unknown, tok: string) => send("POST", `/rpc/${fn}`, body, tok);
 
     const fee = await get("/admin_settings?select=setting_value&setting_key=eq.ebo_platform_fee_percent", token(ALICE));

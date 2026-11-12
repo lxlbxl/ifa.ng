@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { adminAdjustWallet } from "@/utils/walletUtils";
+import { ProviderPicker } from "./AdminUserDetail";
 import { Loader2, Plus, Search, RefreshCw } from "lucide-react";
 
 interface User {
@@ -23,6 +24,7 @@ const AdminWalletManagement = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [creditAmount, setCreditAmount] = useState("");
   const [creditDescription, setCreditDescription] = useState("");
+  const [creditProvider, setCreditProvider] = useState<'paystack' | 'flutterwave' | null>(null);
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
@@ -93,7 +95,7 @@ const AdminWalletManagement = () => {
   };
 
   const handleCreditWallet = async () => {
-    if (!selectedUser || !creditAmount || !creditDescription) {
+    if (!selectedUser || !creditAmount || !creditDescription || !creditProvider) {
       toast({ title: "Please fill all fields", variant: "destructive" });
       return;
     }
@@ -106,7 +108,7 @@ const AdminWalletManagement = () => {
 
     setProcessing(true);
     try {
-      const res = await adminAdjustWallet(selectedUser.id, amount, 'credit', creditDescription);
+      const res = await adminAdjustWallet(selectedUser.id, amount, 'credit', creditDescription, creditProvider);
       const success = res.success;
 
       if (success) {
@@ -114,6 +116,7 @@ const AdminWalletManagement = () => {
         setSelectedUser(null);
         setCreditAmount("");
         setCreditDescription("");
+        setCreditProvider(null);
         fetchUsers(); // Refresh the user list
       } else {
         toast({ title: "Failed to credit wallet", description: res.error, variant: "destructive" });
@@ -256,12 +259,14 @@ const AdminWalletManagement = () => {
                 placeholder="Reason for crediting wallet"
               />
             </div>
+
+            <ProviderPicker value={creditProvider} onChange={setCreditProvider} />
           </div>
           
           <DialogFooter className="flex-col sm:flex-row gap-2">
             <Button
               onClick={handleCreditWallet}
-              disabled={processing || !creditAmount || !creditDescription}
+              disabled={processing || !creditAmount || !creditDescription || !creditProvider}
               className="w-full sm:w-auto"
             >
               {processing ? (

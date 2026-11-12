@@ -138,9 +138,12 @@ export const useMessageUser = () =>
     rpc('admin_message_user', { p_user_id: v.userId, p_title: v.title, p_message: v.message }), 'Message sent');
 export const useSignOutUser = () =>
   useAdminUserAction((v: { userId: string }) => rpc<number>('admin_sign_out_user', { p_user_id: v.userId }), 'Signed out of every device');
+/** Which provider's balance holds the money. Credits must say, so the Babalawo payout rules hold. */
+export type Provider = 'paystack' | 'flutterwave';
 export const useAdjustUserWallet = () =>
-  useAdminUserAction((v: { userId: string; amount: number; type: 'credit' | 'debit'; reason: string }) =>
-    rpc('admin_adjust_wallet', { p_user_id: v.userId, p_amount: v.amount, p_type: v.type, p_description: v.reason }),
+  useAdminUserAction((v: { userId: string; amount: number; type: 'credit' | 'debit'; reason: string; provider?: Provider }) =>
+    rpc('admin_adjust_wallet', { p_user_id: v.userId, p_amount: v.amount, p_type: v.type, p_description: v.reason,
+      p_provider: v.type === 'credit' ? v.provider ?? null : null }),
     (v) => (v.type === 'credit' ? 'Wallet credited' : 'Wallet debited'));
 export const exportUserData = (userId: string) => rpc<unknown>('admin_export_user_data', { p_user_id: userId, p_request_id: null });
 export const useSetBabalawoListing = () =>

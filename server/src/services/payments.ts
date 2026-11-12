@@ -15,7 +15,8 @@ import { createMeetLink } from "./meet.js";
 export type Gateway = "paystack" | "flutterwave";
 
 export type Verified =
-  | { state: "paid"; amount: number; currency: string; txId: string }
+  /** amount: what counts towards our price; fee/charged: the processing fee the client paid on top. */
+  | { state: "paid"; amount: number; currency: string; txId: string; fee?: number; charged?: number }
   | { state: "pending" }
   | { state: "failed"; reason: string };
 
@@ -95,7 +96,14 @@ export async function verifyWithProvider(svc: Services, gateway: Gateway, refere
     const j = (await r.json()) as { status?: boolean; data?: Record<string, unknown> };
     const d = j?.data;
     if (!j?.status || !d) return { state: "pending" };
-    if (d.status === "success") return { state: "paid", amount: Number(d.amount) / 100, currency: String(d.currency ?? "NGN"), txId: String(d.id) };
+    if (d.status === "success") {
+      // With "Pass fees to customers" on, amount is what the client paid (price + fee) and
+      // requested_amount is our price. Either way the fee is in fees.
+      const charged = Number(d.amount) / 100;
+      const requested = d.requested_amount != null ? Number(d.requested_amount) / 100 : charged;
+      return { state: "paid", amount: requested, currency: String(d.currency ?? "NGN"), txId: String(d.id),
+               fee: d.fees != null ? Number(d.fees) / 100 : undefined, charged };
+    }
     if (d.status === "failed" || d.status === "reversed") return { state: "failed", reason: String(d.gateway_response ?? d.status) };
     return { state: "pending" };
   }
@@ -109,7 +117,12 @@ export async function verifyWithProvider(svc: Services, gateway: Gateway, refere
   const j = (await r.json()) as { status?: string; data?: Record<string, unknown> };
   const d = j?.data;
   if (j?.status !== "success" || !d) return { state: "pending" };
-  if (d.status === "successful") return { state: "paid", amount: Number(d.amount), currency: String(d.currency ?? "NGN"), txId: String(d.id) };
+  if (d.status === "successful") {
+    // With "charge my customers" on, charged_amount is price + fee and amount is our price.
+    return { state: "paid", amount: Number(d.amount), currency: String(d.currency ?? "NGN"), txId: String(d.id),
+             fee: d.app_fee != null ? Number(d.app_fee) : undefined,
+             charged: d.charged_amount != null ? Number(d.charged_amount) : undefined };
+  }
   if (d.status === "failed") return { state: "failed", reason: String(d.processor_response ?? "failed") };
   return { state: "pending" };
 }
@@ -135,6 +148,11 @@ export async function confirmAndSettle(svc: Services, reference: string): Promis
   }
   const settled = (await asService(svc, (trx) => sql<{ r: SettleResult }>`
     select public.settle_payment_intent(${reference}, ${v.amount}, ${v.currency}, ${v.txId}) r`.execute(trx))).rows[0].r;
+  if (v.fee !== undefined || v.charged !== undefined) {
+    // For the books only: a failure here must not undo or hide a settled payment.
+    await asService(svc, (trx) => sql`select public.record_provider_fee(${reference}, ${v.fee ?? null}::numeric, ${v.charged ?? null}::numeric)`.execute(trx))
+      .catch((e) => console.warn(`recording the provider fee for ${reference} failed:`, (e as Error).message));
+  }
   // A paid session, or the live ritual session of a paid Ebo, gets its Meet link now.
   if (settled.status === "settled" && (settled.kind === "session" || settled.kind === "ebo") && settled.session_id) {
     // Best effort: the client can retry from the session page if Google is slow.

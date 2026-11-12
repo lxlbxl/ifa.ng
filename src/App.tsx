@@ -21,6 +21,7 @@ const BabalawoProfile = lazy(() => import("./components/BabalawoProfile"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const SearchPage = lazy(() => import("./pages/Search"));
 const BabalawoApply = lazy(() => import("./pages/BabalawoApply"));
+const Legal = lazy(() => import("./pages/Legal"));
 
 const LoadingFallback = () => (
   <div className="flex items-center justify-center h-screen">
@@ -64,6 +65,9 @@ const App = () => (
               />
               <Route path="/search" element={<SearchPage />} />
               <Route path="/become-a-babalawo" element={<BabalawoApply />} />
+              <Route path="/terms" element={<Legal doc="terms" />} />
+              <Route path="/privacy" element={<Legal doc="privacy" />} />
+              <Route path="/refunds" element={<Legal doc="refunds" />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

@@ -19,8 +19,8 @@ const faqs = [
     a: 'Only if both you and your Babalawo agree when you book, and either of you can turn it off. The transcript is used to draft your session notes, which your Babalawo approves before you see them.',
   },
   {
-    q: 'Can I reschedule or cancel?',
-    a: 'Yes, up to 24 hours before the session. Changes inside 24 hours may carry a fee. Contact support@ifa.ng if something goes wrong.',
+    q: 'Can I cancel?',
+    a: 'Yes. Cancel at least 24 hours before the session for a full refund to your wallet; later than that there is no refund. If your Babalawo cancels or never joins, you get everything back. See the refund policy at ifa.ng/refunds.',
   },
   {
     q: 'How do I pay?',

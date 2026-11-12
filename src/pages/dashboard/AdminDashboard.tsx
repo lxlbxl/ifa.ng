@@ -21,6 +21,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Navigate } from "react-router-dom";
 import { adminSections, type AdminSection } from "@/components/dashboard/admin/adminSections";
 import AdminEbo from "@/components/dashboard/admin/AdminEbo";
+import AdminReviews from "@/components/dashboard/admin/AdminReviews";
 import { MobileBottomNav } from "@/components/shared/MobileBottomNav";
 
 const AdminDashboard = () => {
@@ -49,6 +50,8 @@ const AdminDashboard = () => {
         return <AdminDisputes />;
       case 'ebo':
         return <AdminEbo />;
+      case 'reviews':
+        return <AdminReviews />;
       case 'activity':
         return <AdminActivityLog />;
       case 'finance':

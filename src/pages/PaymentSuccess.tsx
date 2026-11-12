@@ -74,10 +74,8 @@ const PaymentSuccess: React.FC = () => {
     }
   };
 
-  const handleDownloadReceipt = () => {
-    // TODO: Implement PDF generation
-    toast({ title: 'Receipt download coming soon!' });
-  };
+  // The browser's print dialog can save this page as a PDF receipt.
+  const handleDownloadReceipt = () => window.print();
 
   const handleShareReceipt = async () => {
     if (navigator.share) {
@@ -201,7 +199,7 @@ const PaymentSuccess: React.FC = () => {
             onClick={handleDownloadReceipt}
           >
             <Download className="mr-2 h-4 w-4" />
-            Download Receipt
+            Print or save as PDF
           </Button>
           <Button
             variant="outline"

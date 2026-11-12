@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Award, Bell, BookOpen, CalendarDays, History, Home, LifeBuoy, Search, Settings as SettingsIcon, Wallet } from 'lucide-react';
+import { Bell, BookOpen, CalendarDays, History, Home, LifeBuoy, Search, Settings as SettingsIcon, Wallet } from 'lucide-react';
 import NetworkStatusBar from "@/components/pwa/NetworkStatusBar";
 import InstallButton from "@/components/pwa/InstallButton";
 import DashboardShell, { type NavGroup } from '@/components/dashboard/shell/DashboardShell';
@@ -10,7 +10,6 @@ import FindBabalawo from '@/components/dashboard/user/FindBabalawo';
 import Settings from '@/components/dashboard/user/Settings';
 import TransactionHistory from '@/components/dashboard/user/TransactionHistory';
 import ClientConsultationRecords from '@/components/dashboard/user/ClientConsultationRecords';
-import Loyalty from '@/components/dashboard/user/Loyalty';
 import Support from '@/components/dashboard/user/Support';
 import NotificationSettings from '@/components/pwa/NotificationSettings';
 import Notifications from '@/components/dashboard/user/Notifications';
@@ -25,7 +24,6 @@ const GROUPS: NavGroup[] = [
   ] },
   { label: 'Money', items: [
     { id: 'transaction-history', label: 'Wallet & payments', short: 'Wallet', icon: Wallet },
-    { id: 'loyalty', label: 'Rewards', icon: Award },
   ] },
   { label: 'You', items: [
     { id: 'notifications', label: 'Notifications', icon: Bell },
@@ -41,7 +39,6 @@ const INTROS = {
   'find-babalawo': { eyebrow: 'Verified Babalawos', title: 'Find a Babalawo', lede: 'Choose who you would like to sit with. Each one is verified before they take bookings.' },
   'transaction-history': { eyebrow: 'Money', title: 'Wallet & payments', lede: 'Your balance, top-ups and what you have paid for.' },
   'notifications': { eyebrow: 'Updates', title: 'Notifications' },
-  'loyalty': { eyebrow: 'Thank you for showing up', title: 'Rewards', lede: 'Earn points for consultations, reviews and the friends you bring.' },
   'settings': { eyebrow: 'Your account', title: 'Settings' },
   'support': { eyebrow: 'We are here', title: 'Help & support', lede: 'Answers to common questions, or write to us.' },
 };
@@ -59,7 +56,6 @@ const UserDashboard = () => {
     'find-babalawo': <FindBabalawo />,
     'transaction-history': <TransactionHistory />,
     'notifications': <Notifications />,
-    'loyalty': <Loyalty />,
     'settings': <div className="space-y-6"><NotificationSettings /><Settings /></div>,
     'support': <Support />,
   };

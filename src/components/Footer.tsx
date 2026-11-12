@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Logo } from '@/components/brand/Logo';
+import { SUPPORT_EMAIL } from '@/hooks/usePlatformRules';
 
 const cols = [
   {
@@ -21,9 +22,10 @@ const cols = [
   {
     title: 'Trust',
     links: [
-      { to: '/#faq', label: 'Privacy and consent' },
-      { to: '/#faq', label: 'Refunds' },
-      { href: 'mailto:support@ifa.ng', label: 'support@ifa.ng' },
+      { to: '/terms', label: 'Terms of use' },
+      { to: '/privacy', label: 'Privacy policy' },
+      { to: '/refunds', label: 'Refunds and cancellations' },
+      { href: `mailto:${SUPPORT_EMAIL}`, label: SUPPORT_EMAIL },
     ],
   },
 ];

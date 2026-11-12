@@ -41,6 +41,9 @@ export const PLATFORM_RULES: PlatformRule[] = [
   { key: "meet_access_type", label: "Joining a Google Meet call", group: "Sessions", type: "choice", fallback: "OPEN", isPublic: false,
     options: [{ value: "OPEN", label: "Walk straight in with the link" }, { value: "TRUSTED", label: "Guests ask to join, the Babalawo admits them" }],
     help: "The link is only shown to the two people in the session. Most clients have no Google account, so asking to join means waiting for the Babalawo." },
+  { key: "reviews_need_approval", label: "New client reviews", group: "Sessions", type: "choice", fallback: "false", isPublic: false,
+    options: [{ value: "false", label: "Publish straight away" }, { value: "true", label: "Hold until an admin approves" }],
+    help: "Either way, you can hide any review under Reviews." },
   { key: "recording_retention_days", label: "Keep recordings for", unit: "days", group: "Sessions", type: "number", min: 1,
     fallback: "90", isPublic: true, help: "Recordings and uploaded audio are deleted after this." },
 ];

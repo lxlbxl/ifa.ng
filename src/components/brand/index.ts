@@ -10,3 +10,5 @@ export { PortraitCard } from './PortraitCard';
 export type { PortraitCardProps } from './PortraitCard';
 export { StickerPanel, ColorBlock, StatTile, SoundWave, TickDot } from './Blocks';
 export { PageShell } from './PageShell';
+export { InsightCard, InsightGrid, InsightPeriodPicker, Sparkline, DeltaChip, percentChange, INSIGHT_PERIODS } from './InsightCard';
+export type { InsightCardProps, InsightTone, InsightPeriod } from './InsightCard';

@@ -10,7 +10,7 @@ const RevenueChart = () => {
     if (isLoading) return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>;
     if (error) return <div className="text-red-500">Error: {error.message}</div>;
 
-    const currencyFormatter = (value: number) => `$${value.toFixed(2)}`;
+    const currencyFormatter = (value: number) => `₦${Math.round(value).toLocaleString("en-NG")}`;
     const dateFormatter = (str: string) => format(new Date(str), 'MMM d');
 
     return (

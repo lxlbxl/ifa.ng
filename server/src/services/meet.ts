@@ -2,7 +2,8 @@ import { sql } from "kysely";
 import type { Caller } from "../db.js";
 import { asService, HttpError, loadSessionFor, type Services } from "./context.js";
 import { meetApi, SCOPES, spaceConfig, type RecordingMode } from "./google.js";
-import { dispatchDue } from "./notify.js";
+import { dispatchDue, setting } from "./notify.js";
+import { isPlaceholderEmail } from "./phoneAuth.js";
 
 /**
  * Creates (or reconciles) the Google Meet space for a PAID session.
@@ -41,16 +42,18 @@ export async function createMeetLink(svc: Services, caller: Caller, sessionId: u
 
   // 2) Create the space.
   try {
-    const created = await meetApi(svc, "POST", "spaces", [SCOPES.meetCreate], { config: spaceConfig(recording) });
+    const access = (await setting(svc, "meet_access_type"))?.toUpperCase() === "TRUSTED" ? "TRUSTED" : "OPEN";
+    const created = await meetApi(svc, "POST", "spaces", [SCOPES.meetCreate], { config: spaceConfig(recording, access) });
     if (!created.ok) throw new Error(`Meet create failed (${created.status}): ${created.data?.error?.message ?? ""}`);
     const space = created.data as { name: string; meetingUri: string; meetingCode: string };
 
-    // 3) Babalawo as co-host (needs a Google account email).
+    // 3) Babalawo as co-host (needs the Google account they use for Meet; a phone sign-in has none).
     let warning: string | null = null;
-    const email = (await asService(svc, (trx) => sql<{ email: string | null }>`
-      select coalesce(nullif(b.google_email, ''), p.email) email
+    const row = (await asService(svc, (trx) => sql<{ email: string | null }>`
+      select coalesce(nullif(trim(b.google_email), ''), p.email) email
         from public.profiles p left join public.babalawos b on b.user_id = p.id
-       where p.id = ${s.babalawo_id}::uuid`.execute(trx))).rows[0]?.email;
+       where p.id = ${s.babalawo_id}::uuid`.execute(trx))).rows[0];
+    const email = row?.email && !isPlaceholderEmail(row.email) ? row.email : null;
     if (email) {
       const m = await meetApi(svc, "POST", `${space.name}/members`, [SCOPES.meetCreate], { email, role: "COHOST" });
       if (!m.ok) { warning = `cohost_not_added: ${m.data?.error?.message ?? m.status}`; console.error(warning); }

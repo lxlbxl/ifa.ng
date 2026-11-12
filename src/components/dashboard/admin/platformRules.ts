@@ -38,6 +38,9 @@ export const PLATFORM_RULES: PlatformRule[] = [
   { key: "whatsapp_notifications_enabled", label: "WhatsApp messages", group: "Messages", type: "choice", fallback: "true", isPublic: false,
     options: [{ value: "true", label: "On (SMS when WhatsApp fails)" }, { value: "false", label: "Off (SMS only)" }],
     help: "Booking confirmations and reminders." },
+  { key: "meet_access_type", label: "Joining a Google Meet call", group: "Sessions", type: "choice", fallback: "OPEN", isPublic: false,
+    options: [{ value: "OPEN", label: "Walk straight in with the link" }, { value: "TRUSTED", label: "Guests ask to join, the Babalawo admits them" }],
+    help: "The link is only shown to the two people in the session. Most clients have no Google account, so asking to join means waiting for the Babalawo." },
   { key: "recording_retention_days", label: "Keep recordings for", unit: "days", group: "Sessions", type: "number", min: 1,
     fallback: "90", isPublic: true, help: "Recordings and uploaded audio are deleted after this." },
 ];

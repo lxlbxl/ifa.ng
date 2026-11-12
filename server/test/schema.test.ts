@@ -159,10 +159,21 @@ describe("baseline behaviour on plain Postgres", () => {
     expect(await count(OTHER)).toBe(0);
   });
 
-  it("the public Babalawo directory lists only verified Babalawos", async () => {
+  it("the public Babalawo directory lists only verified Babalawos with a complete profile", async () => {
     const list = () => database.as({ kind: "anon" }, (trx) => sql<{ id: string }>`select id from public.get_public_babalawos()`.execute(trx));
+    const svc = (q: ReturnType<typeof sql>) => database.as({ kind: "service" }, (trx) => q.execute(trx));
     expect((await list()).rows).toEqual([]);
-    await database.as({ kind: "service" }, (trx) => sql`update babalawos set is_verified = true where user_id = ${BABALAWO}`.execute(trx));
+    await svc(sql`update babalawos set is_verified = true where user_id = ${BABALAWO}`);
+    expect((await list()).rows).toEqual([]); // no photo, price or hours yet
+    await svc(sql`update babalawos set profile_picture_url = 'https://x.invalid/p.jpg', hourly_rate = 10000 where user_id = ${BABALAWO}`);
+    expect((await list()).rows).toEqual([]); // still no hours
+    await svc(sql`insert into availability(babalawo_id, day_of_week, start_time, end_time) values (${BABALAWO}::uuid, 1, '09:00', '12:00')`);
     expect((await list()).rows).toEqual([{ id: BABALAWO }]);
+    const status = await database.as({ kind: "user", userId: BABALAWO }, (trx) =>
+      sql<{ o: Record<string, boolean> }>`select public.babalawo_onboarding() o`.execute(trx));
+    expect(status.rows[0].o).toMatchObject({ photo: true, price: true, hours: true, bank: false, google_email: false, listed: true });
+    // Nobody else can read another Babalawo's checklist.
+    await expect(database.as({ kind: "user", userId: CLIENT }, (trx) =>
+      sql`select public.babalawo_onboarding(${BABALAWO}::uuid)`.execute(trx))).rejects.toThrow(/Not allowed/);
   });
 });

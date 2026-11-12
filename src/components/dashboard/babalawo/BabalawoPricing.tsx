@@ -35,6 +35,7 @@ const BabalawoPricing: React.FC = () => {
     if (error) return toast({ title: "Price not saved", description: error.message, variant: "destructive" });
     toast({ title: "Price updated", description: "New bookings use this price. Existing bookings keep theirs." });
     qc.invalidateQueries({ queryKey: ["bab-price", user?.id] });
+    qc.invalidateQueries({ queryKey: ["babalawo-onboarding"] });
   };
 
   return (

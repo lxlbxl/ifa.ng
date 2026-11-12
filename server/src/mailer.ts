@@ -30,10 +30,25 @@ export class SmtpMailer implements Mailer {
   }
 }
 
-export function createMailer(smtpUrl: string | undefined, from: string): Mailer {
-  const inner = smtpUrl ? new SmtpMailer(smtpUrl, from) : new ConsoleMailer();
+type Setting = string | undefined | (() => string | undefined);
+
+/**
+ * SMTP when SMTP_URL is set, otherwise the console. Pass getters to follow settings changed in
+ * Admin -> Settings -> Integrations without a restart.
+ */
+export function createMailer(smtpUrl: Setting, from: Setting): Mailer {
+  const read = (s: Setting) => (typeof s === "function" ? s() : s);
+  let sig: string | null = null;
+  let inner: Mailer = new ConsoleMailer();
+  const current = () => {
+    const url = read(smtpUrl);
+    const f = read(from) ?? "IFA.ng <no-reply@ifa.ng>";
+    const now = `${url ?? ""}\u0000${f}`;
+    if (now !== sig) { inner = url ? new SmtpMailer(url, f) : new ConsoleMailer(); sig = now; }
+    return inner;
+  };
   return {
     // Phone-only accounts carry a placeholder address under the reserved .invalid TLD; never mail it.
-    send: async (mail) => { if (!/\.invalid$/i.test(mail.to.trim())) await inner.send(mail); },
+    send: async (mail) => { if (!/\.invalid$/i.test(mail.to.trim())) await current().send(mail); },
   };
 }

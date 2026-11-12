@@ -52,8 +52,9 @@ describe("admin settings", () => {
     const admin = createApp({ config, database, resolveCaller: as(ADMIN) });
     const r = await admin.request("/v1/admin/integrations");
     expect(r.status).toBe(200);
-    const body = await r.json();
-    expect(body).toMatchObject({ paystack: true, flutterwave: false, termii: false });
+    const body = await r.json() as { integrations: { id: string; configured: boolean }[] };
+    const configured = Object.fromEntries(body.integrations.map((i) => [i.id, i.configured]));
+    expect(configured).toMatchObject({ paystack: true, flutterwave: false, termii: false });
     expect(JSON.stringify(body)).not.toContain("sk_live_x");
     const user = createApp({ config, database, resolveCaller: as(USER) });
     expect((await user.request("/v1/admin/integrations")).status).toBe(403);

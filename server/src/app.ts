@@ -9,6 +9,7 @@ import { registerV1 } from "./routes/v1.js";
 import { createFileStore, type FileStore } from "./services/storage.js";
 import type { LiveHub } from "./services/live.js";
 import { reportError } from "./services/errors.js";
+import { createIntegrationSettings, type IntegrationSettings } from "./services/integrations.js";
 
 export type AppEnv = { Variables: { caller: Caller } };
 
@@ -28,6 +29,8 @@ export function createApp(deps: {
   files?: FileStore;
   /** Live notification streams. Without it, the stream endpoint answers 503. */
   live?: LiveHub;
+  /** Admin-managed provider keys. index.ts passes the one it loaded at startup. */
+  integrations?: IntegrationSettings;
 }) {
   const { config, database } = deps;
   const resolveCaller = deps.resolveCaller ?? deps.auth?.resolveCaller ?? anonymousOnly;
@@ -65,7 +68,9 @@ export function createApp(deps: {
     return c.json(row);
   });
 
-  registerV1(app, { config, database, fetch: deps.fetch ?? globalThis.fetch, files: deps.files ?? createFileStore(config) }, deps.live);
+  const fetchImpl = deps.fetch ?? globalThis.fetch;
+  const integrations = deps.integrations ?? createIntegrationSettings({ config, database, fetch: fetchImpl });
+  registerV1(app, { config, database, fetch: fetchImpl, files: deps.files ?? createFileStore(config), integrations }, deps.live);
 
   app.onError((err, c) => {
     if (err instanceof HttpError) return c.json({ error: err.message, ...(err.code ? { code: err.code } : {}) }, err.status as 400);

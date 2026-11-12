@@ -138,24 +138,20 @@ export function registerV1(app: Hono<AppEnv>, svc: Services, live?: LiveHub) {
   });
   app.post("/v1/me/push-test", async (c) => c.json(await sendTestAlert(svc, c.get("caller"))));
 
-  // Admin: which providers are configured on the server. Only yes/no, never the values.
+  // Admin -> Settings -> Integrations: provider keys, masked; save; test. Admins only, never cached.
+  // Secret values go in, never come back out (see services/integrations.ts).
   app.get("/v1/admin/integrations", async (c) => {
-    if (!(await isAdmin(svc, c.get("caller")))) throw new HttpError(403, "Forbidden");
-    const k = svc.config;
-    const set = (...v: (string | undefined)[]) => v.every((x) => !!x && x.trim() !== "");
     c.header("Cache-Control", "no-store");
-    return c.json({
-      paystack: set(k.PAYSTACK_SECRET_KEY, k.PAYSTACK_PUBLIC_KEY),
-      flutterwave: set(k.FLW_SECRET_KEY, k.FLW_PUBLIC_KEY, k.FLW_SECRET_HASH),
-      google_meet: set(k.GOOGLE_SERVICE_ACCOUNT_JSON, k.GOOGLE_ORGANIZER_EMAIL),
-      agora: set(k.AGORA_APP_ID, k.AGORA_APP_CERTIFICATE),
-      termii: set(k.TERMII_API_KEY),
-      whatsapp: set(k.WHATSAPP_ACCESS_TOKEN, k.WHATSAPP_PHONE_NUMBER_ID),
-      email: set(k.SMTP_URL),
-      web_push: set(k.VAPID_PUBLIC_KEY, k.VAPID_PRIVATE_KEY),
-      error_tracking: set(k.SENTRY_DSN),
-      file_storage: set(k.S3_ENDPOINT, k.S3_BUCKET, k.S3_ACCESS_KEY_ID, k.S3_SECRET_ACCESS_KEY),
-    });
+    return c.json(await svc.integrations.list(c.get("caller")));
+  });
+  app.put("/v1/admin/integrations/:id", bodyLimit({ maxSize: 64 * 1024, onError: (c) => c.json({ error: "Too large" }, 413) }), async (c) => {
+    c.header("Cache-Control", "no-store");
+    return c.json(await svc.integrations.save(c.get("caller"), c.req.param("id"), (await body(c.req.raw)).values));
+  });
+  app.post("/v1/admin/integrations/:id/test", bodyLimit({ maxSize: 64 * 1024, onError: (c) => c.json({ error: "Too large" }, 413) }), async (c) => {
+    c.header("Cache-Control", "no-store");
+    const b = await body(c.req.raw);
+    return c.json(await svc.integrations.test(c.get("caller"), c.req.param("id"), b.values, b.to));
   });
 
   // Admin: run the notification job now (it also runs every minute on its own).

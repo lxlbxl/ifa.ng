@@ -80,3 +80,29 @@ test("notes keep prescribed Ebo items but never invent prices", () => {
   assert.equal(n.ebo.length, 1);
   assert.deepEqual(n.ebo[0].items.map((i) => [i.name, i.quantity, i.unit_price]), [["Ẹyẹlé", 2, null], ["Oyin", 1, 3000]]);
 });
+
+test("admin-saved settings decrypt with the shared key and stay bound to their name", async () => {
+  const { createCipheriv, randomBytes } = await import("node:crypto");
+  const { open, secretKey, createOverrides } = await import("../lib/secrets.mjs");
+  const key = secretKey({ SETTINGS_ENCRYPTION_KEY: "k".repeat(40) });
+  const seal = (name, value) => {
+    const iv = randomBytes(12);
+    const c = createCipheriv("aes-256-gcm", key, iv);
+    c.setAAD(Buffer.from(name));
+    const ct = Buffer.concat([c.update(value, "utf8"), c.final()]);
+    return `v1:${Buffer.concat([iv, c.getAuthTag(), ct]).toString("base64url")}`;
+  };
+  const sealed = seal("OPENAI_API_KEY", "sk-test-123");
+  assert.equal(open(key, "OPENAI_API_KEY", sealed), "sk-test-123");
+  assert.equal(open(key, "ANTHROPIC_API_KEY", sealed), null);
+  assert.equal(open(secretKey({ AUTH_SECRET: "x".repeat(40) }), "OPENAI_API_KEY", sealed), null);
+
+  const env = { SETTINGS_ENCRYPTION_KEY: "k".repeat(40), OPENAI_API_KEY: "from-env", STT_MODEL: "whisper-1" };
+  let rows = [{ env_key: "OPENAI_API_KEY", value_enc: sealed }];
+  const refresh = createOverrides({ q: async () => rows }, env);
+  assert.deepEqual(await refresh(), ["OPENAI_API_KEY"]);
+  assert.equal(env.OPENAI_API_KEY, "sk-test-123");
+  rows = [];
+  assert.deepEqual(await refresh(), ["OPENAI_API_KEY"]);
+  assert.equal(env.OPENAI_API_KEY, "from-env");
+});

@@ -19,11 +19,33 @@ export interface FileStore {
   delete(key: string): Promise<void>;
 }
 
-export function createFileStore(config: Config): FileStore {
+type StoreConfig = Pick<Config, "S3_ENDPOINT" | "S3_BUCKET" | "S3_ACCESS_KEY_ID" | "S3_SECRET_ACCESS_KEY" | "FILES_DIR">;
+
+/** The store for these settings, as they are right now. */
+export function fileStoreFor(config: StoreConfig): FileStore {
   if (config.S3_ENDPOINT && config.S3_BUCKET && config.S3_ACCESS_KEY_ID && config.S3_SECRET_ACCESS_KEY) {
     return new S3Store(config.S3_ENDPOINT, config.S3_BUCKET, config.S3_ACCESS_KEY_ID, config.S3_SECRET_ACCESS_KEY);
   }
   return new DiskStore(config.FILES_DIR);
+}
+
+/**
+ * Follows the settings: when an admin changes the bucket or its keys (Admin -> Settings ->
+ * Integrations), the next file operation uses the new ones without a restart.
+ */
+export function createFileStore(config: StoreConfig): FileStore {
+  let sig = "";
+  let store: FileStore | null = null;
+  const current = () => {
+    const now = [config.S3_ENDPOINT, config.S3_BUCKET, config.S3_ACCESS_KEY_ID, config.S3_SECRET_ACCESS_KEY, config.FILES_DIR].join("\u0000");
+    if (!store || now !== sig) { store = fileStoreFor(config); sig = now; }
+    return store;
+  };
+  return {
+    put: (key, body, contentType) => current().put(key, body, contentType),
+    get: (key) => current().get(key),
+    delete: (key) => current().delete(key),
+  };
 }
 
 const safeKey = (key: string) => {

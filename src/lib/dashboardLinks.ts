@@ -45,6 +45,7 @@ export const ADMIN_TABS: Record<string, string> = {
   finance: 'finance', payments: 'finance', transactions: 'transactions',
   'wallet-management': 'wallet-management', wallets: 'wallet-management', wallet: 'wallet-management',
   'withdrawal-management': 'withdrawal-management', withdrawals: 'withdrawal-management',
+  privacy: 'privacy', 'data-requests': 'privacy', breaches: 'privacy',
   activity: 'activity', settings: 'settings',
 };
 

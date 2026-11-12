@@ -2,6 +2,8 @@
  * Reports uncaught browser errors to Sentry when VITE_SENTRY_DSN is set at build time.
  * No SDK and no personal data: the error, the page path and the browser.
  */
+import { errorReportsAllowed } from './privacy';
+
 const raw = import.meta.env.VITE_SENTRY_DSN as string | undefined;
 
 function target() {
@@ -16,7 +18,7 @@ function target() {
 let sent = 0;
 export function reportClientError(err: unknown, extra: Record<string, unknown> = {}) {
   const t = target();
-  if (!t || sent >= 20) return; // a broken page shouldn't flood the inbox
+  if (!t || sent >= 20 || !errorReportsAllowed()) return; // the visitor can turn these off (Privacy choices) // a broken page shouldn't flood the inbox
   sent++;
   const e = err instanceof Error ? err : new Error(typeof err === 'string' ? err : JSON.stringify(err));
   const id = crypto.randomUUID().replace(/-/g, '');

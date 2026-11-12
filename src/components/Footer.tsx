@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { openPrivacyChoices } from '@/components/privacy/CookieNotice';
 import { Logo } from '@/components/brand/Logo';
 import { SUPPORT_EMAIL } from '@/hooks/usePlatformRules';
 
@@ -24,6 +25,9 @@ const cols = [
     links: [
       { to: '/terms', label: 'Terms of use' },
       { to: '/privacy', label: 'Privacy policy' },
+      { to: '/cookies', label: 'Cookie policy' },
+      { to: '/privacy/request', label: 'Your data rights' },
+      { action: 'privacy-choices', label: 'Privacy choices' },
       { to: '/refunds', label: 'Refunds and cancellations' },
       { to: '/support', label: 'Help and support' },
       { href: `mailto:${SUPPORT_EMAIL}`, label: SUPPORT_EMAIL },
@@ -47,7 +51,11 @@ const Footer = () => (
           <ul className="space-y-1.5 text-[13px] leading-snug">
             {c.links.map((l) => (
               <li key={l.label}>
-                {'href' in l && l.href ? (
+                {'action' in l ? (
+                  <button type="button" onClick={openPrivacyChoices} className="text-left text-cloth/85 hover:text-white hover:underline">
+                    {l.label}
+                  </button>
+                ) : 'href' in l && l.href ? (
                   <a href={l.href} className="text-cloth/85 no-underline hover:text-white hover:underline">
                     {l.label}
                   </a>

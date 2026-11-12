@@ -5,6 +5,7 @@ import { expireStalePresence } from "./presence.js";
 import { pushPending } from "./push.js";
 import { eboTick } from "./ebo.js";
 import { reportError } from "./errors.js";
+import { deleteQueuedFiles, runRetention } from "./privacy.js";
 
 /**
  * Scheduled work that pg_cron / Supabase schedules used to run. One API
@@ -23,6 +24,9 @@ export const JOBS: { name: string; everySeconds: number; run: (svc: Services) =>
     run: (svc) => asService(svc, (trx) => sql`select public.auto_complete_sessions()`.execute(trx)) },
   { name: "release earnings after the hold", everySeconds: 300,
     run: (svc) => asService(svc, (trx) => sql`select public.release_held_earnings()`.execute(trx)) },
+  // Data protection: the retention schedule, and stored files that erasure or retention queued.
+  { name: "privacy retention schedule", everySeconds: 3600, run: runRetention },
+  { name: "delete queued files", everySeconds: 300, run: deleteQueuedFiles },
 ];
 
 export function startJobs(svc: Services) {

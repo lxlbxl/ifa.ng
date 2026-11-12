@@ -1,8 +1,8 @@
-import { Star, Flame, ClipboardList, LayoutGrid, Users, UserCheck, Wallet, Settings, CreditCard, History, Banknote, CalendarCheck, AlertTriangle, ScrollText } from 'lucide-react';
+import { Star, Flame, ClipboardList, LayoutGrid, Users, UserCheck, Wallet, Settings, CreditCard, History, Banknote, CalendarCheck, AlertTriangle, ScrollText, ShieldCheck } from 'lucide-react';
 
 export type AdminSection =
   | 'overview' | 'users' | 'babalawos' | 'applications' | 'bookings' | 'disputes' | 'finance'
-  | 'transactions' | 'wallet-management' | 'settings' | 'withdrawal-management' | 'activity' | 'ebo' | 'reviews';
+  | 'transactions' | 'wallet-management' | 'settings' | 'withdrawal-management' | 'activity' | 'ebo' | 'reviews' | 'privacy';
 
 /** One list of admin sections for the sidebar, the mobile drawer and the tabs. */
 export const adminSections: { section: AdminSection; label: string; short: string; icon: typeof LayoutGrid; group: string }[] = [
@@ -18,6 +18,7 @@ export const adminSections: { section: AdminSection; label: string; short: strin
   { section: 'transactions', label: 'Transactions', short: 'Transactions', icon: History, group: 'Money' },
   { section: 'wallet-management', label: 'Wallets', short: 'Wallets', icon: CreditCard, group: 'Money' },
   { section: 'withdrawal-management', label: 'Withdrawals', short: 'Withdrawals', icon: Banknote, group: 'Money' },
+  { section: 'privacy', label: 'Privacy & data', short: 'Privacy', icon: ShieldCheck, group: 'System' },
   { section: 'activity', label: 'Activity log', short: 'Activity', icon: ScrollText, group: 'System' },
   { section: 'settings', label: 'Settings', short: 'Settings', icon: Settings, group: 'System' },
 ];

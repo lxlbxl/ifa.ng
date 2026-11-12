@@ -24,6 +24,7 @@ import { Navigate } from "react-router-dom";
 import { adminSections, type AdminSection } from "@/components/dashboard/admin/adminSections";
 import AdminEbo from "@/components/dashboard/admin/AdminEbo";
 import AdminReviews from "@/components/dashboard/admin/AdminReviews";
+import AdminPrivacy from "@/components/dashboard/admin/AdminPrivacy";
 import { MobileBottomNav } from "@/components/shared/MobileBottomNav";
 
 const AdminDashboard = () => {
@@ -56,6 +57,8 @@ const AdminDashboard = () => {
         return <AdminReviews />;
       case 'activity':
         return <AdminActivityLog />;
+      case 'privacy':
+        return <AdminPrivacy />;
       case 'finance':
         return <PaymentsFinancePanel />;
       case 'transactions':

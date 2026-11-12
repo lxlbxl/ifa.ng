@@ -252,6 +252,9 @@ describe("video", () => {
 
   it("shows the client the transcript only after the Babalawo approves the notes", async () => {
     const id = await paidSessionAt(new Date(Date.now() - 2 * 3600_000));
+    // Transcripts exist only when both people agreed to recording and AI notes.
+    await service(sql`insert into session_consents(session_id, user_id, party, recording_consent, ai_processing_consent)
+      values (${id}, ${CLIENT}, 'client', true, true), (${id}, ${BABA}, 'babalawo', true, true)`);
     await service(sql`insert into session_transcripts(session_id, source, language, text, confidence, needs_review)
       values (${id}, 'stt:openai', 'yo', 'Ifá sọ pé...', 0.82, true)`);
     expect((await call(`/v1/sessions/${id}/transcript`, CLIENT, undefined, "GET")).status).toBe(403);

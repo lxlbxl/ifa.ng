@@ -4,6 +4,8 @@ import { createSign } from "node:crypto";
 const SCOPES = {
   meetRead: "https://www.googleapis.com/auth/meetings.space.readonly",
   driveRead: "https://www.googleapis.com/auth/drive.readonly",
+  // Only used when GOOGLE_DRIVE_DELETE=true: the organizer's domain-wide delegation must also allow this scope.
+  drive: "https://www.googleapis.com/auth/drive",
 };
 export { SCOPES };
 
@@ -56,4 +58,12 @@ export async function driveDownload(fileId) {
   });
   if (!res.ok || !res.body) throw new Error(`Drive download ${fileId} -> ${res.status}`);
   return res.body;
+}
+
+/** Deletes a Drive file for good (retention, consent withdrawn, erasure). Missing files count as deleted. */
+export async function driveDelete(fileId) {
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?supportsAllDrives=true`, {
+    method: "DELETE", headers: { Authorization: `Bearer ${await token([SCOPES.drive])}` },
+  });
+  if (!res.ok && res.status !== 404) throw new Error(`Drive delete ${fileId} -> ${res.status}`);
 }

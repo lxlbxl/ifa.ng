@@ -98,7 +98,7 @@ const AdminWithdrawalManagement = () => {
       setReference('');
       setRejectionReason('');
     },
-    onError: (err: unknown) => errorService.showErrorToast(errorService.handleError(err, "withdrawal")),
+    onError: (err: unknown) => errorService.showErrorToast(errorService.handleError(err, 'withdrawal update')),
   });
 
   const closeDialog = () => {

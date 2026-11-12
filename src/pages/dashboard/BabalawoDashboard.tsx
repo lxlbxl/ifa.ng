@@ -4,7 +4,6 @@ import { useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { ONBOARDING_KEY } from "@/hooks/useBabalawoOnboarding";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import DashboardShell, { type NavGroup } from "@/components/dashboard/shell/DashboardShell";
 import { Panel, PanelHeader } from "@/components/dashboard/shell/Panel";
@@ -51,7 +50,7 @@ const GROUPS: NavGroup[] = [
 const INTROS = {
   consultations: { eyebrow: "Your practice", title: "Sessions", lede: "Consultations, notes to approve and Ebo to perform." },
   availability: { eyebrow: "When clients can book", title: "Availability", lede: "Your weekly hours, one-off exceptions and time off." },
-  reminders: { eyebrow: "Stay ready", title: "Reminders", lede: "Choose when we nudge you before a session." },
+  reminders: { eyebrow: "Stay ready", title: "Reminders", lede: "What we send you and your clients before a session." },
   reviews: { eyebrow: "What clients say", title: "Reviews" },
   earnings: { eyebrow: "Money", title: "Earnings & withdrawals", lede: "What you have earned, what is held and what you can withdraw." },
   payments: { eyebrow: "Money", title: "Payments", lede: "Every payment and release into your balance." },
@@ -62,36 +61,25 @@ const INTROS = {
   support: { eyebrow: "We are here", title: "Help & support", lede: "Answers to common questions, or write to us." },
 };
 
-const Toggle = ({ title, hint, on }: { title: string; hint: string; on?: boolean }) => (
-  <div className="flex items-center justify-between gap-4 py-3">
-    <div>
-      <p className="font-semibold">{title}</p>
-      <p className="text-sm text-muted-foreground">{hint}</p>
-    </div>
-    <Switch defaultChecked={on} />
-  </div>
-);
-
-/** Session and ritual reminders. */
+/** Reminders are automatic; this says what is sent and when. */
 const Reminders = () => (
-  <div>
-    <div className="grid gap-6 lg:grid-cols-2">
-      <Panel>
-        <PanelHeader eyebrow="Before each session" title="Session reminders" />
-        <div className="divide-y divide-line">
-          <Toggle title="10 minutes before" hint="Get ready to join" on />
-          <Toggle title="30 minutes before" hint="Prepare your space" on />
-          <Toggle title="1 hour before" hint="Final preparation" />
-        </div>
-      </Panel>
-      <Panel>
-        <PanelHeader eyebrow="For your clients" title="Ebo, Etutu and warnings" />
-        <p className="text-muted-foreground">
-          Ebo and Etutu you prescribe now live with each consultation, under Sessions, with their ritual date, payment and proof.
-        </p>
-        <Button className="mt-5" onClick={() => window.dispatchEvent(new CustomEvent("ifa:navigate", { detail: "consultations" }))}>Open sessions</Button>
-      </Panel>
-    </div>
+  <div className="grid gap-6 lg:grid-cols-2">
+    <Panel>
+      <PanelHeader eyebrow="Before each session" title="Automatic reminders" />
+      <p className="text-muted-foreground">
+        We remind you and your client 24 hours and 1 hour before each booked consultation, by WhatsApp (or SMS when WhatsApp
+        fails), with the link to the session page. Consult Now requests ring on this device while IFA.ng is open, and by push
+        notification when you have switched them on in Settings.
+      </p>
+      <Button className="mt-5" variant="outline" onClick={() => window.dispatchEvent(new CustomEvent("ifa:navigate", { detail: "settings" }))}>Notification settings</Button>
+    </Panel>
+    <Panel>
+      <PanelHeader eyebrow="For your clients" title="Ebo, Etutu and warnings" />
+      <p className="text-muted-foreground">
+        Ebo and Etutu you prescribe now live with each consultation, under Sessions, with their ritual date, payment and proof.
+      </p>
+      <Button className="mt-5" onClick={() => window.dispatchEvent(new CustomEvent("ifa:navigate", { detail: "consultations" }))}>Open sessions</Button>
+    </Panel>
   </div>
 );
 

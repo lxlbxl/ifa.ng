@@ -18,6 +18,7 @@ import { acquireSlotLock, completeSlotLock, releaseSlotLock } from '@/utils/slot
 import { ensureMeetLink, recordSessionConsent } from '@/services/videoService';
 import { pastelBlocks, pickBlock } from '@/design/tokens';
 import { cn } from '@/lib/utils';
+import { usePlatformRules } from '@/hooks/usePlatformRules';
 import { ChoiceCard, StepFrame } from './StepFrame';
 import { PhoneAuthFlow } from './PhoneAuthFlow';
 
@@ -299,6 +300,7 @@ function PayStep({
   const [lock, setLock] = useState<string | null>(null);
   const amount = parseBabalawoPrice(babalawo);
   const name = babalawo.full_name || 'Babalawo';
+  const rules = usePlatformRules();
 
   useEffect(() => {
     if (!user?.id) return;
@@ -399,6 +401,11 @@ function PayStep({
         <PaymentMethodSelector selectedMethod={method} onMethodChange={setMethod} walletBalance={wallet} amount={amount} />
         <FeeDisclosure amount={amount} paymentMethod={method} />
         {mode === 'schedule' && <ConsentFields value={consent} onChange={setConsent} role="client" />}
+        <p className="m-0 text-sm text-muted-foreground" data-testid="pay-terms">
+          By paying you agree to the <a className="underline" href="/terms" target="_blank" rel="noreferrer">Terms</a> and{' '}
+          <a className="underline" href="/refunds" target="_blank" rel="noreferrer">Refund policy</a>.{' '}
+          {mode === 'now' ? `If your Babalawo does not accept within ${rules.acceptMinutes} minutes, you are refunded in full.` : `Cancel at least ${rules.freeCancelHours} hours before the start for a full refund.`}
+        </p>
       </div>
     </StepFrame>
   );

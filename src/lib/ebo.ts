@@ -41,6 +41,9 @@ export interface Ebo {
   babalawo_amount: number | null;
   items_released: number;
   refunded_amount: number;
+  /** What the client actually paid, when not naira (diaspora clients pay in USD). */
+  paid_currency?: "NGN" | "USD" | null;
+  paid_amount?: number | null;
   version: number;
   ai_suggested: boolean;
   ritual_at: string | null;

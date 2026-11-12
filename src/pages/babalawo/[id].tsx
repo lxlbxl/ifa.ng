@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useBabalawos } from "@/hooks/useBabalawos";
+import { babalawoPrice, formatMoney, usePricing } from "@/hooks/usePricing";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 const BabalawoProfilePage = () => {
   const { id } = useParams<{ id: string }>();
   const { babalawos, loading, error } = useBabalawos();
+  const pricing = usePricing();
   const [profile, setProfile] = useState<any | null>(null);
 
   useEffect(() => {
@@ -56,7 +58,7 @@ const BabalawoProfilePage = () => {
               )}
               <p className="text-sm text-gray-600">Timezone: {profile.timezone || "UTC"}</p>
               <p className="text-sm text-gray-600">
-                Rate: ₦{profile.hourly_rate?.toLocaleString() || "15,000"}/hr
+                Rate: {(() => { const p = babalawoPrice(profile, pricing); return formatMoney(p.amount, p.currency); })()}
               </p>
               <p className="text-sm text-gray-600">
                 Rating: {profile.rating?.toFixed(1) || "5.0"} ({profile.total_sessions || 0} reviews)

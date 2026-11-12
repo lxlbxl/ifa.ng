@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Wallet, CreditCard } from "lucide-react";
 import { PaymentMethod } from "@/utils/multiGatewayPaymentHandler";
 import { walletSplit } from "@/utils/walletSplit";
+import { formatMoney, type Currency } from "@/hooks/usePricing";
 
 interface PaymentMethodSelectorProps {
   selectedMethod: PaymentMethod;
@@ -13,9 +14,9 @@ interface PaymentMethodSelectorProps {
   useWallet?: boolean;
   onUseWalletChange?: (use: boolean) => void;
   minCard?: number;
+  /** Dollar prices are paid through Flutterwave only. */
+  currency?: Currency;
 }
-
-const naira = (n: number) => `₦${n.toLocaleString()}`;
 
 const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   selectedMethod,
@@ -25,7 +26,10 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   useWallet = false,
   onUseWalletChange,
   minCard = 100,
+  currency = 'NGN',
 }) => {
+  const naira = (n: number) => formatMoney(n, currency);
+  const usd = currency === 'USD';
   const split = walletSplit(walletBalance, amount, minCard);
   const canSplit = !split.covered && split.wallet > 0 && !!onUseWalletChange;
   const splitting = canSplit && useWallet;
@@ -80,7 +84,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
               <span className="flex items-center gap-2 font-bold"><Wallet className="h-5 w-5 text-green-700" /> Use my wallet balance ({naira(walletBalance)})</span>
               <span className="mt-1 block text-sm text-muted-foreground">
                 {useWallet
-                  ? `${naira(split.wallet)} comes from your wallet. Pay the remaining ${naira(split.card)} with Paystack or Flutterwave below.`
+                  ? `${naira(split.wallet)} comes from your wallet. Pay the remaining ${naira(split.card)} ${usd ? 'by card below' : 'with Paystack or Flutterwave below'}.`
                   : `Tick to use your wallet first, so you only pay ${naira(split.card)} by card or transfer.`}
               </span>
             </span>
@@ -102,8 +106,8 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           </Card>
         )}
 
-        {gatewayCard('flutterwave', 'Flutterwave', 'Pay with card, bank transfer, or USSD', 'text-camwood')}
-        {gatewayCard('paystack', 'Paystack', 'Pay with card or bank transfer', 'text-indigo-700')}
+        {gatewayCard('flutterwave', 'Flutterwave', usd ? 'Pay in US dollars with a debit or credit card' : 'Pay with card, bank transfer, or USSD', 'text-camwood')}
+        {!usd && gatewayCard('paystack', 'Paystack', 'Pay with card or bank transfer', 'text-indigo-700')}
       </div>
     </div>
   );

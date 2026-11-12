@@ -14,7 +14,7 @@ import { fetchBabalawoAvailability, fetchBabalawoSchedule, getBookableSlots, typ
 import { handlePaymentAndBooking, type PaymentMethod } from '@/utils/multiGatewayPaymentHandler';
 import { getUserWallet } from '@/utils/walletUtils';
 import { walletSplit } from '@/utils/walletSplit';
-import { parseBabalawoPrice } from '@/utils/priceUtils';
+import { babalawoPrice, formatMoney, usePricing } from '@/hooks/usePricing';
 import { acquireSlotLock, completeSlotLock, releaseSlotLock } from '@/utils/slotLockUtils';
 import { ensureMeetLink, recordSessionConsent } from '@/services/videoService';
 import { pastelBlocks, pickBlock } from '@/design/tokens';
@@ -314,10 +314,13 @@ function PayStep({
   const [busy, setBusy] = useState(false);
   const [consent, setConsent] = useState<ConsentValue>({ recording: false, ai: false });
   const [lock, setLock] = useState<string | null>(null);
-  const amount = parseBabalawoPrice(babalawo);
+  const pricing = usePricing();
+  const { amount, currency } = babalawoPrice(babalawo, pricing, mode === 'now');
+  const money = (n: number) => formatMoney(n, currency);
   const name = babalawo.full_name || 'Babalawo';
   const rules = usePlatformRules();
-  const split = walletSplit(wallet, amount, rules.minCardPayment);
+  const minCard = currency === 'USD' ? rules.minCardPaymentUsd : rules.minCardPayment;
+  const split = walletSplit(wallet, amount, minCard);
   const splitting = method !== 'wallet' && useWallet && !split.covered && split.wallet > 0;
   const cardDue = splitting ? split.card : amount;
 
@@ -329,6 +332,11 @@ function PayStep({
       if (bal >= amount) setMethod('wallet');
     });
   }, [user?.id, amount]);
+
+  // Dollar prices are paid through Flutterwave only.
+  useEffect(() => {
+    if (currency === 'USD' && method === 'paystack') setMethod('flutterwave');
+  }, [currency, method]);
 
   // Hold the chosen slot for a few minutes while the person pays.
   useEffect(() => {
@@ -389,7 +397,7 @@ function PayStep({
       subtitle={mode === 'now' ? 'You’ll join the call as soon as payment clears.' : 'Your Google Meet link arrives once payment clears.'}
       footer={
         <Button variant="sun" size="lg" className="w-full" onClick={pay} disabled={busy || (mode === 'schedule' && !slot)} data-testid="pay-button">
-          {busy ? <><Loader2 className="animate-spin" /> Processing…</> : <><Lock /> Pay ₦{cardDue.toLocaleString()}{splitting ? ' by card' : ''}{mode === 'now' ? ' and start' : ''}</>}
+          {busy ? <><Loader2 className="animate-spin" /> Processing…</> : <><Lock /> Pay {money(cardDue)}{splitting ? ' by card' : ''}{mode === 'now' ? ' and start' : ''}</>}
         </Button>
       }>
       <div className="space-y-5">
@@ -407,17 +415,17 @@ function PayStep({
           ))}
           <div className="flex items-baseline justify-between gap-4 bg-cloth px-4 py-3">
             <dt className="font-bold">Total</dt>
-            <dd className="m-0 font-display text-3xl font-extrabold tracking-[-0.02em]">₦{amount.toLocaleString()}</dd>
+            <dd className="m-0 font-display text-3xl font-extrabold tracking-[-0.02em]">{money(amount)}</dd>
           </div>
           {splitting && (
             <>
               <div className="flex items-baseline justify-between gap-4 px-4 py-3" data-testid="split-wallet">
                 <dt className="text-sm text-muted-foreground">From your wallet</dt>
-                <dd className="m-0 text-right font-semibold">−₦{split.wallet.toLocaleString()}</dd>
+                <dd className="m-0 text-right font-semibold">−{money(split.wallet)}</dd>
               </div>
               <div className="flex items-baseline justify-between gap-4 px-4 py-3" data-testid="split-card">
                 <dt className="font-bold">To pay now</dt>
-                <dd className="m-0 text-right font-display text-2xl font-extrabold">₦{split.card.toLocaleString()}</dd>
+                <dd className="m-0 text-right font-display text-2xl font-extrabold">{money(split.card)}</dd>
               </div>
             </>
           )}
@@ -430,8 +438,8 @@ function PayStep({
         )}
 
         <PaymentMethodSelector selectedMethod={method} onMethodChange={setMethod} walletBalance={wallet} amount={amount}
-          useWallet={useWallet} onUseWalletChange={setUseWallet} minCard={rules.minCardPayment} />
-        <FeeDisclosure amount={cardDue} paymentMethod={method} />
+          useWallet={useWallet} onUseWalletChange={setUseWallet} minCard={minCard} currency={currency} />
+        <FeeDisclosure amount={cardDue} paymentMethod={method} currency={currency} />
         {mode === 'schedule' && <ConsentFields value={consent} onChange={setConsent} role="client" />}
         <p className="m-0 text-sm text-muted-foreground" data-testid="pay-terms">
           By paying you agree to the <a className="underline" href="/terms" target="_blank" rel="noreferrer">Terms</a> and{' '}

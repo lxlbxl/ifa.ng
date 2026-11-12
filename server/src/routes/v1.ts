@@ -4,6 +4,7 @@ import { HttpError, isAdmin, requireUser, type Services } from "../services/cont
 import { createMeetLink } from "../services/meet.js";
 import { notificationTick } from "../services/notify.js";
 import { handleFlutterwaveWebhook, handlePaystackWebhook, initPayment, verifyForUser } from "../services/payments.js";
+import { pricingFor, trustedCountry } from "../services/pricing.js";
 import { agoraToken, sessionTranscript } from "../services/video.js";
 import { signDataToken } from "../services/dataToken.js";
 import { AUDIO_MAX, readAvatar, readSignedFile, recordingLink, uploadAvatar, uploadSessionAudio } from "../services/files.js";
@@ -41,7 +42,13 @@ export function registerV1(app: Hono<AppEnv>, svc: Services, live?: LiveHub) {
   // Payments (was payment-init and payment-verify).
   app.post("/v1/payments/init", async (c) => {
     const user = requireUser(c.get("caller"));
-    return c.json(await initPayment(svc, user.userId, await body(c.req.raw)));
+    return c.json(await initPayment(svc, user.userId, await body(c.req.raw), trustedCountry(c.req.raw, svc)));
+  });
+  // Naira or US dollars: Nigeria by IP and phone pays naira, the diaspora the admin's USD prices.
+  app.get("/v1/pricing", async (c) => {
+    const caller = c.get("caller");
+    c.header("Cache-Control", "private, no-store");
+    return c.json(await pricingFor(svc, caller.kind === "user" ? caller.userId : null, trustedCountry(c.req.raw, svc)));
   });
   app.post("/v1/payments/verify", async (c) => {
     const user = requireUser(c.get("caller"));

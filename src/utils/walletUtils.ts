@@ -7,11 +7,14 @@ export interface WalletBalance {
   id: string;
   balance: number;
   user_id: string;
+  /** NGN, or USD for a diaspora client's wallet. */
+  currency?: 'NGN' | 'USD';
 }
 
 export interface WalletTransaction {
   id: string;
   amount: number;
+  currency?: 'NGN' | 'USD';
   transaction_type: 'credit' | 'debit';
   transaction_source: string;
   payment_gateway?: string;

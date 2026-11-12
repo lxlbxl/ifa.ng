@@ -6,11 +6,13 @@ import { Eyebrow, PageShell, PortraitCard, StickerPanel, TickDot } from '@/compo
 import { pickBlock } from '@/design/tokens';
 import { useConsultFlow } from './flow/ConsultFlow';
 import { useBabalawoAvailableNow } from '@/hooks/useBabalawoAvailableNow';
+import { babalawoPrice, formatMoney, usePricing } from '@/hooks/usePricing';
 
 const BabalawoProfile = () => {
   const { babalawoId } = useParams<{ babalawoId: string }>();
   const { babalawo, loading, error } = useBabalawoById(babalawoId);
   const { openConsult } = useConsultFlow();
+  const pricing = usePricing();
   const presence = useBabalawoAvailableNow(babalawo?.id, babalawo ?? null, !!babalawo);
 
   if (loading) {
@@ -44,6 +46,7 @@ const BabalawoProfile = () => {
 
   const name = babalawo.full_name || 'Babalawo';
   const fee = babalawo.hourly_rate ? Number(babalawo.hourly_rate) : 15000;
+  const shown = babalawoPrice(babalawo, pricing);
   const color = pickBlock(name);
   const verified = babalawo.verification_status === 'approved';
   // "Available now" is live: online, active, and not already in a session.
@@ -147,7 +150,7 @@ const BabalawoProfile = () => {
           <StickerPanel className="p-6">
             <Eyebrow className="text-muted-foreground">Consultation fee</Eyebrow>
             <p className="mt-2 font-display text-[44px] font-extrabold leading-none tracking-[-0.03em]">
-              ₦{fee.toLocaleString()}
+              {formatMoney(shown.amount, shown.currency)}
             </p>
             <ul className="mt-5 space-y-2.5 text-[15px]">
               <li className="flex items-center gap-2.5"><Video className="h-4 w-4 text-green-700" />One-to-one on Google Meet</li>

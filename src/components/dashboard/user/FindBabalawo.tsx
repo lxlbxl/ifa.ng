@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { PortraitCard } from "@/components/brand";
 import { blockColors } from "@/design/tokens";
 import { babalawoChips } from "@/components/FeaturedBabalawos";
+import { usePricing } from '@/hooks/usePricing';
 import { EmptyState } from "@/components/dashboard/shell/Panel";
 import { useConsultFlow } from "@/components/flow/ConsultFlow";
 import { useBabalawos } from '@/hooks/useBabalawos';
@@ -11,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 
 const FindBabalawo = () => {
   const { babalawos, loading, error } = useBabalawos();
+  const { currency } = usePricing();
   const { openConsult } = useConsultFlow();
   const navigate = useNavigate();
 
@@ -46,7 +48,7 @@ const FindBabalawo = () => {
             fluid
             name={b.full_name}
             imageUrl={b.avatar_url}
-            chips={babalawoChips(b)}
+            chips={babalawoChips(b, currency)}
             status={b.current_status === "online" || b.current_status === "available" ? "available" : null}
             color={blockColors[i % blockColors.length]}
             onClick={() => handleViewProfile(b.id)}

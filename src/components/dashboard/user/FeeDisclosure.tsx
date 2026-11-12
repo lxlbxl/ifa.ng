@@ -3,14 +3,16 @@ import { Info, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { calculatePaymentFee, shouldShowPaymentFees, FeeCalculation } from "@/utils/paymentFeeUtils";
 import { PaymentMethod } from "@/utils/multiGatewayPaymentHandler";
+import { formatMoney, type Currency } from "@/hooks/usePricing";
 
 interface FeeDisclosureProps {
   amount: number;
   paymentMethod: PaymentMethod;
+  currency?: Currency;
   className?: string;
 }
 
-const FeeDisclosure: React.FC<FeeDisclosureProps> = ({ amount, paymentMethod, className }) => {
+const FeeDisclosure: React.FC<FeeDisclosureProps> = ({ amount, paymentMethod, currency = "NGN", className }) => {
   const [feeCalculation, setFeeCalculation] = useState<FeeCalculation | null>(null);
   const [showFees, setShowFees] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -25,7 +27,7 @@ const FeeDisclosure: React.FC<FeeDisclosureProps> = ({ amount, paymentMethod, cl
 
       // Calculate fees for gateway payments only
       if (paymentMethod === 'flutterwave' || paymentMethod === 'paystack') {
-        const calculation = await calculatePaymentFee(paymentMethod, amount);
+        const calculation = await calculatePaymentFee(paymentMethod, amount, currency);
         setFeeCalculation(calculation);
       } else {
         setFeeCalculation(null);
@@ -35,7 +37,7 @@ const FeeDisclosure: React.FC<FeeDisclosureProps> = ({ amount, paymentMethod, cl
     }
 
     loadFeeInfo();
-  }, [amount, paymentMethod]);
+  }, [amount, paymentMethod, currency]);
 
   // Don't show anything if fees are disabled or still loading
   if (!showFees || loading) {
@@ -67,21 +69,21 @@ const FeeDisclosure: React.FC<FeeDisclosureProps> = ({ amount, paymentMethod, cl
               <div className="font-medium">What you pay</div>
               <div className="flex justify-between items-center">
                 <span>Service Amount:</span>
-                <span className="font-medium">₦{feeCalculation.amount.toLocaleString()}</span>
+                <span className="font-medium">{formatMoney(feeCalculation.amount, currency)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span>Transaction Fee ({feeCalculation.feePercent}%):</span>
-                <span className="font-medium">₦{feeCalculation.fee.toLocaleString()}</span>
+                <span>Provider fee, about:</span>
+                <span className="font-medium">{formatMoney(feeCalculation.fee, currency)}</span>
               </div>
               <div className="flex justify-between items-center pt-1 border-t border-blue-300">
-                <span className="font-semibold">Total Amount:</span>
-                <span className="font-bold text-base">₦{feeCalculation.total.toLocaleString()}</span>
+                <span className="font-semibold">Total, about:</span>
+                <span className="font-bold text-base">{formatMoney(feeCalculation.total, currency)}</span>
               </div>
             </div>
           </AlertDescription>
         </Alert>
         <p className="text-xs text-muted-foreground mt-2">
-          Transaction fees are charged by {paymentMethod === 'flutterwave' ? 'Flutterwave' : 'Paystack'} payment gateway
+          {paymentMethod === 'flutterwave' ? 'Flutterwave' : 'Paystack'} adds its fee on its own payment page, where you see the exact total before you pay.
         </p>
       </div>
     );

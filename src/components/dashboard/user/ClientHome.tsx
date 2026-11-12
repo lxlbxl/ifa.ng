@@ -10,6 +10,7 @@ import { useUserSessions } from "@/hooks/useUserSessions";
 import { useUserDashboardStats } from "@/hooks/useUserDashboardStats";
 import { useFeaturedBabalawos } from "@/hooks/useBabalawoSearch";
 import { babalawoChips } from "@/components/FeaturedBabalawos";
+import { usePricing } from '@/hooks/usePricing';
 import { ClothStrip, EmptyState, Panel, PanelHeader, greeting } from "@/components/dashboard/shell/Panel";
 import WalletWidget from "./WalletWidget";
 import { sessionStart, sessionEnd } from "@/utils/sessionTime";
@@ -66,6 +67,7 @@ const NextTicket = ({ s }: { s: S }) => (
 
 const ClientHome: React.FC<{ onNavigate: (id: string) => void }> = ({ onNavigate }) => {
   const { userProfile } = useAuth();
+  const { currency } = usePricing();
   const { data: sessions = [], isLoading } = useUserSessions();
   const { data: stats } = useUserDashboardStats();
   const { featuredBabalawos: babalawos } = useFeaturedBabalawos(12);
@@ -194,7 +196,7 @@ const ClientHome: React.FC<{ onNavigate: (id: string) => void }> = ({ onNavigate
                 key={`${b.id}${isClone ? "-c" : ""}`}
                 name={b.full_name}
                 imageUrl={b.avatar_url}
-                chips={babalawoChips(b)}
+                chips={babalawoChips(b, currency)}
                 status={b.current_status === "online" || b.current_status === "available" ? "available" : null}
                 color={blockColors[i % blockColors.length]}
                 tilt={i % 2 ? "right" : "left"}

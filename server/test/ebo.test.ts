@@ -304,6 +304,20 @@ describe("Ebo: card payments", () => {
     expect(await wallet(CLIENT)).toBe(before + 35200);
   });
 
+  it("takes part from the wallet and the rest by card", async () => {
+    const id = await sentEbo();
+    const keep = await wallet(CLIENT);
+    await admin.query("update wallets set balance = 5000 where user_id = $1", [CLIENT]);
+    const r = await must(null, "select * from public.create_payment_intent($1,'ebo','paystack',null,null,null,null,false,$2,'absent',true)", [CLIENT, id]);
+    expect(Number(r[0].wallet_amount)).toBe(5000);
+    expect(Number(r[0].amount)).toBe(35200 - 5000);
+    const s = await must(null, "select public.settle_payment_intent($1, $2, 'NGN', 'tx3') r", [r[0].reference, 35200 - 5000]);
+    expect(s[0].r.status).toBe("settled");
+    expect((await ebo(id)).status).toBe("paid");
+    expect(await wallet(CLIENT)).toBe(0);
+    await admin.query("update wallets set balance = $2 where user_id = $1", [CLIENT, keep]);
+  });
+
   it("does not let clients call the settlement functions", async () => {
     expect((await as(CLIENT, "select public.settle_payment_intent('x', 1, 'NGN', 'y')")).ok).toBe(false);
     expect((await as(CLIENT, "select public._ebo_mark_paid(gen_random_uuid(),'wallet','r',null,true)")).ok).toBe(false);

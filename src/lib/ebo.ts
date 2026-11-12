@@ -157,8 +157,8 @@ export const eboApi = {
   selfStatus: (id: string, status: "in_progress" | "completed") => rpc("set_ebo_status", { p_id: id, p_status: status }),
   payWithWallet: (id: string, attendance: "present" | "absent") => rpc("pay_ebo_with_wallet", { p_id: id, p_attendance: attendance }),
   /** Card / bank transfer. The server prices it; the popup only collects the money. */
-  payWithGateway: async (e: Ebo, attendance: "present" | "absent", gateway: PaymentGateway) => {
-    const intent = await createPaymentIntent({ kind: "ebo", gateway, ebo_id: e.id, attendance });
+  payWithGateway: async (e: Ebo, attendance: "present" | "absent", gateway: PaymentGateway, useWallet = false) => {
+    const intent = await createPaymentIntent({ kind: "ebo", gateway, ebo_id: e.id, attendance, use_wallet: useWallet });
     const popupSaidPaid = await openCheckout(intent, `Ebo: ${e.title}`);
     return verifyPayment(intent.reference, popupSaidPaid ? 6 : 1, popupSaidPaid ? 2000 : 0);
   },

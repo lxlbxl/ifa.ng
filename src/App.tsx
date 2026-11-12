@@ -4,7 +4,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import ScrollManager from "./components/ScrollManager";
+import { legacyDashboardTarget } from "@/lib/dashboardLinks";
 import { AuthProvider } from "@/hooks/useAuth";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PwaPrompts from "./components/pwa/PwaPrompts";
@@ -22,6 +24,21 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const SearchPage = lazy(() => import("./pages/Search"));
 const BabalawoApply = lazy(() => import("./pages/BabalawoApply"));
 const Legal = lazy(() => import("./pages/Legal"));
+const SupportPage = lazy(() => import("./pages/SupportPage"));
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+const PaymentFailed = lazy(() => import("./pages/PaymentFailed"));
+
+/** Old dashboard paths (/dashboard/user, /dashboard/admin) go to /dashboard, keeping the section. */
+const LegacyDashboard = ({ tab }: { tab?: string }) => {
+  const { search } = useLocation();
+  return <Navigate to={legacyDashboardTarget(search, tab)} replace />;
+};
+
+/** /babalawos was the old name of the listing; keep any ?query. */
+const BabalawosRedirect = () => {
+  const { search } = useLocation();
+  return <Navigate to={`/search${search}`} replace />;
+};
 
 const LoadingFallback = () => (
   <div className="flex items-center justify-center h-screen">
@@ -40,6 +57,7 @@ const App = () => (
         <PwaPrompts />
         <BrowserAdviceBanner />
         <BrowserRouter>
+          <ScrollManager />
           <ConsultFlowProvider>
           <Suspense fallback={<LoadingFallback />}>
             <Routes>
@@ -68,6 +86,19 @@ const App = () => (
               <Route path="/terms" element={<Legal doc="terms" />} />
               <Route path="/privacy" element={<Legal doc="privacy" />} />
               <Route path="/refunds" element={<Legal doc="refunds" />} />
+              <Route path="/support" element={<SupportPage />} />
+              <Route path="/help" element={<Navigate to="/support" replace />} />
+              <Route path="/babalawos" element={<BabalawosRedirect />} />
+              <Route path="/payment/success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
+              <Route path="/payment/failed" element={<PaymentFailed />} />
+              <Route path="/payment-success" element={<Navigate to="/payment/success" replace />} />
+              <Route path="/payment-failed" element={<Navigate to="/payment/failed" replace />} />
+              <Route path="/dashboard/user" element={<LegacyDashboard />} />
+              <Route path="/dashboard/user/*" element={<LegacyDashboard />} />
+              <Route path="/dashboard/admin" element={<LegacyDashboard />} />
+              <Route path="/dashboard/admin/*" element={<LegacyDashboard />} />
+              <Route path="/dashboard/babalawo" element={<LegacyDashboard />} />
+              <Route path="/admin" element={<LegacyDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

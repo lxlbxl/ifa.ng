@@ -22,6 +22,7 @@ import WithdrawalRequestModal from "@/components/dashboard/babalawo/WithdrawalRe
 import BankDetailsModal from "@/components/dashboard/babalawo/BankDetailsModal";
 import Settings from "@/components/dashboard/user/Settings";
 import Support from "@/components/dashboard/user/Support";
+import { BABALAWO_TABS, resolveTab } from "@/lib/dashboardLinks";
 import Notifications from "@/components/dashboard/user/Notifications";
 import { PresencePill } from "@/components/dashboard/babalawo/PresenceToggle";
 import BabalawoLiveAlerts from "@/components/dashboard/babalawo/BabalawoLiveAlerts";
@@ -105,8 +106,7 @@ const SECTION_MAP: { [key: string]: React.ReactNode } = {
 
 const BabalawoDashboard = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const tab = searchParams.get("tab");
-  const activeSection = tab && tab in SECTION_MAP ? tab : "dashboard";
+  const activeSection = resolveTab(BABALAWO_TABS, searchParams.get("tab"), "dashboard");
   const setActiveSection = (section: string) => setSearchParams(section === "dashboard" ? {} : { tab: section });
   const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
   const [bankDetailsModalOpen, setBankDetailsModalOpen] = useState(false);

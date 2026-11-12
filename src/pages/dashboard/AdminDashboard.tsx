@@ -1,5 +1,7 @@
 
 import React, { useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { ADMIN_TABS, resolveTab } from "@/lib/dashboardLinks";
 import AdminSidebar from "@/components/dashboard/admin/AdminSidebar";
 import AdminHeader from "@/components/dashboard/admin/AdminHeader";
 import AdminSummaryCards from "@/components/dashboard/admin/AdminSummaryCards";
@@ -25,11 +27,11 @@ import AdminReviews from "@/components/dashboard/admin/AdminReviews";
 import { MobileBottomNav } from "@/components/shared/MobileBottomNav";
 
 const AdminDashboard = () => {
-  // Notifications can link straight to a section, e.g. /admin?section=ebo
-  const [activeSection, setActiveSection] = useState<AdminSection>(() => {
-    const s = new URLSearchParams(window.location.search).get('section');
-    return (adminSections.find((x) => x.section === s)?.section ?? 'overview');
-  });
+  // The section lives in the URL (?section= or ?tab=), so the phone bottom bar, notifications,
+  // refresh and the back button all land on the right screen.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeSection = resolveTab(ADMIN_TABS, searchParams.get('section') ?? searchParams.get('tab'), 'overview') as AdminSection;
+  const setActiveSection = (section: AdminSection) => setSearchParams(section === 'overview' ? {} : { section });
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isAdmin, loading } = useAuth();
   if (!loading && !isAdmin) return <Navigate to="/dashboard" replace />;

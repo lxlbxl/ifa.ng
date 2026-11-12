@@ -13,6 +13,7 @@ import AdminSidebarMobile from "@/components/dashboard/admin/AdminSidebarMobile"
 import AdminTransactionHistory from "@/components/dashboard/admin/AdminTransactionHistory";
 import AdminWalletManagement from "@/components/dashboard/admin/AdminWalletManagement";
 import UserManagement from "@/components/dashboard/admin/UserManagement";
+import AdminUserDetail from "@/components/dashboard/admin/AdminUserDetail";
 import BabalawoManagement from "@/components/dashboard/admin/BabalawoManagement";
 import BabalawoApplications from "@/components/dashboard/admin/BabalawoApplications";
 import PaymentsFinancePanel from "@/components/dashboard/admin/PaymentsFinancePanel";
@@ -36,6 +37,14 @@ const AdminDashboard = () => {
   const activeSection = resolveTab(ADMIN_TABS, searchParams.get('section') ?? searchParams.get('tab'), 'overview') as AdminSection;
   const setActiveSection = (section: AdminSection) => setSearchParams(section === 'overview' ? {} : { section });
   const [mobileOpen, setMobileOpen] = useState(false);
+  // ?user=<id> opens a person's record inside the current section (Users or Babalawos).
+  const openUser = searchParams.get('user');
+  const openRecord = (id: string | null) => {
+    const next = new URLSearchParams(searchParams);
+    if (id) next.set('user', id); else next.delete('user');
+    setSearchParams(next);
+    window.scrollTo({ top: 0 });
+  };
   // One period for every admin page, so switching pages keeps the comparison the same.
   const [insightDays, setInsightDays] = useState<InsightPeriod>(30);
   const { isAdmin, loading } = useAuth();
@@ -48,7 +57,9 @@ const AdminDashboard = () => {
       case 'users':
         return <UserManagement />;
       case 'babalawos':
-        return <BabalawoManagement />;
+        return openUser
+          ? <AdminUserDetail userId={openUser} backLabel="All Babalawos" onBack={() => openRecord(null)} onOpen={openRecord} />
+          : <BabalawoManagement onOpen={openRecord} />;
       case 'applications':
         return <BabalawoApplications />;
       case 'bookings':
@@ -97,7 +108,7 @@ const AdminDashboard = () => {
         <div className="space-y-6">
           <AdminHeader title={sectionTitle} onOpenMenu={() => setMobileOpen(true)} />
           <AdminSectionTabs activeSection={activeSection} onSectionChange={setActiveSection} />
-          {hasInsights(activeSection) && (
+          {hasInsights(activeSection) && !openUser && (
             <AdminInsights section={activeSection} days={insightDays} onDaysChange={setInsightDays} />
           )}
           <div className="w-full min-w-0">{renderActiveSection()}</div>

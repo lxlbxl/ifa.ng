@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { Search, Star, Users, Award, Settings, Check, X, Clock } from "lucide-react";
+import { Search, Star, Users, Award, Settings, Check, X, Clock, ChevronRight } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useReviewBabalawo } from "@/hooks/useAdminActions";
@@ -14,7 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import BabalawoCommissionModal from "./BabalawoCommissionModal";
 
-const BabalawoManagement: React.FC = () => {
+const BabalawoManagement: React.FC<{ onOpen?: (id: string) => void }> = ({ onOpen }) => {
   const { data: babalawos, isLoading, error, refetch } = useAdminBabalawos();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected' | 'suspended'>('pending');
@@ -171,7 +171,8 @@ const BabalawoManagement: React.FC = () => {
             filteredBabalawos.map((babalawo) => (
               <div key={babalawo.id} className="border rounded-lg p-4 space-y-4">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-4">
+                  <button type="button" onClick={() => onOpen?.(babalawo.id)} aria-label={`Open ${babalawo.full_name || 'Babalawo'}'s record`}
+                    className="flex items-center gap-4 rounded-field text-left hover:opacity-80">
                     <Avatar className="h-12 w-12">
                       <AvatarImage src={babalawo.avatar_url} />
                       <AvatarFallback>
@@ -225,7 +226,8 @@ const BabalawoManagement: React.FC = () => {
                         </div>
                       )}
                     </div>
-                  </div>
+                    <ChevronRight className="h-5 w-5 flex-none text-muted-foreground" />
+                  </button>
                 </div>
 
                 {/* Action Controls */}

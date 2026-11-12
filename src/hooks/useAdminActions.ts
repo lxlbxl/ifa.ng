@@ -49,7 +49,7 @@ export const useReviewBabalawo = () =>
   useAdminRpc(
     (v: { userId: string; status: 'approved' | 'rejected' | 'pending' | 'suspended'; notes?: string }) =>
       supabase.rpc('admin_review_babalawo', { _user_id: v.userId, _status: v.status, _notes: v.notes }),
-    ['adminBabalawos', 'adminAuditLog'],
+    ['adminBabalawos', 'adminUsers', 'adminAuditLog'],
     'Babalawo review saved',
   );
 

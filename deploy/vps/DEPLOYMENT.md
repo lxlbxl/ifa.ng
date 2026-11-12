@@ -26,9 +26,28 @@ The previous coming soon container is stopped and retained for rollback. To rest
 
 ## First installation
 
-The VPS must already have Docker Compose, Traefik on the external `coolify` Docker network, and `ai20-minio` attached to that network. Copy `.env.example` to `.env`, set unique database passwords and auth secrets, and set the same database passwords in the two connection URLs. Set `S3_ACCESS_KEY_ID` to the dedicated MinIO username and `S3_SECRET_ACCESS_KEY` to its secret; both `.env.example` values are placeholders. Keep `.env` mode 0600.
+The VPS must already have Docker Compose, Traefik on the external `coolify` Docker network, and `ai20-minio` attached to that network. Point DNS for the apex domain and `www` to this VPS; if using Cloudflare proxy, use Full (strict) TLS. Copy `.env.example` to `.env`, set unique database passwords and auth/JWT secrets, and make sure `DATABASE_URL`, `MIGRATE_DATABASE_URL`, and the PostgREST JWT secret use the matching values. Set `API_URL`, `APP_URL`, `CORS_ORIGINS`, and `COOKIE_DOMAIN` to the actual site domains. Set `S3_ACCESS_KEY_ID` to the dedicated MinIO username and `S3_SECRET_ACCESS_KEY` to its secret; both `.env.example` values are placeholders. Keep `.env` mode 0600.
 
 Create private MinIO bucket `ifa-files` and a dedicated user, then attach the policy from `bucket-policy.json` to that user. The application credentials must not be MinIO root credentials. Start the compose stack with the command above; the API applies database migrations automatically.
+
+## Web push notifications (VAPID)
+
+Push while the app is closed requires a VAPID key pair. Generate a **unique pair for each environment** after the API image has been built:
+
+```sh
+docker compose -f compose.yml run --rm --no-deps --entrypoint node api \
+  -e "console.log(JSON.stringify(require('web-push').generateVAPIDKeys()))"
+```
+
+Copy the resulting `publicKey` and `privateKey` into `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` in `.env`; set `VAPID_SUBJECT` to a monitored `mailto:` address or an HTTPS contact URL. Keep the private key secret, keep `.env` mode 0600, and never commit or expose it. Do not rotate the pair casually: existing browser subscriptions are tied to the public key and users would need to subscribe again after a rotation.
+
+Restart the API after editing `.env` so it receives the new values:
+
+```sh
+docker compose -f compose.yml up -d --force-recreate api
+```
+
+Verify `GET https://<domain>/v1/push/config` returns the public key and Admin → Settings → Integrations reports Web push as configured. Then enable notifications in a supported browser and confirm its subscription was registered. If browser permission was granted before VAPID was configured, return to Settings and select **Finish setup on this device**; permission alone does not create a push subscription. Without VAPID keys the app can only play alerts while open.
 
 ## Seed accounts and profile portraits
 
@@ -70,7 +89,8 @@ Uploaded files (avatars, recordings) live in MinIO; back up its bucket with your
    docker compose -f compose.yml exec -T db psql -U ifa_admin -d ifa -v ON_ERROR_STOP=1 < remove-demo.sql
    rm -f demo-credentials.json DEMO-ACCESS.md
    ```
-2. Set the provider keys (Paystack/Flutterwave, Termii, WhatsApp, Google, VAPID) and check Admin → Settings → Integrations shows them as set.
-3. Optional error tracking: set `SENTRY_DSN` (API) and `VITE_SENTRY_DSN` (web) in `.env`, then rebuild. Add the Sentry ingest host to `connect-src` in `security-headers.conf` when the CSP is enforced.
-4. Set `VITE_SUPPORT_EMAIL` (and `VITE_SUPPORT_WHATSAPP`, international format without +) in `.env` for the Help page and footer, then rebuild the web app.
-5. Have the Terms, Privacy and Refund pages (`/terms`, `/privacy`, `/refunds`, in `src/pages/Legal.tsx`) reviewed.
+2. Configure the integrations the launch needs in `.env`: Paystack or Flutterwave for payments; Termii for production phone sign-in codes; SMTP for email; WhatsApp credentials for WhatsApp delivery; Google service account and organizer email for Meet links; and Agora credentials for video fallback. Configure VAPID as described above for push while the app is closed. Set up each provider's matching webhook/callback URL in its provider dashboard. Admin → Settings → Integrations reports which server-side integrations are present.
+3. Strongly recommended: set `RCLONE_REMOTE` and the `BACKUP_S3_*` values to copy database dumps off the VPS, and arrange backups for the MinIO `ifa-files` bucket too.
+4. Optional error tracking: set `SENTRY_DSN` (API) and `VITE_SENTRY_DSN` (web) in `.env`, then rebuild. Add the Sentry ingest host to `connect-src` in `security-headers.conf` when the CSP is enforced.
+5. Set `VITE_SUPPORT_EMAIL` and `VITE_SUPPORT_WHATSAPP` (international format without +) in `.env` for the Help page and footer, then rebuild the web app.
+6. Have the Terms, Privacy and Refund pages (`/terms`, `/privacy`, `/refunds`, in `src/pages/Legal.tsx`) reviewed. Confirm the main site, `www`, `/health`, phone sign-in, a test payment, file upload, and any enabled notification/video providers before launch.

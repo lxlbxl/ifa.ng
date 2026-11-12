@@ -53,7 +53,8 @@ beforeAll(async () => {
   await admin.connect();
   await admin.query(`insert into auth.users(id,email,raw_user_meta_data) values
     ('${CLIENT}','c@x.ng','{}'), ('${BABA}','b@x.ng','{"role":"babalawo"}')`);
-  await admin.query(`update babalawos set hourly_rate = 10000, is_verified = true where user_id = '${BABA}'`);
+  await admin.query(`update babalawos set hourly_rate = 10000, is_verified = true, profile_picture_url = 'https://x.invalid/p.jpg' where user_id = '${BABA}'`);
+  await admin.query(`insert into availability(babalawo_id, day_of_week, start_time, end_time) values ('${BABA}', 1, '09:00', '12:00')`);
   await admin.query(`insert into wallets(user_id, balance) values ('${CLIENT}', 1000000)
     on conflict (user_id) do update set balance = 1000000`);
 }, 60_000);

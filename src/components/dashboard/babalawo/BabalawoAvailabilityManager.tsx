@@ -51,7 +51,7 @@ const WeeklyHours: React.FC<{ userId: string }> = ({ userId }) => {
         if (error) throw error;
       }
     },
-    onSuccess: () => { toast({ title: "Weekly hours saved" }); qc.invalidateQueries({ queryKey: ["bab-weekly", userId] }); },
+    onSuccess: () => { toast({ title: "Weekly hours saved" }); qc.invalidateQueries({ queryKey: ["bab-weekly", userId] }); qc.invalidateQueries({ queryKey: ["babalawo-onboarding"] }); },
     onError: (e: any) => { toast({ title: "Could not save", description: e.message, variant: "destructive" }); qc.invalidateQueries({ queryKey: ["bab-weekly", userId] }); },
   });
 

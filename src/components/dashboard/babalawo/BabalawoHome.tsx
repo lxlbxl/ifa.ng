@@ -12,6 +12,7 @@ import { useBabalawoReviews } from "@/hooks/useBabalawoReviews";
 import { useBabalawoDashboardStats } from "@/hooks/useBabalawoDashboardStatsSimple";
 import { ClothStrip, EmptyState, Panel, PanelHeader, greeting } from "@/components/dashboard/shell/Panel";
 import { PresenceCard } from "./PresenceToggle";
+import OnboardingChecklist from "./OnboardingChecklist";
 import { sessionStart, sessionEnd } from "@/utils/sessionTime";
 
 type Row = { id: number; session_date: string; start_time: string; end_time: string; starts_at?: string | null; ends_at?: string | null; status: string; user_id: string; is_instant?: boolean };
@@ -85,6 +86,8 @@ const BabalawoHome: React.FC<{ onNavigate: (id: string) => void }> = ({ onNaviga
         </section>
         <PresenceCard />
       </div>
+
+      <OnboardingChecklist />
 
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatTile tone="leaf" label="Today" value={today.length} hint={today.length === 1 ? "Consultation" : "Consultations"} />

@@ -82,11 +82,14 @@ export async function meetApi(svc: Services, method: string, path: string, scope
 
 export type RecordingMode = "ON" | "OFF";
 
-export function spaceConfig(recording: RecordingMode) {
+export type MeetAccess = "OPEN" | "TRUSTED";
+
+export function spaceConfig(recording: RecordingMode, access: MeetAccess = "OPEN") {
   return {
-    // TRUSTED: the Babalawo (a member) and IFA.ng staff walk in; guests without a
-    // Google account "Ask to join" and are admitted by the Babalawo (co-host).
-    accessType: "TRUSTED",
+    // OPEN (default): anyone with the link walks straight in. The link is only ever shown on the
+    // session page, to the two people in the session. Most clients sign in with a phone number and
+    // have no Google account, so with TRUSTED they "Ask to join" and wait for the Babalawo to admit them.
+    accessType: access,
     entryPointAccess: "ALL",
     moderation: "OFF",
     attendanceReportGenerationType: "GENERATE_REPORT",

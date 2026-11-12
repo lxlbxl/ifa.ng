@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Bell, CalendarClock, CalendarDays, Clock, Home, LifeBuoy, Settings as SettingsIcon, Star, Tag, User2, Wallet, Banknote } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { ONBOARDING_KEY } from "@/hooks/useBabalawoOnboarding";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
@@ -120,6 +122,7 @@ const BabalawoDashboard = () => {
   const setActiveSection = (section: string) => setSearchParams(section === "dashboard" ? {} : { tab: section });
   const [withdrawalModalOpen, setWithdrawalModalOpen] = useState(false);
   const [bankDetailsModalOpen, setBankDetailsModalOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const openWithdrawalModalHandler = () => setWithdrawalModalOpen(true);
@@ -170,6 +173,7 @@ const BabalawoDashboard = () => {
         open={bankDetailsModalOpen}
         onOpenChange={setBankDetailsModalOpen}
         onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: [ONBOARDING_KEY] });
           toast({
             title: "Bank details updated",
             description: "Your bank details have been updated successfully"

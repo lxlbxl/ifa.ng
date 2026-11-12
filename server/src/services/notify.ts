@@ -28,7 +28,7 @@ export function toE164(raw: string | null | undefined): string | null {
   return /^\d{11,15}$/.test(p) ? p : null;
 }
 
-async function setting(svc: Services, key: string): Promise<string | null> {
+export async function setting(svc: Services, key: string): Promise<string | null> {
   const r = await asService(svc, (trx) =>
     sql<{ v: string }>`select setting_value v from public.admin_settings where setting_key = ${key}`.execute(trx));
   return r.rows[0]?.v ?? null;

@@ -88,7 +88,7 @@ beforeAll(async () => {
       (${ADMIN}, 'admin@example.com', '{}'),
       (${OTHER}, 'other@example.com', '{}')`);
   await service(sql`insert into user_roles(user_id, role) values (${ADMIN}, 'admin')`);
-  await service(sql`update babalawos set session_price = 20000, is_verified = true, google_email = 'baba@gmail.test' where user_id = ${BABA}`);
+  await service(sql`update babalawos set session_price = 20000, is_verified = true, profile_picture_url = 'https://x.invalid/p.jpg', google_email = 'baba@gmail.test' where user_id = ${BABA}`);
   await service(sql`insert into availability(babalawo_id, day_of_week, start_time, end_time)
     select ${BABA}::uuid, d, '00:00', '23:59' from generate_series(0, 6) d`);
   await service(sql`insert into babalawo_scheduling_settings(babalawo_id, min_notice_hours) values (${BABA}, 0) on conflict do nothing`);
@@ -152,6 +152,8 @@ describe("payments", () => {
     const s = (await service(sql`select payment_status, video_provider, meet_uri, status::text from sessions where id = ${settled.session_id}`)).rows[0];
     expect(s).toMatchObject({ payment_status: "paid", video_provider: "google_meet", meet_uri: "https://meet.google.com/abc-defg-hij" });
     expect(calls.some((c) => c.url.endsWith("spaces/abc/members") && c.body.includes("baba@gmail.test"))).toBe(true);
+    // Clients sign in by phone and have no Google account: they walk straight in (admin setting).
+    expect(calls.some((c) => c.url === "https://meet.googleapis.com/v2/spaces" && JSON.parse(c.body).config.accessType === "OPEN")).toBe(true);
 
     const sms = calls.filter((c) => c.url.startsWith("https://api.ng.termii.com/"));
     expect(sms).toHaveLength(2);

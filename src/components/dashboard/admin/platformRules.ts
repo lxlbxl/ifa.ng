@@ -24,6 +24,8 @@ export const PLATFORM_RULES: PlatformRule[] = [
     fallback: "500000", isPublic: true, help: "Babalawos cannot set a price above this." },
   { key: "min_wallet_topup", label: "Smallest wallet top-up", unit: "₦", group: "Money", type: "number", min: 0,
     fallback: "100", isPublic: true, help: "" },
+  { key: "min_card_payment", label: "Smallest card part when the wallet pays the rest", unit: "₦", group: "Money", type: "number", min: 0,
+    fallback: "100", isPublic: true, help: "When a client pays partly from their wallet, at least this much is charged by card." },
   { key: "min_withdrawal_amount", label: "Smallest Babalawo withdrawal", unit: "₦", group: "Money", type: "number", min: 0,
     fallback: "5000", isPublic: true, help: "" },
   { key: "cancellation_full_refund_hours", label: "Free cancellation until", unit: "hours before start", group: "Bookings", type: "number", min: 0,

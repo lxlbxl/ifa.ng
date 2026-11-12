@@ -19,6 +19,7 @@ export function usePlatformRules() {
     noShowRefund: (data?.babalawo_no_show_refund ?? 'true') !== 'false',
     commissionPercent: n('platform_commission_percent', 20),
     recordingDays: n('recording_retention_days', 90),
+    minCardPayment: n('min_card_payment', 100),
   };
 }
 

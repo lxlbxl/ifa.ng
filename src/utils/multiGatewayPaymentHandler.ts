@@ -12,6 +12,8 @@ interface PaymentData {
   amount: number;         // display only: the server recomputes the price and ignores this
   paymentMethod: PaymentMethod;
   walletBalance?: number;
+  /** Card payments: take what the wallet holds first and charge only the rest. */
+  useWallet?: boolean;
   isInstant?: boolean;
 }
 
@@ -32,7 +34,7 @@ export const handlePaymentAndBooking = async (
   onSuccess: (sessionId: string) => void,
   onError: (message: string) => void
 ) => {
-  const { user, babalawo, date, selectedTime, paymentMethod, isInstant } = paymentData;
+  const { user, babalawo, date, selectedTime, paymentMethod, isInstant, useWallet } = paymentData;
   const sessionDate = date;
 
   try {
@@ -56,6 +58,7 @@ export const handlePaymentAndBooking = async (
       kind: 'session', gateway,
       babalawo_user_id: String(babalawo.id),
       session_date: sessionDate, start_time: selectedTime, is_instant: !!isInstant,
+      use_wallet: !!useWallet,
     });
     const popupSaidPaid = await openCheckout(intent, `Consultation with ${babalawo.full_name || babalawo.name || "Babalawo"}`);
     if (!popupSaidPaid) {
@@ -71,6 +74,8 @@ export const handlePaymentAndBooking = async (
     const result = await verifyPayment(intent.reference);
     if ((result.status === 'settled' || result.status === 'already_settled') && 'session_id' in result && result.session_id) {
       onSuccess(String(result.session_id));
+    } else if (result.status === 'wallet_short_credited_to_wallet') {
+      onError("Your wallet balance changed while you were paying, so we could not book. The card payment is safe in your wallet: please try again.");
     } else if (result.status === 'slot_taken_credited_to_wallet') {
       onError("That time was taken while you were paying. Your money is safe in your wallet, so please pick another time.");
     } else if (result.status === 'pending') {

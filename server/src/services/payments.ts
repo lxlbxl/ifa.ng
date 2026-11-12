@@ -37,6 +37,8 @@ export interface InitRequest {
   session_date?: string;
   start_time?: string;
   is_instant?: boolean;
+  /** Session or Ebo: take what the wallet holds first, charge only the rest by card. */
+  use_wallet?: boolean;
 }
 
 export async function initPayment(svc: Services, userId: string, b: Partial<InitRequest>) {
@@ -55,18 +57,19 @@ export async function initPayment(svc: Services, userId: string, b: Partial<Init
 
   try {
     return await asService(svc, async (trx) => {
-      const r = await sql<{ reference: string; amount: string }>`
+      const r = await sql<{ reference: string; amount: string; wallet_amount: string; total: string }>`
         select * from public.create_payment_intent(
           ${userId}::uuid, ${b.kind}, ${b.gateway},
           ${b.kind === "wallet_topup" ? Number(b.amount) : null}::numeric,
           ${b.babalawo_user_id ?? null}::uuid, ${b.session_date ?? null}::date,
           ${b.start_time ?? null}::text, ${!!b.is_instant},
-          ${b.kind === "ebo" ? b.ebo_id! : null}::uuid, ${b.kind === "ebo" ? b.attendance! : null}::text)`.execute(trx);
+          ${b.kind === "ebo" ? b.ebo_id! : null}::uuid, ${b.kind === "ebo" ? b.attendance! : null}::text, ${b.use_wallet === true})`.execute(trx);
       const who = await sql<{ email: string; full_name: string | null }>`
         select u.email, p.full_name from auth.users u left join public.profiles p on p.id = u.id
          where u.id = ${userId}::uuid`.execute(trx);
       return {
         reference: r.rows[0].reference, amount: Number(r.rows[0].amount), currency: "NGN", gateway: b.gateway,
+        wallet_amount: Number(r.rows[0].wallet_amount), total: Number(r.rows[0].total),
         public_key: publicKey, email: who.rows[0]?.email ?? null, name: who.rows[0]?.full_name ?? null,
       };
     });

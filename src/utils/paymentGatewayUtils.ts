@@ -33,7 +33,11 @@ export const loadPaystackScript = (): Promise<boolean> =>
 
 export interface PaymentIntentInfo {
   reference: string;
-  amount: number; // NGN, decided by the server
+  amount: number; // NGN charged by the gateway, decided by the server
+  /** Paid from the wallet once the gateway confirms (0 when the card pays it all). */
+  wallet_amount?: number;
+  /** Full price: amount + wallet_amount. */
+  total?: number;
   currency: string;
   gateway: PaymentGateway;
   public_key: string;
@@ -43,7 +47,7 @@ export interface PaymentIntentInfo {
 
 export type SettleResult =
   | { status: 'settled' | 'already_settled'; kind: 'session' | 'wallet_topup' | 'ebo'; session_id?: number | null; ebo_id?: string | null }
-  | { status: 'slot_taken_credited_to_wallet' | 'ebo_unavailable_credited_to_wallet' }
+  | { status: 'slot_taken_credited_to_wallet' | 'ebo_unavailable_credited_to_wallet' | 'wallet_short_credited_to_wallet' }
   | { status: 'pending' | 'failed' | 'amount_mismatch' | 'unknown_reference'; reason?: string };
 
 /** Ask the server to create a payment. The server picks the amount; we never send one for a session. */
@@ -57,6 +61,8 @@ export const createPaymentIntent = async (body: {
   session_date?: string;
   start_time?: string;
   is_instant?: boolean;
+  /** Session or Ebo: the wallet pays what it can, the card the rest. */
+  use_wallet?: boolean;
 }): Promise<PaymentIntentInfo> => {
   return apiFetch<PaymentIntentInfo>('/v1/payments/init', { method: 'POST', body: JSON.stringify(body) });
 };

@@ -13,6 +13,7 @@ import FeeDisclosure from '@/components/dashboard/user/FeeDisclosure';
 import { fetchBabalawoAvailability, fetchBabalawoSchedule, getBookableSlots, type AvailabilitySlot, type BabalawoSchedule, type BookableSlot } from '@/utils/availabilityUtils';
 import { handlePaymentAndBooking, type PaymentMethod } from '@/utils/multiGatewayPaymentHandler';
 import { getUserWallet } from '@/utils/walletUtils';
+import { walletSplit } from '@/utils/walletSplit';
 import { parseBabalawoPrice } from '@/utils/priceUtils';
 import { acquireSlotLock, completeSlotLock, releaseSlotLock } from '@/utils/slotLockUtils';
 import { ensureMeetLink, recordSessionConsent } from '@/services/videoService';
@@ -295,12 +296,16 @@ function PayStep({
   const { user, userProfile } = useAuth();
   const [method, setMethod] = useState<PaymentMethod>('paystack');
   const [wallet, setWallet] = useState(0);
+  const [useWallet, setUseWallet] = useState(true);
   const [busy, setBusy] = useState(false);
   const [consent, setConsent] = useState<ConsentValue>({ recording: false, ai: false });
   const [lock, setLock] = useState<string | null>(null);
   const amount = parseBabalawoPrice(babalawo);
   const name = babalawo.full_name || 'Babalawo';
   const rules = usePlatformRules();
+  const split = walletSplit(wallet, amount, rules.minCardPayment);
+  const splitting = method !== 'wallet' && useWallet && !split.covered && split.wallet > 0;
+  const cardDue = splitting ? split.card : amount;
 
   useEffect(() => {
     if (!user?.id) return;
@@ -339,7 +344,7 @@ function PayStep({
     const date = mode === 'now' ? ymd(new Date()) : slot!.date;
     const selectedTime = mode === 'now' ? new Date().toTimeString().slice(0, 5) : slot!.time;
     await handlePaymentAndBooking(
-      { user, userProfile, babalawo, date, selectedTime, amount, paymentMethod: method, walletBalance: wallet, isInstant: mode === 'now' },
+      { user, userProfile, babalawo, date, selectedTime, amount, paymentMethod: method, walletBalance: wallet, useWallet: splitting, isInstant: mode === 'now' },
       async (sessionId) => {
         if (lock) await completeSlotLock(lock, user.id).catch(() => {});
         // Best effort: the session page asks again for anything that didn't go through.
@@ -370,7 +375,7 @@ function PayStep({
       subtitle={mode === 'now' ? 'You’ll join the call as soon as payment clears.' : 'Your Google Meet link arrives once payment clears.'}
       footer={
         <Button variant="sun" size="lg" className="w-full" onClick={pay} disabled={busy || (mode === 'schedule' && !slot)} data-testid="pay-button">
-          {busy ? <><Loader2 className="animate-spin" /> Processing…</> : <><Lock /> Pay ₦{amount.toLocaleString()}{mode === 'now' ? ' and start' : ''}</>}
+          {busy ? <><Loader2 className="animate-spin" /> Processing…</> : <><Lock /> Pay ₦{cardDue.toLocaleString()}{splitting ? ' by card' : ''}{mode === 'now' ? ' and start' : ''}</>}
         </Button>
       }>
       <div className="space-y-5">
@@ -390,6 +395,18 @@ function PayStep({
             <dt className="font-bold">Total</dt>
             <dd className="m-0 font-display text-3xl font-extrabold tracking-[-0.02em]">₦{amount.toLocaleString()}</dd>
           </div>
+          {splitting && (
+            <>
+              <div className="flex items-baseline justify-between gap-4 px-4 py-3" data-testid="split-wallet">
+                <dt className="text-sm text-muted-foreground">From your wallet</dt>
+                <dd className="m-0 text-right font-semibold">−₦{split.wallet.toLocaleString()}</dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-4 px-4 py-3" data-testid="split-card">
+                <dt className="font-bold">To pay now</dt>
+                <dd className="m-0 text-right font-display text-2xl font-extrabold">₦{split.card.toLocaleString()}</dd>
+              </div>
+            </>
+          )}
         </dl>
 
         {lock && (
@@ -398,8 +415,9 @@ function PayStep({
           </p>
         )}
 
-        <PaymentMethodSelector selectedMethod={method} onMethodChange={setMethod} walletBalance={wallet} amount={amount} />
-        <FeeDisclosure amount={amount} paymentMethod={method} />
+        <PaymentMethodSelector selectedMethod={method} onMethodChange={setMethod} walletBalance={wallet} amount={amount}
+          useWallet={useWallet} onUseWalletChange={setUseWallet} minCard={rules.minCardPayment} />
+        <FeeDisclosure amount={cardDue} paymentMethod={method} />
         {mode === 'schedule' && <ConsentFields value={consent} onChange={setConsent} role="client" />}
         <p className="m-0 text-sm text-muted-foreground" data-testid="pay-terms">
           By paying you agree to the <a className="underline" href="/terms" target="_blank" rel="noreferrer">Terms</a> and{' '}

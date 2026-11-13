@@ -5,6 +5,7 @@ import { createMeetLink } from "../services/meet.js";
 import { notificationTick } from "../services/notify.js";
 import { handleFlutterwaveWebhook, handlePaystackWebhook, initPayment, verifyForUser } from "../services/payments.js";
 import { pricingFor, trustedCountry } from "../services/pricing.js";
+import { refreshBanks, resolveForBabalawo, saveForBabalawo } from "../services/payoutAccounts.js";
 import { agoraToken, sessionTranscript } from "../services/video.js";
 import { signDataToken } from "../services/dataToken.js";
 import { AUDIO_MAX, readAvatar, readSignedFile, recordingLink, uploadAvatar, uploadSessionAudio } from "../services/files.js";
@@ -49,6 +50,19 @@ export function registerV1(app: Hono<AppEnv>, svc: Services, live?: LiveHub) {
     const caller = c.get("caller");
     c.header("Cache-Control", "private, no-store");
     return c.json(await pricingFor(svc, caller.kind === "user" ? caller.userId : null, trustedCountry(c.req.raw, svc)));
+  });
+  // Babalawo payout account: the provider tells us the name on it; saving needs a fresh PIN confirmation.
+  app.post("/v1/payout-account/resolve", async (c) => {
+    const user = requireUser(c.get("caller"));
+    return c.json(await resolveForBabalawo(svc, user.userId, await body(c.req.raw)));
+  });
+  app.put("/v1/payout-account", async (c) => {
+    const user = requireUser(c.get("caller"));
+    return c.json(await saveForBabalawo(svc, user.userId, await body(c.req.raw)));
+  });
+  app.post("/v1/admin/payout-banks/refresh", async (c) => {
+    if (!(await isAdmin(svc, c.get("caller")))) throw new HttpError(403, "Admin only");
+    return c.json(await refreshBanks(svc));
   });
   app.post("/v1/payments/verify", async (c) => {
     const user = requireUser(c.get("caller"));

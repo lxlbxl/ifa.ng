@@ -7,7 +7,7 @@ import { eboTick } from "./ebo.js";
 import { reportError } from "./errors.js";
 import { deleteQueuedFiles, runRetention } from "./privacy.js";
 import { refreshBanks } from "./payoutAccounts.js";
-import { checkPendingPayouts, sendDuePayouts } from "./payouts.js";
+import { checkPendingPayouts, reconcileBalances, sendDuePayouts } from "./payouts.js";
 
 /**
  * Scheduled work that pg_cron / Supabase schedules used to run. One API
@@ -34,6 +34,11 @@ export const JOBS: { name: string; everySeconds: number; run: (svc: Services) =>
   // Automated payouts (off until an admin switches them on): send due transfers, ask about pending ones.
   { name: "send payouts", everySeconds: 60, run: sendDuePayouts },
   { name: "check pending payouts", everySeconds: 300, run: checkPendingPayouts },
+  { name: "approve small withdrawals", everySeconds: 60,
+    run: (svc) => asService(svc, (trx) => sql`select public.auto_approve_withdrawals()`.execute(trx)) },
+  { name: "flag slow payouts", everySeconds: 1800,
+    run: (svc) => asService(svc, (trx) => sql`select public.flag_stuck_payout_transfers()`.execute(trx)) },
+  { name: "check provider balances", everySeconds: 3600, run: reconcileBalances },
 ];
 
 export function startJobs(svc: Services) {

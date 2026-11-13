@@ -246,3 +246,36 @@ export async function approvePaystackTransfer(svc: Services, raw: string, signat
   }
   return 200;
 }
+
+// ------------------------------------------------------------------ reconciliation
+
+async function providerBalance(svc: Services, p: Transfer["provider"]): Promise<number | null> {
+  if (p === "paystack") {
+    const r = await svc.fetch("https://api.paystack.co/balance", { headers: { Authorization: `Bearer ${svc.config.PAYSTACK_SECRET_KEY}` } });
+    const j = await readJson(r);
+    const ngn = Array.isArray(j.data) ? j.data.find((b: { currency?: string }) => b?.currency === "NGN") : null;
+    return r.ok && j.status && ngn && typeof ngn.balance === "number" ? ngn.balance / 100 : null;
+  }
+  const r = await svc.fetch("https://api.flutterwave.com/v3/balances/NGN", { headers: { Authorization: `Bearer ${svc.config.FLW_SECRET_KEY}` } });
+  const j = await readJson(r);
+  const v = Number(j.data?.available_balance);
+  return r.ok && j.status === "success" && Number.isFinite(v) ? v : null;
+}
+
+/** Read each provider's naira balance and store it beside what we owe on it. Admins hear if it is short. */
+export async function reconcileBalances(svc: Services) {
+  const out: Record<string, unknown>[] = [];
+  for (const p of ["paystack", "flutterwave"] as const) {
+    if (!hasKey(svc, p)) continue;
+    try {
+      const bal = await providerBalance(svc, p);
+      if (bal == null) { console.warn(`[payouts] ${p} balance unreadable`); continue; }
+      const r = await asService(svc, (trx) => sql<{ r: Record<string, unknown> }>`
+        select public._record_provider_balance(${p}, ${bal}) r`.execute(trx));
+      out.push(r.rows[0].r);
+    } catch (e) {
+      console.warn(`[payouts] ${p} balance check failed:`, (e as Error).message);
+    }
+  }
+  return { checks: out };
+}

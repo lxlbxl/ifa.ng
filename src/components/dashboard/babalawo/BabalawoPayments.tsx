@@ -10,18 +10,34 @@ import { StatTile } from "@/components/brand";
 const db = supabase as any;
 const naira = (n: any) => `₦${Number(n ?? 0).toLocaleString()}`;
 
+/** A withdrawal's state in plain words, from its bank transfers when it is paid automatically. */
+function withdrawalWords(w: any, transfers: { withdrawal_id: string; status: string }[]) {
+  const mine = transfers.filter((t) => t.withdrawal_id === w.id).map((t) => t.status);
+  if (w.status === "completed") return mine.includes("reversed") ? "Returned by your bank" : "Paid";
+  if (w.status === "rejected") return "Not approved";
+  if (w.status === "pending") return "Waiting for approval";
+  if (w.status === "approved") {
+    if (mine.some((s) => s === "sending" || s === "pending")) return "On its way to your bank";
+    if (mine.includes("failed")) return "Approved, IFA.ng is sorting out the transfer";
+    return "Approved, paying soon";
+  }
+  return w.status;
+}
+
 /** Read-only money view. Balances and ledger come from server views owned by the payments work (RLS limits rows to the caller). */
 const BabalawoPayments: React.FC = () => {
   const { user } = useAuth();
   const { data, isLoading } = useQuery({
     queryKey: ["bab-money", user?.id], enabled: !!user?.id,
     queryFn: async () => {
-      const [bal, ledger, wd] = await Promise.all([
+      const [bal, ledger, wd, tr] = await Promise.all([
         db.from("my_babalawo_earnings").select("*").maybeSingle(),
         db.from("babalawo_ledger").select("*").order("created_at", { ascending: false }).limit(100),
         db.from("withdrawal_requests").select("*").order("created_at", { ascending: false }).limit(20),
+        db.from("payout_transfers").select("withdrawal_id, status").order("created_at", { ascending: false }).limit(100),
       ]);
-      return { bal: bal.error ? null : bal.data, ledger: ledger.error ? [] : ledger.data ?? [], wd: wd.error ? [] : wd.data ?? [], viewsMissing: !!bal.error };
+      return { bal: bal.error ? null : bal.data, ledger: ledger.error ? [] : ledger.data ?? [], wd: wd.error ? [] : wd.data ?? [],
+        transfers: tr.error ? [] : tr.data ?? [], viewsMissing: !!bal.error };
     },
   }) as any;
   if (isLoading) return <p className="text-muted-foreground">Loading payments...</p>;
@@ -49,7 +65,7 @@ const BabalawoPayments: React.FC = () => {
           </div>))}
       </CardContent></Card>
       {(data?.wd ?? []).length > 0 && <Card><CardHeader><CardTitle className="text-xl">Withdrawals</CardTitle></CardHeader><CardContent className="divide-y">
-        {data.wd.map((w: any) => (<div key={w.id} className="py-2 flex justify-between text-sm"><span>{new Date(w.created_at).toLocaleDateString()}</span><span>{naira(w.amount)} <Badge variant="outline" className="ml-1">{w.status}</Badge></span></div>))}
+        {data.wd.map((w: any) => (<div key={w.id} className="py-2 flex justify-between text-sm"><span>{new Date(w.created_at).toLocaleDateString()}</span><span>{naira(w.amount)} <Badge variant="outline" className="ml-1">{withdrawalWords(w, data.transfers)}</Badge></span></div>))}
       </CardContent></Card>}
     </div>
   );

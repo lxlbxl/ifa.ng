@@ -6,6 +6,7 @@ import { notificationTick } from "../services/notify.js";
 import { handleFlutterwaveWebhook, handlePaystackWebhook, initPayment, verifyForUser } from "../services/payments.js";
 import { pricingFor, trustedCountry } from "../services/pricing.js";
 import { refreshBanks, resolveForBabalawo, saveForBabalawo } from "../services/payoutAccounts.js";
+import { approvePaystackTransfer } from "../services/payouts.js";
 import { agoraToken, sessionTranscript } from "../services/video.js";
 import { signDataToken } from "../services/dataToken.js";
 import { AUDIO_MAX, readAvatar, readSignedFile, recordingLink, uploadAvatar, uploadSessionAudio } from "../services/files.js";
@@ -79,6 +80,12 @@ export function registerV1(app: Hono<AppEnv>, svc: Services, live?: LiveHub) {
     const raw = await c.req.text();
     const status = await handleFlutterwaveWebhook(svc, raw, c.req.header("verif-hash") ?? "");
     return c.text(status === 200 ? "ok" : status === 401 ? "invalid signature" : "retry", status as 200 | 401 | 500);
+  });
+
+  // Paystack asks here before sending each payout transfer (Paystack: Settings -> Preferences -> Transfer approval URL).
+  app.post("/webhooks/paystack/transfer-approval", async (c) => {
+    const status = await approvePaystackTransfer(svc, await c.req.text(), c.req.header("x-paystack-signature") ?? "");
+    return c.text(status === 200 ? "approved" : "rejected", status as 200 | 400);
   });
 
   // Video (was create-meet-link and generate-agora-token).

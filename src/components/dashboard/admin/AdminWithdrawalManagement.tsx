@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import BankAccountReviews from './BankAccountReviews';
+import { IN_FLIGHT, PayoutTransferList, usePayoutTransfers } from './PayoutTransfers';
 
 interface BankSnapshot {
   bank_name?: string;
@@ -89,6 +90,9 @@ const AdminWithdrawalManagement = () => {
     queryFn: () => fetchWithdrawalRequests(status),
     staleTime: 30_000,
   });
+
+  const { data: transfers } = usePayoutTransfers(requests.map((r) => r.id));
+  const inFlight = (id: string) => (transfers?.get(id) ?? []).some((t) => IN_FLIGHT.includes(t.status));
 
   const mutation = useMutation({
     mutationFn: updateWithdrawal,
@@ -188,7 +192,10 @@ const AdminWithdrawalManagement = () => {
                   ) : <span className="text-muted-foreground">No account snapshot</span>}
                 </TableCell>
                 <TableCell>{request.reason || '—'}</TableCell>
-                <TableCell><Badge variant={request.status === 'completed' ? 'success' : request.status === 'rejected' ? 'destructive' : request.status === 'approved' ? 'default' : 'secondary'}>{request.status}</Badge></TableCell>
+                <TableCell>
+                  <Badge variant={request.status === 'completed' ? 'success' : request.status === 'rejected' ? 'destructive' : request.status === 'approved' ? 'default' : 'secondary'}>{request.status}</Badge>
+                  <PayoutTransferList transfers={transfers?.get(request.id) ?? []} />
+                </TableCell>
                 <TableCell className="whitespace-nowrap">{format(new Date(request.created_at), 'PPP')}</TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-2">
@@ -198,7 +205,10 @@ const AdminWithdrawalManagement = () => {
                         <Button size="sm" variant="destructive" disabled={mutation.isPending} onClick={() => { setRejectionReason(''); setDialog({ action: 'reject', request }); }}>Reject</Button>
                       </>
                     )}
-                    {request.status === 'approved' && (
+                    {request.status === 'approved' && inFlight(request.id) && (
+                      <span className="text-xs text-muted-foreground">Being paid by bank transfer</span>
+                    )}
+                    {request.status === 'approved' && !inFlight(request.id) && (
                       <>
                         <Button size="sm" disabled={mutation.isPending} onClick={() => { setReference(''); setDialog({ action: 'mark_paid', request }); }}>Process payout</Button>
                         <Button size="sm" variant="destructive" disabled={mutation.isPending} onClick={() => { setRejectionReason(''); setDialog({ action: 'reject', request }); }}>Reject</Button>

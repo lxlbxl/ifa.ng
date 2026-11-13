@@ -7,6 +7,7 @@ import { eboTick } from "./ebo.js";
 import { reportError } from "./errors.js";
 import { deleteQueuedFiles, runRetention } from "./privacy.js";
 import { refreshBanks } from "./payoutAccounts.js";
+import { checkPendingPayouts, sendDuePayouts } from "./payouts.js";
 
 /**
  * Scheduled work that pg_cron / Supabase schedules used to run. One API
@@ -30,6 +31,9 @@ export const JOBS: { name: string; everySeconds: number; run: (svc: Services) =>
   { name: "delete queued files", everySeconds: 300, run: deleteQueuedFiles },
   // Payouts: both providers' Nigerian bank lists and codes.
   { name: "refresh payout bank list", everySeconds: 6 * 3600, run: refreshBanks },
+  // Automated payouts (off until an admin switches them on): send due transfers, ask about pending ones.
+  { name: "send payouts", everySeconds: 60, run: sendDuePayouts },
+  { name: "check pending payouts", everySeconds: 300, run: checkPendingPayouts },
 ];
 
 export function startJobs(svc: Services) {

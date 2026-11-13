@@ -1,3 +1,4 @@
+import { confirmTransfer } from "./payouts.js";
 import { createHmac, timingSafeEqual as nodeTimingSafeEqual } from "node:crypto";
 import { sql } from "kysely";
 import { asService, HttpError, type Services } from "./context.js";
@@ -193,6 +194,10 @@ export async function handlePaystackWebhook(svc: Services, raw: string, signatur
       await audit(svc, "webhook_paystack", { reference: ref, result: r.status });
       if (r.status === "amount_mismatch") console.error("PAYSTACK AMOUNT MISMATCH", ref);
     }
+    if (typeof evt?.event === "string" && evt.event.startsWith("transfer.") && typeof ref === "string") {
+      const r = await confirmTransfer(svc, "paystack", ref);
+      await audit(svc, "webhook_paystack_transfer", { reference: ref, event: evt.event, result: r });
+    }
     return 200;
   } catch (e) {
     console.error("webhook paystack", e);
@@ -211,6 +216,11 @@ export async function handleFlutterwaveWebhook(svc: Services, raw: string, verif
       const r = await confirmAndSettle(svc, ref);
       await audit(svc, "webhook_flutterwave", { reference: ref, result: r.status });
       if (r.status === "amount_mismatch") console.error("FLUTTERWAVE AMOUNT MISMATCH", ref);
+    }
+    const tref = evt?.data?.reference;
+    if ((evt?.event === "transfer.completed" || evt?.["event.type"] === "Transfer") && typeof tref === "string") {
+      const r = await confirmTransfer(svc, "flutterwave", tref);
+      await audit(svc, "webhook_flutterwave_transfer", { reference: tref, result: r });
     }
     return 200;
   } catch (e) {

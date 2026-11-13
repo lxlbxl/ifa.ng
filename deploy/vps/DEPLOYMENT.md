@@ -93,8 +93,13 @@ Uploaded files (avatars, recordings) live in MinIO; back up its bucket with your
 3. Strongly recommended: set `RCLONE_REMOTE` and the `BACKUP_S3_*` values to copy database dumps off the VPS, and arrange backups for the MinIO `ifa-files` bucket too.
 4. Optional error tracking: set `SENTRY_DSN` (API) and `VITE_SENTRY_DSN` (web) in `.env`, then rebuild. Add the Sentry ingest host to `connect-src` in `security-headers.conf` when the CSP is enforced.
 5. Prices for the diaspora: put the site behind Cloudflare's proxy and set `GEO_COUNTRY_HEADER=cf-ipcountry`, so visitors outside Nigeria see US dollar prices. Without it, only the phone number decides (a +234 number pays naira). Dollar prices, the naira rate and per-Babalawo dollar prices are in Admin → Settings → Diaspora prices and on each Babalawo's record. Dollar payments go through Flutterwave, so enable USD collections on the Flutterwave account.
-6. Set `VITE_SUPPORT_EMAIL` and `VITE_SUPPORT_WHATSAPP` (international format without +) in `.env` for the Help page and footer, then rebuild the web app.
-7. Have the Terms, Privacy and Refund pages (`/terms`, `/privacy`, `/refunds`, in `src/pages/Legal.tsx`) reviewed. Confirm the main site, `www`, `/health`, phone sign-in, a test payment, file upload, and any enabled notification/video providers before launch.
+6. Automated Babalawo payouts (off until you switch them on). Each part of a withdrawal is paid through the provider that received that money.
+   - Paystack: Settings → Preferences → Transfers: turn off "Confirm transfers before sending" (the OTP), set the transfer approval URL to `https://<API_DOMAIN>/webhooks/paystack/transfer-approval`, and add the VPS IP to the IP whitelist if you use one. Transfer webhooks arrive on the existing webhook URL.
+   - Flutterwave: Settings → Whitelisted IP addresses: add the VPS IP (transfers are refused from other IPs). Transfer webhooks arrive on the existing webhook URL.
+   - On both, keep settled money in the provider balance (not swept to your bank), so there is money to pay from.
+   - Then in Admin → Settings → Payouts, switch on "Pay approved withdrawals automatically" and check the per-transfer and daily limits. Try one small withdrawal first. Failed or held transfers show on Admin → Withdrawals with "Send again" and "Paid by hand".
+7. Set `VITE_SUPPORT_EMAIL` and `VITE_SUPPORT_WHATSAPP` (international format without +) in `.env` for the Help page and footer, then rebuild the web app.
+8. Have the Terms, Privacy and Refund pages (`/terms`, `/privacy`, `/refunds`, in `src/pages/Legal.tsx`) reviewed. Confirm the main site, `www`, `/health`, phone sign-in, a test payment, file upload, and any enabled notification/video providers before launch.
 
 ## Provider keys from the admin screen
 

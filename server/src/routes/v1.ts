@@ -6,7 +6,7 @@ import { notificationTick } from "../services/notify.js";
 import { handleFlutterwaveWebhook, handlePaystackWebhook, initPayment, verifyForUser } from "../services/payments.js";
 import { pricingFor, trustedCountry } from "../services/pricing.js";
 import { refreshBanks, resolveForBabalawo, saveForBabalawo } from "../services/payoutAccounts.js";
-import { approvePaystackTransfer } from "../services/payouts.js";
+import { approvePaystackTransfer, reconcileBalances } from "../services/payouts.js";
 import { agoraToken, sessionTranscript } from "../services/video.js";
 import { signDataToken } from "../services/dataToken.js";
 import { AUDIO_MAX, readAvatar, readSignedFile, recordingLink, uploadAvatar, uploadSessionAudio } from "../services/files.js";
@@ -64,6 +64,10 @@ export function registerV1(app: Hono<AppEnv>, svc: Services, live?: LiveHub) {
   app.post("/v1/admin/payout-banks/refresh", async (c) => {
     if (!(await isAdmin(svc, c.get("caller")))) throw new HttpError(403, "Admin only");
     return c.json(await refreshBanks(svc));
+  });
+  app.post("/v1/admin/payouts/check-balances", async (c) => {
+    if (!(await isAdmin(svc, c.get("caller")))) throw new HttpError(403, "Admin only");
+    return c.json(await reconcileBalances(svc));
   });
   app.post("/v1/payments/verify", async (c) => {
     const user = requireUser(c.get("caller"));

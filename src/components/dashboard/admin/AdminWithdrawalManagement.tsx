@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import BankAccountReviews from './BankAccountReviews';
+import PayoutOverview from './PayoutOverview';
 import { IN_FLIGHT, PayoutTransferList, usePayoutTransfers } from './PayoutTransfers';
 
 interface BankSnapshot {
@@ -31,6 +32,7 @@ interface WithdrawalRequest {
   babalawo_id: string;
   bank_snapshot: BankSnapshot | null;
   babalawo_name: string;
+  auto_approved?: boolean;
 }
 
 type WithdrawalAction = 'approve' | 'reject' | 'mark_paid';
@@ -38,7 +40,7 @@ type WithdrawalDialog = { action: 'reject' | 'mark_paid'; request: WithdrawalReq
 
 const fetchWithdrawalRequests = async (status: string): Promise<WithdrawalRequest[]> => {
   let query = supabase.from('withdrawal_requests').select(
-    'id, amount, status, created_at, reason, babalawo_id, bank_snapshot',
+    'id, amount, status, created_at, reason, babalawo_id, bank_snapshot, auto_approved',
   ).order('created_at', { ascending: false });
   if (status !== 'all') query = query.eq('status', status);
 
@@ -142,6 +144,7 @@ const AdminWithdrawalManagement = () => {
 
   return (
     <div className="space-y-4">
+    <PayoutOverview />
     <BankAccountReviews />
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-4">
@@ -194,6 +197,7 @@ const AdminWithdrawalManagement = () => {
                 <TableCell>{request.reason || '—'}</TableCell>
                 <TableCell>
                   <Badge variant={request.status === 'completed' ? 'success' : request.status === 'rejected' ? 'destructive' : request.status === 'approved' ? 'default' : 'secondary'}>{request.status}</Badge>
+                  {request.auto_approved && <div className="mt-1 text-xs text-muted-foreground">Approved automatically</div>}
                   <PayoutTransferList transfers={transfers?.get(request.id) ?? []} />
                 </TableCell>
                 <TableCell className="whitespace-nowrap">{format(new Date(request.created_at), 'PPP')}</TableCell>

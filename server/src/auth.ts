@@ -103,7 +103,8 @@ export function createAuth(config: Config, mailer: Mailer, opts: { otpSender?: O
         "/request-password-reset": { window: 300, max: 3 },
         // Coarse per-IP caps; the precise per-number limits and lockouts are in services/phoneAuth.ts.
         "/phone/start": { window: 60, max: 10 }, "/phone/verify-otp": { window: 60, max: 10 },
-        "/phone/sign-in-pin": { window: 60, max: 10 }, "/phone/set-pin": { window: 60, max: 10 } } },
+        "/phone/sign-in-pin": { window: 60, max: 10 }, "/phone/set-pin": { window: 60, max: 10 },
+        "/phone/confirm-pin": { window: 60, max: 10 } } },
     plugins: [bearer(), phoneAuthPlugin(phone)],
   });
 

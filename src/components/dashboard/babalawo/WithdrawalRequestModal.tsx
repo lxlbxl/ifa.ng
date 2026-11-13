@@ -1,3 +1,4 @@
+import { PayoutAccountStatus, type PayoutAccount } from "./BankDetailsModal";
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -171,16 +172,12 @@ const WithdrawalRequestModal: React.FC<WithdrawalRequestModalProps> = ({
                 </AlertDescription>
               </Alert>
             ) : (
-              <div className="bg-cloth p-3 rounded-lg mb-6">
+              <div className="mb-6">
                 <div className="flex items-center gap-2 mb-2">
                   <CreditCard className="h-4 w-4 text-muted-foreground" />
-                  <p className="text-sm font-medium text-ink">Bank Details</p>
+                  <p className="text-sm font-medium text-ink">Paid to</p>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  <p>{bankDetails.bank_name}</p>
-                  <p>{bankDetails.account_name}</p>
-                  <p>•••• {bankDetails.account_number.slice(-4)}</p>
-                </div>
+                <PayoutAccountStatus account={bankDetails as PayoutAccount} />
               </div>
             )}
             

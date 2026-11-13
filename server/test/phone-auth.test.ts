@@ -289,3 +289,21 @@ describe("admin sign-in and client IPs", () => {
     expect(clientIp(req("1.1.1.1"), 3)).toBe("1.1.1.1");
   });
 });
+
+describe("confirming the PIN again (step-up)", () => {
+  it("gives a one-use token for a sensitive change after the right PIN, and counts wrong ones", async () => {
+    const { cookie, body } = await register("+2348011119999", "2580");
+    const ip = freshIp();
+    expect((await post("/phone/confirm-pin", { pin: "2580", purpose: "payout_account" }, { ip })).status).toBe(401);
+    expect((await post("/phone/confirm-pin", { pin: "2580", purpose: "anything" }, { cookie, ip })).status).toBe(400);
+    const wrong = await post("/phone/confirm-pin", { pin: "1357", purpose: "payout_account" }, { cookie, ip });
+    expect(wrong.status).toBe(401);
+    expect((await wrong.json()).attempts_left).toBe(4);
+    const ok = await post("/phone/confirm-pin", { pin: "2580", purpose: "payout_account" }, { cookie, ip });
+    expect(ok.status).toBe(200);
+    const { step_up } = await ok.json();
+    expect(typeof step_up).toBe("string");
+    const row = await svc(sql<{ user_id: string; purpose: string }>`select user_id, purpose from auth.step_ups where used_at is null`);
+    expect(row.rows).toEqual([{ user_id: body.user.id, purpose: "payout_account" }]);
+  });
+});

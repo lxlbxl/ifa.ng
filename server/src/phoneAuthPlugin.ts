@@ -72,6 +72,13 @@ export function phoneAuthPlugin(phone: PhoneAuth) {
         } catch (e) { return fail(e); }
       }),
 
+      // Signed in already: type the PIN again before a sensitive change. Returns a one-use token.
+      phoneConfirmPin: createAuthEndpoint("/phone/confirm-pin", { method: "POST", use: [sessionMiddleware] }, async (ctx) => {
+        try {
+          return ctx.json(await phone.confirmPin(ctx.context.session.user.id, (ctx.body ?? {}) as Body, clientIp(ctx.request)));
+        } catch (e) { return fail(e); }
+      }),
+
       phoneSignInPin: createAuthEndpoint("/phone/sign-in-pin", { method: "POST" }, async (ctx) => {
         let result;
         try {

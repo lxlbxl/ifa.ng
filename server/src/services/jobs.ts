@@ -6,6 +6,7 @@ import { pushPending } from "./push.js";
 import { eboTick } from "./ebo.js";
 import { reportError } from "./errors.js";
 import { deleteQueuedFiles, runRetention } from "./privacy.js";
+import { refreshBanks } from "./payoutAccounts.js";
 
 /**
  * Scheduled work that pg_cron / Supabase schedules used to run. One API
@@ -27,6 +28,8 @@ export const JOBS: { name: string; everySeconds: number; run: (svc: Services) =>
   // Data protection: the retention schedule, and stored files that erasure or retention queued.
   { name: "privacy retention schedule", everySeconds: 3600, run: runRetention },
   { name: "delete queued files", everySeconds: 300, run: deleteQueuedFiles },
+  // Payouts: both providers' Nigerian bank lists and codes.
+  { name: "refresh payout bank list", everySeconds: 6 * 3600, run: refreshBanks },
 ];
 
 export function startJobs(svc: Services) {

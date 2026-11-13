@@ -66,8 +66,8 @@ beforeAll(async () => {
     profile_picture_url = 'https://x.invalid/p.jpg' where user_id = '${BABA}'`);
   await admin.query(`insert into availability(babalawo_id, day_of_week, start_time, end_time) values ('${BABA}', 1, '09:00', '12:00')`);
   await admin.query(`insert into babalawo_wallets(babalawo_id) values ($1) on conflict do nothing`, [BABA]);
-  await admin.query(`insert into babalawo_bank_details(babalawo_id, bank_name, account_number, account_name)
-    values ($1, 'Test Bank', '0123456789', 'Test Babalawo')`, [BABA]);
+  await admin.query(`insert into babalawo_bank_details(babalawo_id, bank_name, account_number, account_name, status)
+    values ($1, 'Test Bank', '0123456789', 'Test Babalawo', 'verified')`, [BABA]);
   await admin.query(`insert into admin_settings(setting_key, setting_value) values ('min_withdrawal_amount', '100')
     on conflict (setting_key) do update set setting_value = '100'`);
 }, 60_000);

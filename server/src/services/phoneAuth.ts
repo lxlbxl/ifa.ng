@@ -1,4 +1,4 @@
-import { createHmac, randomBytes, randomInt, scrypt as scryptCb, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomBytes, randomInt, scrypt as scryptCb, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 import type pg from "pg";
 import type { Config } from "../config.js";
@@ -10,6 +10,7 @@ import type { Config } from "../config.js";
  *   verifyOtp(phone, code)  -> the person (created on first use) + a one-time ticket to set a PIN
  *   setPin(user, ticket)    -> stores the PIN (scrypt over an HMAC keyed by AUTH_SECRET)
  *   verifyPin(phone, pin)   -> the person, with lockouts after repeated wrong PINs
+ *   confirmPin(user, pin)   -> a signed-in person proves it is them again (step-up), before a sensitive change
  *
  * Every table here lives in the auth schema and is reached only through the
  * service-role pool the login code uses.
@@ -33,6 +34,11 @@ export const PIN_LOCK_MINUTES = 15;
 export const PIN_FAILURES_PER_IP_PER_HOUR = 30;
 export const OTP_CHECKS_PER_IP_PER_HOUR = 30;
 export const PIN_TICKET_TTL_SECONDS = 15 * 60;
+export const STEP_UP_TTL_SECONDS = 10 * 60;
+export const STEP_UP_PURPOSES = ["payout_account"] as const;
+export type StepUpPurpose = (typeof STEP_UP_PURPOSES)[number];
+/** Step-up tokens are random; only their hash is stored (auth.step_ups). */
+export const stepUpHash = (token: string) => createHash("sha256").update(`step-up:${token}`).digest("hex");
 
 const E164 = /^\+[1-9]\d{6,14}$/;
 const PIN = /^\d{4}$/;
@@ -296,14 +302,37 @@ export function createPhoneAuth(deps: { pool: pg.Pool; secret: string; sender: O
     throw new PhoneAuthError(401, "PIN_INVALID", `Wrong PIN. ${left} ${left === 1 ? "try" : "tries"} left.`, { attempts_left: left });
   }
 
+  /**
+   * A signed-in person types their PIN again before a sensitive change (a new payout account).
+   * Same lockouts as signing in. Returns a one-use token for that purpose, valid a few minutes.
+   */
+  async function confirmPin(userId: string, input: { pin?: unknown; purpose?: unknown }, ip: string) {
+    const purpose = STEP_UP_PURPOSES.find((p) => p === input.purpose);
+    if (!purpose) throw new PhoneAuthError(400, "BAD_PURPOSE", "Unknown action.");
+    const u = await pool.query<{ phone: string | null; has_pin: boolean }>(
+      `select u.phone, exists (select 1 from auth.phone_pins p where p.user_id = u.id) has_pin from auth.users u where u.id = $1`, [userId]);
+    const row = u.rows[0];
+    if (!row?.phone || !row.has_pin) {
+      throw new PhoneAuthError(400, "NO_PIN", "Set up phone sign-in with a PIN first, then try again.");
+    }
+    const who = await verifyPin({ phone: row.phone, pin: input.pin }, ip);
+    if (who.userId !== userId) throw new PhoneAuthError(403, "PIN_INVALID", "Wrong PIN.");
+    const token = randomBytes(24).toString("base64url");
+    await pool.query(
+      `insert into auth.step_ups(token_hash, user_id, purpose, expires_at) values ($1, $2, $3, now() + make_interval(secs => $4))`,
+      [stepUpHash(token), userId, purpose, STEP_UP_TTL_SECONDS]);
+    return { step_up: token, expires_in: STEP_UP_TTL_SECONDS };
+  }
+
   /** Housekeeping: drop old codes, tickets and counters. */
   async function cleanup() {
     await pool.query("delete from auth.phone_otps where created_at < now() - interval '1 day'");
     await pool.query("delete from auth.pin_tickets where expires_at < now() - interval '1 day'");
+    await pool.query("delete from auth.step_ups where expires_at < now() - interval '1 day'");
     await pool.query("delete from auth.rate_events where at < now() - interval '1 day'");
   }
 
-  return { start, verifyOtp, setPin, verifyPin, cleanup };
+  return { start, verifyOtp, setPin, verifyPin, confirmPin, cleanup };
 }
 
 export type PhoneAuth = ReturnType<typeof createPhoneAuth>;

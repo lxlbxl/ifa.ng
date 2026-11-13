@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import BankAccountReviews from './BankAccountReviews';
 
 interface BankSnapshot {
   bank_name?: string;
@@ -136,6 +137,8 @@ const AdminWithdrawalManagement = () => {
   const dialogOpen = dialog !== null;
 
   return (
+    <div className="space-y-4">
+    <BankAccountReviews />
     <Card>
       <CardHeader className="flex flex-row items-center justify-between gap-4">
         <CardTitle>Withdrawal Management</CardTitle>
@@ -248,6 +251,7 @@ const AdminWithdrawalManagement = () => {
         </DialogContent>
       </Dialog>
     </Card>
+    </div>
   );
 };
 

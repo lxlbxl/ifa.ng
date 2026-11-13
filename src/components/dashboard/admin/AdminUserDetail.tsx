@@ -20,6 +20,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSetUserRole, useSetUserSuspended, useAdminRefundSession, useReviewBabalawo } from "@/hooks/useAdminActions";
 import BabalawoCommissionModal from "./BabalawoCommissionModal";
 import { PaysInRow, UsdPriceKVs, UsdPricesButton } from "./PricingAdmin";
+import { PayoutAccountRow } from "./BankAccountReviews";
 import {
   exportUserData, useAddUserNote, useSetBabalawoListing, useAdjustUserWallet, useMessageUser, type Provider, useSignOutUser, useUpdateUserNote, useUserDetail,
   type UserDetail,
@@ -286,6 +287,7 @@ function BabalawoPractice({ d, userId, name }: { d: UserDetail; userId: string; 
           <KV k="Rating" v={pr.rating_avg != null ? `${Number(pr.rating_avg).toFixed(1)}★ from ${pr.reviews_count}` : "No reviews"} />
           <KV k="Earned, 90 days" v={naira(pr.gross_90d)} />
           <KV k="Available to withdraw" v={`${naira(b.wallet?.available)} (${naira(b.wallet?.pending)} pending)`} />
+          <PayoutAccountRow babalawoId={userId} />
         </Panel>
       </div>
 
